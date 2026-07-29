@@ -1,0 +1,23 @@
+# Generated data and checkpoints (regenerable — results/ is tracked, data/ is not)
+data/
+*.pt
+*.npz
+*.npy
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
