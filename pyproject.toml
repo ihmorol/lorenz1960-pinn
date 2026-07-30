@@ -2,5 +2,5 @@
 # Source lives under src/ (src layout); put it on sys.path so `import fydp2` works
 # without installing the package.
 pythonpath = ["src"]
-testpaths = ["tests"]
+testpaths = ["src/fydp2"]
 addopts = "-q"

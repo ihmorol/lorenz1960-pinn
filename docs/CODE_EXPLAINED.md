@@ -49,7 +49,7 @@ Two more ingredients make it work:
 config.py   -> all the settings + access to the trusted baseline solver
 pinn.py     -> the network, the physics residual, and the loss
 train.py    -> the training loop (Adam then L-BFGS), evaluation, and plots
-test_pinn.py-> quick checks that the pieces are correct (lives in tests/)
+test_pinn.py-> quick checks that the pieces are correct
 __init__.py -> makes `import fydp2` convenient
 lorenz_pinn.ipynb -> a notebook to run everything on Kaggle/Colab (notebooks/)
 ```
@@ -110,11 +110,13 @@ Standard tools: `sys`/`Path` to find files, `dataclass` to make a tidy settings
 object, `numpy` for arrays.
 
 ```python
-10 _SRC_ROOT = Path(__file__).resolve().parents[1]
-11 sys.path.insert(0, str(_SRC_ROOT / "baseline"))
+10 _SRC_ROOT = Path(__file__).resolve().parents[1]   # .../src
+11 _REPO_ROOT = _SRC_ROOT.parent                     # repository root
+12 sys.path.insert(0, str(_SRC_ROOT / "baseline"))
 ```
-`__file__` is this file's path. `parents[1]` goes up one level to `src/`.
-Line 11 adds `src/baseline/` to Python's search path so the next import works.
+`__file__` is this file's path. `parents[1]` goes up one level to `src/`, and its
+parent is the repository root (used further down to anchor output paths).
+Line 12 adds `src/baseline/` to Python's search path so the next import works.
 **Why:** it lets `src/fydp2/` reuse the locked baseline solver
 without copying any code.
 
@@ -186,7 +188,7 @@ How many time points we check the physics at (3000, drawn by Latin hypercube
 sampling over `[0,1]`, following paper1).
 
 ```python
-46     results_dir: str = "results/fydp2"
+    results_dir: str = "results/fydp2"
 47     ckpt_dir: str = "data/fydp2"
 ```
 Where plots/tables go (tracked in git) and where the saved model goes (ignored
@@ -376,24 +378,20 @@ The one number we minimize:
 ## 5. `src/fydp2/train.py` — train, evaluate, and save
 
 ```python
-6  import matplotlib
-8  matplotlib.use("Agg")
-9  import matplotlib.pyplot as plt
-```
-Loads the plotting library and picks the "Agg" backend, which draws to image
-files without needing a screen. **Why:** lets training save PNGs on a headless
-server (like Kaggle).
+import numpy as np
+import pandas as pd
+import torch
+from torch import Tensor
 
-```python
-10 import numpy as np
-11 import pandas as pd
-12 import torch
-13 from torch import Tensor
-15 from .config import Config, compute_error_metrics, reference_trajectory
-16 from .pinn import PINN, pinn_loss
-18 STATE = ("x", "y", "z")
+from . import figures
+from .config import Config, compute_error_metrics, reference_trajectory
+from .history import TrainHistory, flat_params
+from .pinn import PINN, loss_terms, pinn_loss, residual
 ```
-Imports and a small label list for the three variables.
+Imports. `train.py` does the training and nothing else: the per-epoch telemetry
+lives in `history.py`, and every plot lives in `figures.py`. **Why the split:**
+`figures.py` never imports torch, so figures can be rebuilt from saved arrays on
+a machine with no deep-learning stack.
 
 ```python
 21 def get_device() -> torch.device:
@@ -422,26 +420,21 @@ the network expects one input per row. (In 1-D this behaves like a lightly
 jittered even grid; it is seeded so runs repeat.)
 
 ```python
-35 def train(cfg: Config) -> tuple[PINN, list[float]]:
-36     set_seed(cfg.seed)
-37     device = get_device()
-38     model = PINN(cfg).to(device)
-39     grid = make_grid(cfg, device)
-40     history: list[float] = []
+def train(cfg: Config) -> tuple[PINN, TrainHistory]:
+    set_seed(cfg.seed)
+    device = get_device()
+    model = PINN(cfg).to(device)
+    grid = make_grid(cfg, device)
+    history = TrainHistory()
+    t_ref, ys_ref = reference_trajectory(cfg, n=1001)
 ```
 Set the seed, pick the device, build the model and move it to the device, make
-the collocation grid, and prepare an empty list to record the loss each step.
+the collocation grid, and prepare the record that training fills in. `t_ref`
+holds the trusted solution — used only to *watch* the true error while training,
+never in the loss.
 
 ```python
-42     def loss_fn() -> Tensor:
-43         return pinn_loss(model, grid.clone().requires_grad_(True))
-```
-A tiny helper that computes the current loss. `grid.clone().requires_grad_(True)`
-makes a fresh copy of the time points that PyTorch will track for derivatives
-(the residual needs `d/dt`). Cloning each call keeps the graph clean.
-
-```python
-45     adam = torch.optim.Adam(model.parameters(), lr=cfg.lr_start)
+    adam = torch.optim.Adam(model.parameters(), lr=cfg.lr_start)
 46     decay = cfg.lr_end / cfg.lr_start
 47     sched = torch.optim.lr_scheduler.LambdaLR(
 48         adam, lambda e: 1.0 + (decay - 1.0) * min(e, cfg.epochs) / cfg.epochs
@@ -454,35 +447,63 @@ scheduler shrinks the learning rate **linearly** from `lr_start` (1e-3) to
 late to settle precisely. (This matches PinnDE's default schedule.)
 
 ```python
-50     for _ in range(cfg.epochs):
-51         adam.zero_grad()
-52         loss = loss_fn()
-53         loss.backward()
-54         adam.step()
-55         sched.step()
-56         history.append(loss.item())
+    for epoch in range(cfg.epochs):
+        last = epoch == cfg.epochs - 1
+        logging = epoch % cfg.log_every == 0 or last
+
+        adam.zero_grad()
+        res, ic = loss_terms(model, grid.clone().requires_grad_(True))
+        loss = res + model.gamma * ic if cfg.ic == "soft" else res
+        loss.backward()
+
+        lr = adam.param_groups[0]["lr"]
+        before = flat_params(model) if logging else None
+        adam.step()
+        sched.step()
+        history.loss.append(loss.item())
+
+        if logging:
+            history.record_step(epoch, model=model, loss=loss, residual=res, ic=ic,
+                                lr=lr, params_before=before)
+        if epoch % cfg.eval_every == 0 or last:
+            history.record_reference(epoch, float(np.mean((predict(model, t_ref) - ys_ref) ** 2)))
 ```
 The training loop, repeated `epochs` times:
 - `zero_grad`: clear old gradients.
-- `loss_fn()`: measure how wrong the physics is now.
+- `loss_terms(...)`: measure how wrong the physics is now, keeping the residual
+  and initial-condition parts separate so the loss can be plotted by component.
+  `grid.clone().requires_grad_(True)` makes a fresh copy of the time points that
+  PyTorch will track for derivatives (the residual needs `d/dt`).
 - `backward()`: compute how each weight affects the loss.
 - `adam.step()`: nudge the weights to reduce the loss.
 - `sched.step()`: shrink the learning rate a little.
 - record the loss for the convergence plot.
 
+The two `if` blocks are the instrumentation. Every `log_every` epochs
+`record_step` snapshots the gradient norms (global and per layer), the learning
+rate, and how far the weights actually moved — this is what the gradient-descent
+figures are drawn from. `before` has to be captured *after* `backward()` but
+*before* `adam.step()`, otherwise the "how far did we move" measurement would
+compare a weight vector to itself. Every `eval_every` epochs the model is scored
+against the trusted solution, which is what makes the "physics loss vs true
+error" panel possible. **Why sample instead of recording every epoch:** cloning
+the whole weight vector 20000 times would cost more than the training itself.
+
 ```python
-58     if cfg.lbfgs_iters > 0:
-59         lbfgs = torch.optim.LBFGS(
-60             model.parameters(), max_iter=cfg.lbfgs_iters, history_size=50,
-61             tolerance_grad=1e-12, tolerance_change=1e-14, line_search_fn="strong_wolfe",
-62         )
-64         def closure() -> Tensor:
-65             lbfgs.zero_grad()
-66             loss = loss_fn()
-67             loss.backward()
-68             history.append(loss.item())
-69             return loss
-71         lbfgs.step(closure)
+    if cfg.lbfgs_iters > 0:
+        lbfgs = torch.optim.LBFGS(
+            model.parameters(), max_iter=cfg.lbfgs_iters, history_size=50,
+            tolerance_grad=1e-12, tolerance_change=1e-14, line_search_fn="strong_wolfe",
+        )
+
+        def closure() -> Tensor:
+            lbfgs.zero_grad()
+            loss = pinn_loss(model, grid.clone().requires_grad_(True))
+            loss.backward()
+            history.loss.append(loss.item())
+            return loss
+
+        lbfgs.step(closure)
 ```
 The **second optimizer, L-BFGS**, polishes the result after Adam. L-BFGS is a
 "quasi-Newton" method: it uses curvature information to take very precise steps,
@@ -490,12 +511,13 @@ which usually drives a PINN's error much lower than Adam alone. It needs a
 `closure` — a function that recomputes the loss — because it may evaluate the loss
 several times per step (line search). **Why this matters:** this two-step
 Adam→L-BFGS recipe is exactly what paper1 uses for its forward-PINN ODE examples,
-and it reaches the same accuracy as Adam in far fewer epochs.
+and it reaches the same accuracy as Adam in far fewer epochs. Set
+`lbfgs_iters=0` to run Adam alone.
 
 ```python
-73     return model, history
+    return model, history
 ```
-Hand back the trained model and the loss history.
+Hand back the trained model and the full optimisation record.
 
 ```python
 76 def predict(model: PINN, t: np.ndarray) -> np.ndarray:
@@ -517,39 +539,55 @@ Compares the PINN's output against the trusted baseline and returns an error
 table (MAE/RMSE/max per variable).
 
 ```python
-88 def save_results(model, history, cfg) -> pd.DataFrame:
-89     ... mkdir results_dir and ckpt_dir ...
-93     torch.save(model.state_dict(), ckpt / "pinn.pt")
+def residual_at(model: PINN, t: np.ndarray) -> np.ndarray:
+    device = next(model.parameters()).device
+    tt = torch.as_tensor(t, ...).reshape(-1, 1).requires_grad_(True)
+    return residual(model, tt).detach().cpu().numpy().astype(np.float64)
 ```
-Makes the output folders and saves the trained weights (`pinn.pt`) so you can
-reload the model without retraining.
+Evaluates the physics residual at any times you ask for, as plain numbers.
+Unlike `predict`, this one *cannot* use `torch.no_grad()` — the residual is
+built from `d/dt`, so the derivative machinery has to stay on; `.detach()`
+afterwards drops the graph.
 
 ```python
-95     t, ys = reference_trajectory(cfg, n=1001)
-96     pred = predict(model, t)
-97     metrics = compute_error_metrics(ys, pred)
-98     metrics.to_csv(results / "metrics.csv", index=False)
+def collect_artifacts(model, history, cfg) -> figures.RunArtifacts:
+    t, ref = reference_trajectory(cfg, n=1001)
+    grid = make_grid(cfg, next(model.parameters()).device).cpu().numpy().reshape(-1)
+    return figures.RunArtifacts(t=t, pred=predict(model, t), ref=ref, history=history, ...)
 ```
-Get the truth, get the prediction, compute the error table, and write it to
-`metrics.csv`.
-
-One combined figure (matching paper1's style), saved as **`results.png`**, with
-three side-by-side panels:
-1. **left** — the PINN solution (solid) over the reference (dashed) for x, y, z;
-   they should overlap.
-2. **middle** — the signed error per variable, with the **MSE in the title**.
-3. **right** — the loss on a log scale; a **red dashed line marks where L-BFGS**
-   takes over from Adam.
+The bridge between the two halves of the code. It turns a trained model into a
+bag of plain numpy arrays: the prediction, the truth, the collocation points, the
+residual at those points, and the residual across the whole domain. Everything
+torch-shaped stops here.
 
 ```python
-134 def main(cfg: Config | None = None):
-135     cfg = cfg or Config()
-136     model, history = train(cfg)
-137     metrics = save_results(model, history, cfg)
-138     print(metrics.to_string(index=False))
-139     return model, history, metrics
-142 if __name__ == "__main__":
-143     main()
+def save_results(model, history, cfg) -> pd.DataFrame:
+    cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
+    torch.save(model.state_dict(), cfg.ckpt_path / "pinn.pt")
+    return figures.write_run_report(collect_artifacts(model, history, cfg), cfg.results_path)
+```
+Saves the trained weights (`pinn.pt`) so you can reload the model without
+retraining, then hands the run to `figures.write_run_report`, which writes
+`metrics.csv`, the `results.png` report figure, and the whole `figures/` suite
+into `results/fydp2/`, with the bulk telemetry going to `data/fydp2/`. Both paths
+are anchored to the repository root, so it does not matter which folder you run
+from — an earlier version used bare relative paths and quietly created a nested
+nested duplicate results folder when run from inside the package.
+
+`rebuild_figures(cfg)` is the reverse trip: load the checkpoint, load the saved
+telemetry, redraw everything. Use it when tuning a plot, so a styling change
+costs seconds instead of a full retrain.
+
+```python
+def main(cfg: Config | None = None):
+    cfg = cfg or Config()
+    model, history = train(cfg)
+    metrics = save_results(model, history, cfg)
+    print(metrics.to_string(index=False))
+    return model, history, metrics
+
+if __name__ == "__main__":
+    main()
 ```
 `main` runs the whole pipeline with default settings: train → save → print the
 error table. The last two lines let you run the file directly with
@@ -557,7 +595,75 @@ error table. The last two lines let you run the file directly with
 
 ---
 
-## 6. `tests/test_pinn.py` — four quick correctness checks
+## 5b. `src/fydp2/history.py` — what the optimiser was doing
+
+`TrainHistory` is a plain record with one list per quantity. `loss` gets an entry
+every single iteration; everything else is sampled. Two methods fill it:
+
+- `record_step(...)` — called just after `optimizer.step()`. It reads the
+  gradient that `backward()` left on every parameter, reduces it to one global
+  norm plus one norm per weight matrix, and measures the distance the weights
+  actually travelled. **Why per-layer norms:** if the gradient in the first layer
+  is orders of magnitude smaller than in the last, the network is suffering
+  vanishing gradients and depth is being wasted — the per-layer panel makes that
+  visible immediately.
+- `record_reference(epoch, mse)` — stores how far the prediction is from the
+  trusted solution at that point in training.
+
+`diagnostics_frame()` and `reference_frame()` dump the record to tidy DataFrames,
+which the report writes as CSVs under `data/fydp2/`, and `from_saved()` reads
+them back. **Why bother:** without them the diagnostics exist only in memory, so
+redrawing a gradient figure would mean repeating a 20000-epoch run. They live
+beside the checkpoint rather than in `results/` because they are half a megabyte
+of regenerable numbers, not a result.
+
+That last one deserves emphasis. A PINN minimises the *physics residual*, not the
+error against a known answer, so a falling loss is not by itself proof of a good
+solution. Recording both lets the report show whether driving the residual down
+really did drive the true error down.
+
+---
+
+## 5c. `src/fydp2/figures.py` — every plot in one place
+
+The module imports numpy, pandas, matplotlib, seaborn and scipy — no torch. It
+takes arrays and returns figures.
+
+- `set_style()` applies the house style once: seaborn `whitegrid`, a
+  colourblind-safe palette, serif type, 300 dpi. Every figure inherits it, so the
+  report looks like one document rather than nine unrelated plots.
+- `RunArtifacts` is the record `train.collect_artifacts` builds; `metrics` is a
+  property, so the error table is always recomputed from the arrays it holds and
+  cannot drift out of sync with them.
+- `fig_*` functions each build one figure and return it. They can be called
+  individually from the notebook.
+- `save_figure(fig, outdir, name)` writes PNG (slides) and PDF (LaTeX) and closes
+  the figure — closing matters, or a sweep of many runs exhausts memory.
+- `generate_all(run, outdir)` renders the nine-figure suite;
+  `write_run_report(run, outdir)` adds the CSVs and the `results.png` report
+  figure on top.
+- `generate_sweep(df, outdir)` covers the *next* phase: give it one row per run
+  with `depth`, `width`, `activation`, `seed` and a metric, and it draws the
+  depth x width heatmap, the activation comparison, and the seed-robustness plot.
+
+Two details worth knowing:
+
+`_log_trend` smooths curves by taking a rolling mean **of the logarithm**, not of
+the values. A loss that falls from 1e-1 to 1e-6 is dominated by its first few
+points on a linear average, so an ordinary moving average lags thousands of
+epochs behind the curve and tells a false story about convergence.
+
+`fig_invariant_drift` is a physics check rather than an accuracy check. For
+`du_i/dt = a_i u_j u_k`, any weighted sum `I = alpha x^2 + beta y^2 + gamma z^2`
+is conserved whenever `(alpha, beta, gamma)` is perpendicular to `a`, because
+`dI/dt = 2xyz(alpha a_1 + beta a_2 + gamma a_3)`. The code finds those weights as
+the null space of `a`, so the invariants are derived, not hard-coded, and stay
+correct if `k` and `l` change. Plotting the drift for the PINN next to the
+reference shows how much conserved structure the network quietly threw away.
+
+---
+
+## 6. `src/fydp2/test_pinn.py` — correctness checks
 
 ```python
 8  def test_hard_ic_exact():
@@ -583,21 +689,28 @@ our residual and coefficient signs match the real ODE. (We skip the two endpoint
 because the derivative estimate is less accurate there.)
 
 ```python
-26 def test_training_reduces_loss():
-29     cfg = Config(epochs=100, n_collocation=101, lbfgs_iters=50, seed=0)
-30     _, history = train(cfg)
-31     assert history[-1] < 0.1 * history[0]
+def test_training_reduces_loss():
+    cfg = Config(epochs=100, n_collocation=101, lbfgs_iters=50, seed=0)
+    _, history = train(cfg)
+    assert history.loss[-1] < 0.1 * history.loss[0]
 ```
 A fast end-to-end check: a short training run must cut the loss by at least 10×.
 This exercises the real derivative computation, Adam, and L-BFGS together.
 
 ```python
-34 def test_soft_ic_trains():
-37     cfg = Config(ic="soft", epochs=200, n_collocation=101, lbfgs_iters=50, seed=0)
-38     _, history = train(cfg)
-39     assert history[-1] < 0.1 * history[0]
+def test_soft_ic_trains():
+    cfg = Config(ic="soft", epochs=200, n_collocation=101, lbfgs_iters=50, seed=0)
+    _, history = train(cfg)
+    assert history.loss[-1] < 0.1 * history.loss[0]
 ```
 Same idea for **soft mode**, confirming that code path also trains.
+
+`test_history_records_diagnostics` checks the instrumentation itself: every
+sampled series has the same length (a mismatch would silently misalign the x-axis
+of the gradient plots), and no gradient norm is zero. The two figure tests render
+the full suite and the sweep suite to a temporary folder and assert every file
+exists and is non-empty — cheap insurance against a plotting call that only
+breaks at the end of a long training run.
 
 Run them all with: `python -m pytest` from the repository root.
 
@@ -609,7 +722,7 @@ Run them all with: `python -m pytest` from the repository root.
 can write `import fydp2; fydp2.Config()`.
 
 `requirements.txt` lists the libraries needed: `torch, numpy, scipy, matplotlib,
-pandas, pytest`. Install with `pip install -r requirements.txt`.
+seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 
 ---
 
@@ -628,8 +741,8 @@ pandas, pytest`. Install with `pip install -r requirements.txt`.
 9. **(markdown)** "Evaluate vs the locked baseline."
 10. **(code)** `save_results(...)`, computes the final-state relative error, and
     shows the metrics table.
-11. **(markdown)** "Plots."
-12. **(code)** Displays the saved `results.png` figure inline.
+11. **(markdown)** "Figures."
+12. **(code)** Displays `results.png` and the nine diagnostic figures inline.
 
 ---
 
@@ -641,6 +754,11 @@ pandas, pytest`. Install with `pip install -r requirements.txt`.
   what lets the network learn the solution from the equations alone.
 - **train.py**'s Adam→L-BFGS recipe is what actually drives the error down to a
   tiny value and matches the reference paper's protocol.
+- **history.py** turns training from a single number into evidence: the report can
+  argue *why* an architecture converged, not just that it did.
+- **figures.py** makes results reproducible as artefacts. Every claim in the
+  chapter maps to a figure that regenerates from one command, and the sweep
+  functions are already in place for the depth x width x activation study.
 - **test_pinn.py** gives quick confidence that the IC, the physics, and training
   are all correct before trusting any result.
 - Comparing against the **locked baseline** keeps the science honest: the network

@@ -27,11 +27,11 @@ src/
     train.py               training loop, evaluation vs the baseline, artifact collection
     history.py             per-iteration optimisation telemetry (gradients, LR, ref error)
     figures.py             the figure suite: per-run panels and architecture-sweep plots
+    test_pinn.py           sanity, training, and figure-suite checks
   baseline/                the numerical reference solver
     lorenz1960_baseline.py RK4 + SciPy solvers, coefficients, error metrics (imported by fydp2)
     lorenz1960_solver.py   standalone RK4-vs-SciPy validation script
     generate_lorenz1960_baseline_notebooks.py   notebook generator for the baseline study
-tests/test_pinn.py         sanity, training, and figure-suite checks
 notebooks/lorenz_pinn.ipynb  runnable notebook (Kaggle / Colab)
 results/fydp2/             tracked outputs: metrics.csv, results.png, figures/
 run_pinn.py                entry point: train, evaluate, save results
@@ -117,22 +117,24 @@ reference-error evaluations are recorded.
 variable plus a combined L2 row. `results.png` is the summary figure, and
 `figures/` holds the full suite:
 
+Each figure is written as PNG (for slides) and PDF (for LaTeX).
+
 | Figure | Shows |
 |---|---|
-| `training_dynamics` | loss and reference error against epoch |
-| `gradient_diagnostics` | global and per-layer gradient norms, update norm, LR |
-| `collocation_points` | where the residual is enforced, and its magnitude there |
-| `solution_vs_reference` | network solution against the trusted solver |
-| `error_analysis` | per-component error over time |
-| `phase_portraits` | trajectory projections, predicted vs reference |
-| `metrics_summary` | the metric table as a figure |
-| `invariant_drift` | drift in the system's conserved quantities |
-| `physics_residual` | residual evaluated densely across the interval |
+| `training_dynamics` | loss convergence, loss decomposition, LR schedule, physics loss vs true error |
+| `gradient_diagnostics` | global and per-layer gradient norms, effective step size, gradient-loss coupling |
+| `collocation_points` | LHS density, uniformity, spacing regularity, trained residual per point |
+| `solution_vs_reference` | per-state solution and signed error against the locked baseline |
+| `error_analysis` | error growth, distribution, parity plot with R², relative error |
+| `phase_portraits` | x–y, x–z, y–z projections and the 3-D orbit |
+| `metrics_summary` | grouped MAE/RMSE/max-error bars plus the metric table |
+| `physics_residual` | ODE residual over the domain and its distribution |
+| `invariant_drift` | drift in the two conserved quadratic forms, PINN vs reference |
 
-`figures.generate_sweep()` additionally renders architecture-heatmap,
-activation-comparison, and seed-robustness plots from a tidy multi-run table.
+Bulk telemetry for the run lands in `data/fydp2/` (gitignored): `pinn.pt`,
+`loss_history.csv`, `training_diagnostics.csv`, `reference_error.csv`.
 
-> The `results/fydp2/` committed here is from the last full training run and
-> predates the current figure suite, so it holds only `metrics.csv` and the
-> earlier three-panel `results.png`. Run `python run_pinn.py` to regenerate the
-> complete set.
+`figures.generate_sweep(df, outdir)` additionally renders the depth × width
+heatmap, activation comparison, and seed-robustness plots from a tidy table with
+one row per run (`depth`, `width`, `activation`, `seed`, and a metric column).
+These are ready for the plain-ANN architecture search; nothing calls them yet.
