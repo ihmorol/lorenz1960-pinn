@@ -47,7 +47,7 @@ class Config:
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
 
-    results_dir: str = "results/fydp2"
+    results_dir: str = "src/fydp2/results"
     ckpt_dir: str = "data/fydp2"
 
     def __post_init__(self) -> None:

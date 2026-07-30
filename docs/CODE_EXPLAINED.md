@@ -188,7 +188,7 @@ How many time points we check the physics at (3000, drawn by Latin hypercube
 sampling over `[0,1]`, following paper1).
 
 ```python
-    results_dir: str = "results/fydp2"
+    results_dir: str = "src/fydp2/results"
 47     ckpt_dir: str = "data/fydp2"
 ```
 Where plots/tables go (tracked in git) and where the saved model goes (ignored
@@ -569,7 +569,7 @@ def save_results(model, history, cfg) -> pd.DataFrame:
 Saves the trained weights (`pinn.pt`) so you can reload the model without
 retraining, then hands the run to `figures.write_run_report`, which writes
 `metrics.csv`, the `results.png` report figure, and the whole `figures/` suite
-into `results/fydp2/`, with the bulk telemetry going to `data/fydp2/`. Both paths
+into `src/fydp2/results/`, with the bulk telemetry going to `data/fydp2/`. Both paths
 are anchored to the repository root, so it does not matter which folder you run
 from — an earlier version used bare relative paths and quietly created a nested
 nested duplicate results folder when run from inside the package.

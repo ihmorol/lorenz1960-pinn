@@ -28,12 +28,12 @@ src/
     history.py             per-iteration optimisation telemetry (gradients, LR, ref error)
     figures.py             the figure suite: per-run panels and architecture-sweep plots
     test_pinn.py           sanity, training, and figure-suite checks
+    results/               tracked outputs: metrics.csv, results.png, figures/
   baseline/                the numerical reference solver
     lorenz1960_baseline.py RK4 + SciPy solvers, coefficients, error metrics (imported by fydp2)
     lorenz1960_solver.py   standalone RK4-vs-SciPy validation script
     generate_lorenz1960_baseline_notebooks.py   notebook generator for the baseline study
 notebooks/lorenz_pinn.ipynb  runnable notebook (Kaggle / Colab)
-results/fydp2/             tracked outputs: metrics.csv, results.png, figures/
 run_pinn.py                entry point: train, evaluate, save results
 docs/CODE_EXPLAINED.md     line-by-line plain-language walkthrough of the code
 docs/adr/                  architecture decision records
@@ -85,7 +85,7 @@ python run_pinn.py
 ```
 
 Output paths are anchored to the repository root, not the working directory, so
-this works from anywhere. Tracked results go to `results/fydp2/`; bulk telemetry
+this works from anywhere. Tracked results go to `src/fydp2/results/`; bulk telemetry
 (per-iteration loss, sampled diagnostics) and the checkpoint go to `data/fydp2/`,
 which is gitignored because it is regenerable and large.
 
@@ -113,7 +113,7 @@ reference-error evaluations are recorded.
 
 ## Results
 
-`results/fydp2/metrics.csv` reports MAE, RMSE, and max absolute error per state
+`src/fydp2/results/metrics.csv` reports MAE, RMSE, and max absolute error per state
 variable plus a combined L2 row. `results.png` is the summary figure, and
 `figures/` holds the full suite:
 
