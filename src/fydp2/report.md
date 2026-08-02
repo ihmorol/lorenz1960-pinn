@@ -37,9 +37,17 @@ Errors against the DOP853 reference (rtol 1e-10) over 1001 evaluation points:
 | z | 8.27e-06 | 9.04e-06 | 1.25e-05 |
 | combined L2 | 1.66e-05 | 1.73e-05 | 2.60e-05 |
 
-The training loss (mean squared residual) falls from order 1 to 6.82e-09. The
-state variables span roughly 0.5 to 1.6, so the solution is accurate to about
-five decimal places, obtained from the differential equations alone.
+The combined L2 row is not an average of the three states. It is computed from
+the Euclidean error magnitude at each time point, sqrt(ex^2 + ey^2 + ez^2), so
+it is larger than any single component. The average of the three per-state
+RMSEs would be 9.48e-06.
+
+The training loss (mean squared ODE residual over the 3000 collocation points)
+falls from 2.17e-01 at the first iteration to 6.82e-09 at the last, a drop of
+7.5 orders of magnitude. That figure is logged before the final optimiser step;
+recomputing the residual from the saved checkpoint gives 6.79e-09. The state
+variables span roughly 0.5 to 1.6, so the solution is accurate to about five
+decimal places, obtained from the differential equations alone.
 
 The run is deterministic: retraining from scratch with the default
 configuration (seed 0) reproduces the metric table above to the last digit.
