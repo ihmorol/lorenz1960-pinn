@@ -588,7 +588,7 @@ def fig_invariant_drift(
 
 
 # --------------------------------------------------------------------------
-# paper1-style single-panel summary (kept for continuity with earlier results)
+# PinnDE-style single-panel summary (kept for continuity with earlier results)
 # --------------------------------------------------------------------------
 def fig_paper_summary(
     t: np.ndarray, pred: np.ndarray, ref: np.ndarray, history: "TrainHistory"

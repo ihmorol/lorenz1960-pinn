@@ -2,7 +2,7 @@
 
 A Physics-Informed Neural Network (PINN) that solves the Lorenz-1960 ODE system,
 validated against an RK4 / SciPy DOP853 reference solver. This is the code for
-the FYDP-2 phase of a final-year design project at UIU — implementation only, no
+the FYDP-2 phase of a final-year design project at UIU. Implementation only, no
 manuscript or reference material.
 
 The system, with `k = 2`, `l = 1`:
@@ -28,15 +28,15 @@ src/
     history.py             per-iteration optimisation telemetry (gradients, LR, ref error)
     figures.py             the figure suite: per-run panels and architecture-sweep plots
     test_pinn.py           sanity, training, and figure-suite checks
+    report.md              short implementation report with the headline results
     results/               tracked outputs: metrics.csv, results.png, figures/
   baseline/                the numerical reference solver
     lorenz1960_baseline.py RK4 + SciPy solvers, coefficients, error metrics (imported by fydp2)
     lorenz1960_solver.py   standalone RK4-vs-SciPy validation script
-    generate_lorenz1960_baseline_notebooks.py   notebook generator for the baseline study
 notebooks/lorenz_pinn.ipynb  runnable notebook (Kaggle / Colab)
 run_pinn.py                entry point: train, evaluate, save results
 docs/CODE_EXPLAINED.md     line-by-line plain-language walkthrough of the code
-docs/adr/                  architecture decision records
+docs/the-short-version.md  short plain-words summary of the project and results
 ```
 
 `src/baseline/` is the source of truth for all numerical computation. The PINN
@@ -60,9 +60,9 @@ comparison.
 
 Defaults follow the forward-PINN protocol of Matthews & Bihlo (PinnDE), Section
 4.1: 4 hidden layers × 60 units, tanh, 3000 collocation points, 20000 Adam steps
-with polynomial LR decay from 1e-3 to 1e-4.
+with linear LR decay from 1e-3 to 1e-4.
 
-L-BFGS polishing after Adam is implemented but **off by default** —
+L-BFGS polishing after Adam is implemented but **off by default**:
 `lbfgs_iters` defaults to `0`, for an Adam-only ablation. Set
 `Config(lbfgs_iters=5000)` for the paper's full recipe.
 
@@ -86,8 +86,9 @@ python run_pinn.py
 
 Output paths are anchored to the repository root, not the working directory, so
 this works from anywhere. Tracked results go to `src/fydp2/results/`; bulk telemetry
-(per-iteration loss, sampled diagnostics) and the checkpoint go to `data/fydp2/`,
-which is gitignored because it is regenerable and large.
+(per-iteration loss, sampled diagnostics) and the checkpoint go to
+`src/fydp2/history/`, tracked as the run of record so figures can be rebuilt
+without retraining.
 
 `fydp2.train.rebuild_figures()` redraws every figure from a finished run's
 checkpoint and saved CSVs, with no retraining.
@@ -100,7 +101,7 @@ changes into it, and puts `src/` on the import path; on Colab, uncomment the two
 
 ## Configuration
 
-Every knob is a field on `Config` — no code edits needed:
+Every knob is a field on `Config`, so no code edits are needed:
 
 ```python
 from fydp2.config import Config
@@ -131,10 +132,10 @@ Each figure is written as PNG (for slides) and PDF (for LaTeX).
 | `physics_residual` | ODE residual over the domain and its distribution |
 | `invariant_drift` | drift in the two conserved quadratic forms, PINN vs reference |
 
-Bulk telemetry for the run lands in `data/fydp2/` (gitignored): `pinn.pt`,
+Bulk telemetry for the run lands in `src/fydp2/history/`: `pinn.pt`,
 `loss_history.csv`, `training_diagnostics.csv`, `reference_error.csv`.
 
-`figures.generate_sweep(df, outdir)` additionally renders the depth × width
-heatmap, activation comparison, and seed-robustness plots from a tidy table with
+`figures.generate_sweep(df, outdir)` also renders the depth × width
+heatmap, activation comparison, and seed plots from a tidy table with
 one row per run (`depth`, `width`, `activation`, `seed`, and a metric column).
 These are ready for the plain-ANN architecture search; nothing calls them yet.

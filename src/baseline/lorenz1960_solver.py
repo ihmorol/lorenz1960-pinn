@@ -37,7 +37,7 @@ def lorenz1960_rhs(t, state):
     # Coefficients computed from k=2, l=1
     coeff_x = K * L * (1.0 / (K**2 + L**2) - 1.0 / K**2)  # -0.1
     coeff_y = K * L * (1.0 / L**2 - 1.0 / (K**2 + L**2))  # 1.6
-    coeff_z = 0.5 * K * L**2 * (1.0 / K**2 - 1.0 / L**2)  # -0.75
+    coeff_z = 0.5 * K * L * (1.0 / K**2 - 1.0 / L**2)  # -0.75
 
     dx = coeff_x * y * z
     dy = coeff_y * x * z

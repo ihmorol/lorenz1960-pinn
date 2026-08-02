@@ -1,6 +1,7 @@
-# Generated data and checkpoints (regenerable — results/ is tracked, data/ is not)
+# Generated data and checkpoints (results/ and the run-of-record history/ are tracked)
 data/
 *.pt
+!src/fydp2/history/pinn.pt
 *.npz
 *.npy
 

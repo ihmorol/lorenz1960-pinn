@@ -1,7 +1,7 @@
 """Entry point: train the Lorenz-1960 PINN, evaluate it, and write results.
 
 Run from the repository root:  python run_pinn.py
-Outputs go to src/fydp2/results/ (tracked) and data/fydp2/ (gitignored).
+Outputs go to src/fydp2/results/ and src/fydp2/history/ (both tracked).
 """
 from __future__ import annotations
 

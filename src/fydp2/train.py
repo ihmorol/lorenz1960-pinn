@@ -23,7 +23,7 @@ def set_seed(seed: int) -> None:
 
 
 def make_grid(cfg: Config, device: torch.device) -> Tensor:
-    # Latin hypercube sampling over [t0, tf], following paper1.
+    # Latin hypercube sampling over [t0, tf], following Matthews & Bihlo (PinnDE).
     t0, tf = cfg.t_span
     sample = qmc.LatinHypercube(d=1, seed=cfg.seed).random(cfg.n_collocation)
     t = t0 + (tf - t0) * sample  # Linear interpolation onto [t0, tf].

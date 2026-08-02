@@ -1,4 +1,4 @@
-# fydp2 — The Code Explained (plain language, line by line)
+# fydp2: the code explained (plain language, line by line)
 
 This document explains **every file** in the `src/fydp2/` PINN, in simple language,
 for someone new to physics-informed neural networks. It covers *what* each line
@@ -13,8 +13,8 @@ Lorenz-1960 equations) on the time interval `t ∈ [0, 1]`.
 
 The classic way (RK4/SciPy) *steps* through time in tiny increments. Our way is
 different: we train a small **neural network** to **be** the solution. After
-training, you can plug in any `t` and it returns `(x, y, z)` directly — no
-stepping.
+training, you can plug in any `t` and it returns `(x, y, z)` directly. There
+is no stepping.
 
 How can a network learn the solution **without being shown the answer**? Because
 the ODEs themselves tell us what a correct solution must satisfy:
@@ -31,7 +31,7 @@ r_y = dy/dt − 1.60·x·z   (should be 0 everywhere)
 r_z = dz/dt + 0.75·x·y   (should be 0 everywhere)
 ```
 
-These `r`'s are called the **residual** — how badly the network breaks the
+These `r`'s are called the **residual**: how badly the network breaks the
 physics. We sample many time points, measure the residual, and nudge the
 network's weights until the residual is ~0. That is the whole idea of a
 **Physics-Informed Neural Network (PINN)**.
@@ -48,7 +48,7 @@ Two more ingredients make it work:
 ```
 config.py   -> all the settings + access to the trusted baseline solver
 pinn.py     -> the network, the physics residual, and the loss
-train.py    -> the training loop (Adam then L-BFGS), evaluation, and plots
+train.py    -> the training loop (Adam, then optional L-BFGS), evaluation, and plots
 test_pinn.py-> quick checks that the pieces are correct
 __init__.py -> makes `import fydp2` convenient
 lorenz_pinn.ipynb -> a notebook to run everything on Kaggle/Colab (notebooks/)
@@ -69,17 +69,17 @@ Data flows left to right: `config` → build `pinn` → `train` it → save resu
   of the network output with respect to its input `t`. That is how we get
   `dx/dt` without finite differences.
 - **Collocation points**: the time samples where we check the residual.
-- **Loss**: one number we minimize — here, the average squared residual.
+- **Loss**: one number we minimize. Here it is the average squared residual.
 - **Adam / L-BFGS**: two optimizers (recipes for adjusting weights). Adam is a
   fast general workhorse; L-BFGS is a slower, more precise "polisher."
-- **Hard vs soft IC**: two ways to enforce the starting point — build it in
+- **Hard vs soft IC**: two ways to enforce the starting point. Build it in
   exactly (hard) or add a penalty for missing it (soft).
 
 ---
 
 ## 2. `src/baseline/lorenz1960_baseline.py` (imported, not part of fydp2)
 
-We do **not** modify this file — it is the locked, trusted reference. We only
+We do **not** modify this file. It is the locked, trusted reference. We only
 import four things from it:
 
 - `lorenz1960_coefficients(k, l)` → the numbers `[-0.10, 1.60, -0.75]` for k=2,l=1.
@@ -92,7 +92,7 @@ import four things from it:
 
 ---
 
-## 3. `src/fydp2/config.py` — every setting in one place
+## 3. `src/fydp2/config.py`: every setting in one place
 
 ```python
 1  """Central configuration and locked-baseline access for the FYDP-2 PINN."""
@@ -143,7 +143,7 @@ Listing them lets us reject typos early.
 ```
 `@dataclass(frozen=True)` makes a small, **read-only** settings object: once you
 create it, its fields cannot change. **Why frozen:** an experiment's settings
-should not silently change halfway through — that keeps results reproducible.
+should not silently change halfway through. That keeps results reproducible.
 
 ```python
 26     k: float = 2.0
@@ -152,15 +152,15 @@ should not silently change halfway through — that keeps results reproducible.
 29     t_span: tuple[float, float] = (0.0, 1.0)
 ```
 The physics: the two constants `k, l`; the start point; the time interval.
-These match paper1 Section 4.2 exactly.
+These match Section 4.2 of the PinnDE paper (Matthews & Bihlo) exactly.
 
 ```python
 31     depth: int = 4
 32     width: int = 60
 33     activation: str = "tanh"
 ```
-The network shape: 4 hidden layers, 60 neurons each, `tanh` activation — matching
-paper1's forward-PINN examples (Section 4.1). Change these to try other
+The network shape: 4 hidden layers, 60 neurons each, `tanh` activation, matching
+the PinnDE paper's forward-PINN examples (Section 4.1). Change these to try other
 architectures **without touching any code**.
 
 ```python
@@ -172,27 +172,28 @@ architectures **without touching any code**.
 
 ```python
 38     epochs: int = 20000
-39     lbfgs_iters: int = 5000
+39     lbfgs_iters: int = 0
 40     lr_start: float = 1e-3
 41     lr_end: float = 1e-4
 42     seed: int = 0
 ```
-Training settings (paper1 §4.1): 20000 Adam steps then up to 5000 L-BFGS polishing
-steps, the learning rate decaying from 1e-3 to 1e-4, and a random seed so runs are
-repeatable.
+Training settings (PinnDE §4.1): 20000 Adam steps, the learning rate decaying
+from 1e-3 to 1e-4, and a random seed so runs are repeatable. L-BFGS polishing is
+implemented but **off by default** (`lbfgs_iters=0`); set e.g.
+`Config(lbfgs_iters=5000)` for the paper's full recipe.
 
 ```python
 44     n_collocation: int = 3000
 ```
 How many time points we check the physics at (3000, drawn by Latin hypercube
-sampling over `[0,1]`, following paper1).
+sampling over `[0,1]`, following PinnDE).
 
 ```python
     results_dir: str = "src/fydp2/results"
-47     ckpt_dir: str = "data/fydp2"
+47     ckpt_dir: str = "src/fydp2/history"
 ```
-Where plots/tables go (tracked in git) and where the saved model goes (ignored
-by git, since it is regenerable).
+Where plots/tables go and where the saved model and telemetry go. Both are
+tracked in git as the run of record.
 
 ```python
 49     def __post_init__(self) -> None:
@@ -212,7 +213,7 @@ typos like `activation="tan"` at the source.
 ```
 A convenient shortcut: `cfg.coefficients` returns `[-0.10, 1.60, -0.75]`, computed
 by the baseline from `k, l`. **Why a property:** the equations are never re-typed
-here — always sourced from the locked baseline.
+here. They always come from the locked baseline.
 
 ```python
 60 def reference_trajectory(cfg: Config, n: int = 1001):
@@ -235,7 +236,7 @@ The public names other files may import from here.
 
 ---
 
-## 4. `src/fydp2/pinn.py` — the network, the physics, the loss (the heart)
+## 4. `src/fydp2/pinn.py`: the network, the physics, the loss (the heart)
 
 ```python
 4  import torch
@@ -273,7 +274,7 @@ Builds the network as a stack:
 - Line 19: final layer maps `width` numbers to the **3** outputs (x, y, z).
 - Line 20: `nn.Sequential` runs them in order.
 
-`nn.Linear(a, b)` is just `output = weights·input + bias` — the tunable part.
+`nn.Linear(a, b)` is just `output = weights·input + bias`, the tunable part.
 The activation (e.g. `tanh`) adds the "bend" so the network can represent curved
 functions. **Why tanh:** smooth and infinitely differentiable, which matters
 because we take derivatives of the output.
@@ -315,15 +316,15 @@ for Kaggle.**
 `forward` is what the network computes. Given times `t` (shape `N×1`):
 - Line 33: run the raw network → `n` (shape `N×3`).
 - **Hard mode (default):** `g = (t - t0)/(tf - t0)`, which is 0 at the start.
-  Return `u0 + g·n`. At `t = t0`, `g = 0`, so the output is exactly `u0` —
-  **the initial condition is guaranteed, for any weights.** This is the
+  Return `u0 + g·n`. At `t = t0`, `g = 0`, so the output is exactly `u0`.
+  **The initial condition is guaranteed, for any weights.** This is the
   "trial solution" trick.
 - **Soft mode:** return the raw network; the start point is encouraged later by a
   penalty (see the loss).
 
 **Why hard is nice:** we never have to tune how strongly to enforce the start
-point — it's exact by construction, and paper1 says this trains better for smooth
-problems like ours.
+point. It is exact by construction, and the PinnDE paper says this trains
+better for smooth problems like ours.
 
 ```python
 40 def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
@@ -332,11 +333,11 @@ problems like ours.
 43     f = torch.stack([c[0] * y * z, c[1] * x * z, c[2] * x * y], dim=1)
 44     return dudt - f
 ```
-This is the physics, written as pure math (no network inside — easy to test):
+This is the physics, written as pure math (no network inside, so it is easy to test):
 - Line 41: make sure the coefficients are a tensor on the same device/precision as
   `u`. (Doing this directly avoids a bug where numpy conversion fails on a GPU.)
 - Line 42: split `u` into columns x, y, z.
-- Line 43: build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]` — the ODE's
+- Line 43: build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]`, the ODE's
   "what the derivative *should* be."
 - Line 44: return `dudt − f`, the residual. Zero means the ODE is satisfied.
 
@@ -350,7 +351,7 @@ This is the physics, written as pure math (no network inside — easy to test):
 Ties the network to the physics:
 - Line 48: get the network's `(x, y, z)` at the times `t`.
 - Line 49: the key step. For each output column `j`, `torch.autograd.grad`
-  computes its derivative with respect to `t` — this is `dx/dt, dy/dt, dz/dt`,
+  computes its derivative with respect to `t`. This is `dx/dt, dy/dt, dz/dt`,
   computed **exactly** by PyTorch, not approximated. (`.sum()` is a standard trick:
   because each point's output depends only on its own `t`, summing then
   differentiating gives the per-point derivative. `create_graph=True` keeps the
@@ -375,7 +376,7 @@ The one number we minimize:
 
 ---
 
-## 5. `src/fydp2/train.py` — train, evaluate, and save
+## 5. `src/fydp2/train.py`: train, evaluate, and save
 
 ```python
 import numpy as np
@@ -414,7 +415,7 @@ def make_grid(cfg, device):
     t = t0 + (tf - t0) * sample
     return torch.as_tensor(t, dtype=torch.float32, device=device).reshape(-1, 1)
 ```
-Creates the collocation points using **Latin hypercube sampling** (as in paper1):
+Creates the collocation points using **Latin hypercube sampling** (as in PinnDE):
 `n_collocation` well-spread times in `[0,1]`, shaped as a column (`N×1`) because
 the network expects one input per row. (In 1-D this behaves like a lightly
 jittered even grid; it is seeded so runs repeat.)
@@ -430,7 +431,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
 ```
 Set the seed, pick the device, build the model and move it to the device, make
 the collocation grid, and prepare the record that training fills in. `t_ref`
-holds the trusted solution — used only to *watch* the true error while training,
+holds the trusted solution. It is used only to *watch* the true error while training,
 never in the loss.
 
 ```python
@@ -481,7 +482,7 @@ The training loop, repeated `epochs` times:
 
 The two `if` blocks are the instrumentation. Every `log_every` epochs
 `record_step` snapshots the gradient norms (global and per layer), the learning
-rate, and how far the weights actually moved — this is what the gradient-descent
+rate, and how far the weights actually moved. This is what the gradient-descent
 figures are drawn from. `before` has to be captured *after* `backward()` but
 *before* `adam.step()`, otherwise the "how far did we move" measurement would
 compare a weight vector to itself. Every `eval_every` epochs the model is scored
@@ -508,11 +509,12 @@ the whole weight vector 20000 times would cost more than the training itself.
 The **second optimizer, L-BFGS**, polishes the result after Adam. L-BFGS is a
 "quasi-Newton" method: it uses curvature information to take very precise steps,
 which usually drives a PINN's error much lower than Adam alone. It needs a
-`closure` — a function that recomputes the loss — because it may evaluate the loss
+`closure`, a function that recomputes the loss, because it may evaluate the loss
 several times per step (line search). **Why this matters:** this two-step
-Adam→L-BFGS recipe is exactly what paper1 uses for its forward-PINN ODE examples,
-and it reaches the same accuracy as Adam in far fewer epochs. Set
-`lbfgs_iters=0` to run Adam alone.
+Adam→L-BFGS recipe is exactly what the PinnDE paper uses for its forward-PINN ODE
+examples, and it reaches the same accuracy as Adam in far fewer epochs. It is
+**off by default** (`lbfgs_iters=0`, an Adam-only ablation); set e.g.
+`lbfgs_iters=5000` to enable it.
 
 ```python
     return model, history
@@ -545,7 +547,7 @@ def residual_at(model: PINN, t: np.ndarray) -> np.ndarray:
     return residual(model, tt).detach().cpu().numpy().astype(np.float64)
 ```
 Evaluates the physics residual at any times you ask for, as plain numbers.
-Unlike `predict`, this one *cannot* use `torch.no_grad()` — the residual is
+Unlike `predict`, this one *cannot* use `torch.no_grad()`, because the residual is
 built from `d/dt`, so the derivative machinery has to stay on; `.detach()`
 afterwards drops the graph.
 
@@ -569,9 +571,9 @@ def save_results(model, history, cfg) -> pd.DataFrame:
 Saves the trained weights (`pinn.pt`) so you can reload the model without
 retraining, then hands the run to `figures.write_run_report`, which writes
 `metrics.csv`, the `results.png` report figure, and the whole `figures/` suite
-into `src/fydp2/results/`, with the bulk telemetry going to `data/fydp2/`. Both paths
+into `src/fydp2/results/`, with the bulk telemetry going to `src/fydp2/history/`. Both paths
 are anchored to the repository root, so it does not matter which folder you run
-from — an earlier version used bare relative paths and quietly created a nested
+from. An earlier version used bare relative paths and quietly created a
 nested duplicate results folder when run from inside the package.
 
 `rebuild_figures(cfg)` is the reverse trip: load the checkpoint, load the saved
@@ -595,23 +597,23 @@ error table. The last two lines let you run the file directly with
 
 ---
 
-## 5b. `src/fydp2/history.py` — what the optimiser was doing
+## 5b. `src/fydp2/history.py`: what the optimiser was doing
 
 `TrainHistory` is a plain record with one list per quantity. `loss` gets an entry
 every single iteration; everything else is sampled. Two methods fill it:
 
-- `record_step(...)` — called just after `optimizer.step()`. It reads the
+- `record_step(...)` is called just after `optimizer.step()`. It reads the
   gradient that `backward()` left on every parameter, reduces it to one global
   norm plus one norm per weight matrix, and measures the distance the weights
   actually travelled. **Why per-layer norms:** if the gradient in the first layer
   is orders of magnitude smaller than in the last, the network is suffering
-  vanishing gradients and depth is being wasted — the per-layer panel makes that
+  vanishing gradients and depth is being wasted. The per-layer panel makes that
   visible immediately.
-- `record_reference(epoch, mse)` — stores how far the prediction is from the
+- `record_reference(epoch, mse)` stores how far the prediction is from the
   trusted solution at that point in training.
 
 `diagnostics_frame()` and `reference_frame()` dump the record to tidy DataFrames,
-which the report writes as CSVs under `data/fydp2/`, and `from_saved()` reads
+which the report writes as CSVs under `src/fydp2/history/`, and `from_saved()` reads
 them back. **Why bother:** without them the diagnostics exist only in memory, so
 redrawing a gradient figure would mean repeating a 20000-epoch run. They live
 beside the checkpoint rather than in `results/` because they are half a megabyte
@@ -624,9 +626,9 @@ really did drive the true error down.
 
 ---
 
-## 5c. `src/fydp2/figures.py` — every plot in one place
+## 5c. `src/fydp2/figures.py`: every plot in one place
 
-The module imports numpy, pandas, matplotlib, seaborn and scipy — no torch. It
+The module imports numpy, pandas, matplotlib, seaborn and scipy, but no torch. It
 takes arrays and returns figures.
 
 - `set_style()` applies the house style once: seaborn `whitegrid`, a
@@ -638,13 +640,13 @@ takes arrays and returns figures.
 - `fig_*` functions each build one figure and return it. They can be called
   individually from the notebook.
 - `save_figure(fig, outdir, name)` writes PNG (slides) and PDF (LaTeX) and closes
-  the figure — closing matters, or a sweep of many runs exhausts memory.
+  the figure. Closing matters: without it, a sweep of many runs runs out of memory.
 - `generate_all(run, outdir)` renders the nine-figure suite;
   `write_run_report(run, outdir)` adds the CSVs and the `results.png` report
   figure on top.
 - `generate_sweep(df, outdir)` covers the *next* phase: give it one row per run
   with `depth`, `width`, `activation`, `seed` and a metric, and it draws the
-  depth x width heatmap, the activation comparison, and the seed-robustness plot.
+  depth x width heatmap, the activation comparison, and the seed plot.
 
 Two details worth knowing:
 
@@ -663,7 +665,7 @@ reference shows how much conserved structure the network quietly threw away.
 
 ---
 
-## 6. `src/fydp2/test_pinn.py` — correctness checks
+## 6. `src/fydp2/test_pinn.py`: correctness checks
 
 ```python
 8  def test_hard_ic_exact():
@@ -709,7 +711,7 @@ Same idea for **soft mode**, confirming that code path also trains.
 sampled series has the same length (a mismatch would silently misalign the x-axis
 of the gradient plots), and no gradient norm is zero. The two figure tests render
 the full suite and the sweep suite to a temporary folder and assert every file
-exists and is non-empty — cheap insurance against a plotting call that only
+exists and is non-empty. That is cheap insurance against a plotting call that only
 breaks at the end of a long training run.
 
 Run them all with: `python -m pytest` from the repository root.
@@ -726,7 +728,7 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 
 ---
 
-## 8. `notebooks/lorenz_pinn.ipynb` — the runnable notebook (cell by cell)
+## 8. `notebooks/lorenz_pinn.ipynb`: the runnable notebook (cell by cell)
 
 1. **(markdown)** Title and one-paragraph description.
 2. **(markdown)** Setup instructions for Kaggle/Colab.
@@ -735,7 +737,7 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 4. **(code)** Imports from `fydp2.config` and `fydp2.train`, and prints the device
    (GPU or CPU).
 5. **(markdown)** "Configure."
-6. **(code)** `cfg = Config()` — the settings; edit here to change the experiment.
+6. **(code)** `cfg = Config()` holds the settings. Edit here to change the experiment.
 7. **(markdown)** "Train."
 8. **(code)** `model, history = train(cfg)` and prints the final loss.
 9. **(markdown)** "Evaluate vs the locked baseline."
@@ -749,13 +751,14 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 ## 9. How each piece helps the research goal
 
 - **config.py** keeps every knob in one place, so trying a new architecture or
-  equation is a one-line change — essential for the upcoming architecture study.
+  equation is a one-line change. The upcoming architecture study depends on that.
 - **pinn.py** encodes the method: the hard-IC trial solution + physics residual is
   what lets the network learn the solution from the equations alone.
-- **train.py**'s Adam→L-BFGS recipe is what actually drives the error down to a
-  tiny value and matches the reference paper's protocol.
+- **train.py**'s training recipe (Adam, with optional L-BFGS polishing) is what
+  actually drives the error down to a tiny value and matches the reference
+  paper's protocol.
 - **history.py** turns training from a single number into evidence: the report can
-  argue *why* an architecture converged, not just that it did.
+  argue *why* an architecture converged, rather than only that it did.
 - **figures.py** makes results reproducible as artefacts. Every claim in the
   chapter maps to a figure that regenerates from one command, and the sweep
   functions are already in place for the depth x width x activation study.
@@ -778,7 +781,7 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
   float precision, but that was not proven (no float64 comparison was run); it may
   also be an optimization plateau.
 - **Soft-IC mode** is implemented and passes its training test, but there is **no
-  full hard-vs-soft comparison study yet** — that belongs to the next phase.
+  full hard-vs-soft comparison study yet**; that belongs to the next phase.
 - This solves a **single** initial value problem. It does **not** learn a solution
-  operator over many initial conditions (that is paper1's DeepONet, out of scope
+  operator over many initial conditions (that is the PinnDE paper's DeepONet, out of scope
   here), and it has not been tested beyond `t ∈ [0, 1]`.

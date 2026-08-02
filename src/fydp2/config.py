@@ -48,7 +48,7 @@ class Config:
     eval_every: int = 100     # epochs between reference-solution error evaluations
 
     results_dir: str = "src/fydp2/results"
-    ckpt_dir: str = "data/fydp2"
+    ckpt_dir: str = "src/fydp2/history"
 
     def __post_init__(self) -> None:
         if self.activation not in ACTIVATIONS:
