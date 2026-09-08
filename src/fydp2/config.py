@@ -46,6 +46,7 @@ class Config:
 
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
+    print_every: int = 250    # epochs between console progress lines (0 = silent)
 
     results_dir: str = "src/fydp2/results"
     ckpt_dir: str = "src/fydp2/history"

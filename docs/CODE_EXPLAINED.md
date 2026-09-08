@@ -12,9 +12,7 @@ We want the three functions `x(t), y(t), z(t)` that solve a system of ODEs (the
 Lorenz-1960 equations) on the time interval `t ∈ [0, 1]`.
 
 The classic way (RK4/SciPy) *steps* through time in tiny increments. Our way is
-different: we train a small **neural network** to **be** the solution. After
-training, you can plug in any `t` and it returns `(x, y, z)` directly. There
-is no stepping.
+different: we train a small **neural network** to **be** the solution. After training, you can plug in any `t` and it returns `(x, y, z)` directly. There is no stepping.
 
 How can a network learn the solution **without being shown the answer**? Because
 the ODEs themselves tell us what a correct solution must satisfy:
