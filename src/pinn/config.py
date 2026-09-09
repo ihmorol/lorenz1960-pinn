@@ -53,8 +53,8 @@ class Config:
     # the architecture sweep sets it to 50.
     snapshot_every: int = 0
 
-    results_dir: str = "src/fydp2/results"
-    ckpt_dir: str = "src/fydp2/history"
+    results_dir: str = "src/pinn/results"
+    ckpt_dir: str = "src/pinn/history"
     runs_dir: str = "runs"
 
     def __post_init__(self) -> None:

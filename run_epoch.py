@@ -21,8 +21,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import pandas as pd  # noqa: E402
 
-from fydp2.config import Config  # noqa: E402
-from fydp2.train import train  # noqa: E402
+from pinn.config import Config  # noqa: E402
+from pinn.train import train  # noqa: E402
 
 if __name__ == "__main__":
     epochs = int(sys.argv[1]) if len(sys.argv) > 1 else 1

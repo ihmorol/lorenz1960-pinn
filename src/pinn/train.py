@@ -261,8 +261,8 @@ def run_summary(
 def write_breakdown_figures(cfg: Config, formats=figures.FORMATS) -> dict[str, list]:
     """Render the per-epoch collocation figures from a run's ``breakdown/`` CSVs.
 
-    Lives here rather than in :mod:`fydp2.figures` because it reads the breakdown
-    through :mod:`fydp2.history`, and that module imports torch; ``figures`` stays
+    Lives here rather than in :mod:`pinn.figures` because it reads the breakdown
+    through :mod:`pinn.history`, and that module imports torch; ``figures`` stays
     a pure array-in, figure-out module.
     """
     out = cfg.results_path / "figures"

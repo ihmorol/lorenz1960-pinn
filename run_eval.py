@@ -1,6 +1,6 @@
 """Entry point: evaluate a trained model against the reference. No retraining.
 
-    python run_eval.py                # the run of record in src/fydp2/
+    python run_eval.py                # the run of record in src/pinn/
     python run_eval.py runs/5x70      # any sweep run
 
 Reloads the checkpoint, re-derives the network shape from the run's own summary,
@@ -16,9 +16,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import numpy as np  # noqa: E402
 
-from fydp2.config import Config  # noqa: E402
-from fydp2.sweep import config_for  # noqa: E402
-from fydp2.train import evaluate, load_run, residual_at, run_summary  # noqa: E402
+from pinn.config import Config  # noqa: E402
+from pinn.sweep import config_for  # noqa: E402
+from pinn.train import evaluate, load_run, residual_at, run_summary  # noqa: E402
 
 if __name__ == "__main__":
     run_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Config().results_path

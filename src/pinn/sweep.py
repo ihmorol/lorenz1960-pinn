@@ -72,7 +72,7 @@ def sweep(
 
     ``runs/<arch>/`` is overwritten on rerun: the runs are deterministic at a fixed
     seed, so a rerun reproduces the same bytes. Nothing here touches the
-    run-of-record under ``src/fydp2/``.
+    run-of-record under ``src/pinn/``.
     """
     base = base or Config()
     combos = list(itertools.product(depths, widths, seeds or (base.seed,)))

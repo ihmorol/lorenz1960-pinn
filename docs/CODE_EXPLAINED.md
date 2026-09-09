@@ -1,6 +1,6 @@
-# fydp2: the code explained (plain language, line by line)
+# pinn: the code explained (plain language, line by line)
 
-This document explains **every file** in the `src/fydp2/` PINN, in simple language,
+This document explains **every file** in the `src/pinn/` PINN, in simple language,
 for someone new to physics-informed neural networks. It covers *what* each line
 does, *why* it is there, and *how* it helps solve the Lorenz-1960 system.
 
@@ -48,7 +48,7 @@ config.py   -> all the settings + access to the trusted baseline solver
 pinn.py     -> the network, the physics residual, and the loss
 train.py    -> the training loop (Adam, then optional L-BFGS), evaluation, and plots
 test_pinn.py-> quick checks that the pieces are correct
-__init__.py -> makes `import fydp2` convenient
+__init__.py -> makes `import pinn` convenient
 lorenz_pinn.ipynb -> a notebook to run everything on Kaggle/Colab (notebooks/)
 ```
 
@@ -75,7 +75,7 @@ Data flows left to right: `config` → build `pinn` → `train` it → save resu
 
 ---
 
-## 2. `src/baseline/lorenz1960_baseline.py` (imported, not part of fydp2)
+## 2. `src/baseline/lorenz1960_baseline.py` (imported, not part of pinn)
 
 We do **not** modify this file. It is the locked, trusted reference. We only
 import four things from it:
@@ -90,7 +90,7 @@ import four things from it:
 
 ---
 
-## 3. `src/fydp2/config.py`: every setting in one place
+## 3. `src/pinn/config.py`: every setting in one place
 
 ```python
 1  """Central configuration and locked-baseline access for the FYDP-2 PINN."""
@@ -115,7 +115,7 @@ object, `numpy` for arrays.
 `__file__` is this file's path. `parents[1]` goes up one level to `src/`, and its
 parent is the repository root (used further down to anchor output paths).
 Line 12 adds `src/baseline/` to Python's search path so the next import works.
-**Why:** it lets `src/fydp2/` reuse the locked baseline solver
+**Why:** it lets `src/pinn/` reuse the locked baseline solver
 without copying any code.
 
 ```python
@@ -187,8 +187,8 @@ How many time points we check the physics at (3000, drawn by Latin hypercube
 sampling over `[0,1]`, following PinnDE).
 
 ```python
-    results_dir: str = "src/fydp2/results"
-47     ckpt_dir: str = "src/fydp2/history"
+    results_dir: str = "src/pinn/results"
+47     ckpt_dir: str = "src/pinn/history"
 ```
 Where plots/tables go and where the saved model and telemetry go. Both are
 tracked in git as the run of record.
@@ -234,7 +234,7 @@ The public names other files may import from here.
 
 ---
 
-## 4. `src/fydp2/pinn.py`: the network, the physics, the loss (the heart)
+## 4. `src/pinn/pinn.py`: the network, the physics, the loss (the heart)
 
 ```python
 4  import torch
@@ -410,7 +410,7 @@ The one number we minimize:
 
 ---
 
-## 5. `src/fydp2/train.py`: train, evaluate, and save
+## 5. `src/pinn/train.py`: train, evaluate, and save
 
 ```python
 import numpy as np
@@ -613,7 +613,7 @@ def save_results(model, history, cfg) -> pd.DataFrame:
 Saves the trained weights (`pinn.pt`) so you can reload the model without
 retraining, then hands the run to `figures.write_run_report`, which writes
 `metrics.csv`, the `results.png` report figure, and the whole `figures/` suite
-into `src/fydp2/results/`, with the bulk telemetry going to `src/fydp2/history/`. Both paths
+into `src/pinn/results/`, with the bulk telemetry going to `src/pinn/history/`. Both paths
 are anchored to the repository root, so it does not matter which folder you run
 from. An earlier version used bare relative paths and quietly created a
 nested duplicate results folder when run from inside the package.
@@ -635,11 +635,11 @@ if __name__ == "__main__":
 ```
 `main` runs the whole pipeline with default settings: train → save → print the
 error table. The last two lines let you run the file directly with
-`python -m fydp2.train`.
+`python -m pinn.train`.
 
 ---
 
-## 5b. `src/fydp2/history.py`: what the optimiser was doing
+## 5b. `src/pinn/history.py`: what the optimiser was doing
 
 `TrainHistory` is a plain record with one list per quantity. `loss` gets an entry
 every single iteration; everything else is sampled. Two methods fill it:
@@ -655,7 +655,7 @@ every single iteration; everything else is sampled. Two methods fill it:
   trusted solution at that point in training.
 
 `diagnostics_frame()` and `reference_frame()` dump the record to tidy DataFrames,
-which the report writes as CSVs under `src/fydp2/history/`, and `from_saved()` reads
+which the report writes as CSVs under `src/pinn/history/`, and `from_saved()` reads
 them back. **Why bother:** without them the diagnostics exist only in memory, so
 redrawing a gradient figure would mean repeating a 20000-epoch run. They live
 beside the checkpoint rather than in `results/` because they are half a megabyte
@@ -668,7 +668,7 @@ really did drive the true error down.
 
 ---
 
-## 5c. `src/fydp2/figures.py`: every plot in one place
+## 5c. `src/pinn/figures.py`: every plot in one place
 
 The module imports numpy, pandas, matplotlib, seaborn and scipy, but no torch. It
 takes arrays and returns figures.
@@ -707,7 +707,7 @@ reference shows how much conserved structure the network quietly threw away.
 
 ---
 
-## 6. `src/fydp2/test_pinn.py`: correctness checks
+## 6. `src/pinn/test_pinn.py`: correctness checks
 
 ```python
 8  def test_hard_ic_exact():
@@ -760,10 +760,10 @@ Run them all with: `python -m pytest` from the repository root.
 
 ---
 
-## 7. `src/fydp2/__init__.py` and `requirements.txt`
+## 7. `src/pinn/__init__.py` and `requirements.txt`
 
 `__init__.py` (3 lines) just re-exports `Config` and `reference_trajectory` so you
-can write `import fydp2; fydp2.Config()`.
+can write `import pinn; pinn.Config()`.
 
 `requirements.txt` lists the libraries needed: `torch, numpy, scipy, matplotlib,
 seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
@@ -775,8 +775,8 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 1. **(markdown)** Title and one-paragraph description.
 2. **(markdown)** Setup instructions for Kaggle/Colab.
 3. **(code)** Optional `git clone` for Colab, then a few lines that add the repo
-   folder to Python's path so `import fydp2` works.
-4. **(code)** Imports from `fydp2.config` and `fydp2.train`, and prints the device
+   folder to Python's path so `import pinn` works.
+4. **(code)** Imports from `pinn.config` and `pinn.train`, and prints the device
    (GPU or CPU).
 5. **(markdown)** "Configure."
 6. **(code)** `cfg = Config()` holds the settings. Edit here to change the experiment.

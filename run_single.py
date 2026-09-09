@@ -5,7 +5,7 @@
 
 Writes runs/<depth>x<width>/ exactly as the sweep does, so a single run can be
 added to or refreshed without retraining the other eight. Prints the run's
-63-column summary. The run of record under src/fydp2/ is not touched.
+63-column summary. The run of record under src/pinn/ is not touched.
 """
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from fydp2.config import Config  # noqa: E402
-from fydp2.sweep import run_one, sweep_config  # noqa: E402
+from pinn.config import Config  # noqa: E402
+from pinn.sweep import run_one, sweep_config  # noqa: E402
 
 if __name__ == "__main__":
     base = Config()

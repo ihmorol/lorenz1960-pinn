@@ -9,7 +9,7 @@ runs/*/breakdown/
 # Scratch output of `python run_epoch.py`, a throwaway probe.
 runs/epoch_probe/
 *.pt
-!src/fydp2/history/pinn.pt
+!src/pinn/history/pinn.pt
 !runs/*/history/pinn.pt
 *.npz
 *.npy
@@ -31,3 +31,6 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local working notes, deliberately untracked.
+feedback.md

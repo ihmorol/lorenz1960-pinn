@@ -15,7 +15,7 @@ class ResidualParts(NamedTuple):
     """Every per-collocation-point quantity computed inside one residual evaluation.
 
     These are the intermediates the training step already builds; exposing them
-    costs nothing and lets :mod:`fydp2.history` snapshot the full state of the
+    costs nothing and lets :mod:`pinn.history` snapshot the full state of the
     collocation batch without a second forward/backward pass.
     """
 

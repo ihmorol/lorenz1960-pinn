@@ -1,4 +1,4 @@
-"""Optimisation telemetry recorded during training, consumed by :mod:`fydp2.figures`."""
+"""Optimisation telemetry recorded during training, consumed by :mod:`pinn.figures`."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -84,7 +84,7 @@ for the full recipe.
 
 ```
 src/
-  fydp2/                     the PINN
+  pinn/                     the PINN
     config.py                Config dataclass; reference trajectory accessors
     pinn.py                  MLP, trial solution, autograd residual, loss
     train.py                 training loop, evaluation, run summary, artifacts
@@ -134,7 +134,7 @@ suite.
 |---|---|---|---|
 | `run_sweep.py` | all nine architectures | ≈ 60–90 min, ≈ 3.6 GB | `runs/` |
 | `run_single.py [depth width]` | one architecture | ≈ 5–8 min, ≈ 420 MB | `runs/<arch>/` |
-| `run_pinn.py` | the run of record | ≈ 5.5 min | `src/fydp2/results/`, `src/fydp2/history/` |
+| `run_pinn.py` | the run of record | ≈ 5.5 min | `src/pinn/results/`, `src/pinn/history/` |
 | `run_epoch.py [n]` | one epoch, all `N_c` points | seconds | `runs/epoch_probe/` |
 | `run_eval.py [run_dir]` | evaluate a finished model | seconds | nothing |
 
@@ -165,8 +165,8 @@ and the full 63-column summary. For the run of record it falls back to the
 package defaults, which are that run's configuration.
 
 Output paths are anchored to the repository root, not the working directory, so
-all five work from anywhere. `fydp2.train.rebuild_figures()` redraws every figure
-of a finished run from its checkpoint and CSVs, and `fydp2.train.load_run()`
+all five work from anywhere. `pinn.train.rebuild_figures()` redraws every figure
+of a finished run from its checkpoint and CSVs, and `pinn.train.load_run()`
 returns its model and telemetry, both with no retraining.
 
 ## 5. Data products
@@ -229,7 +229,7 @@ analysis drawn from it.
 Three helpers read it back without loading the whole cube:
 
 ```python
-from fydp2.history import point_history, residual_grid, load_snapshots
+from pinn.history import point_history, residual_grid, load_snapshots
 
 point_history("runs/4x60/breakdown", i=1734)   # one point's 401-row trajectory
 residual_grid("runs/4x60/breakdown")           # (epochs, t bins, |r|) field for plotting
@@ -303,7 +303,7 @@ runs/
 
 `runs/<arch>/` is overwritten on rerun; the runs are deterministic at a fixed
 seed, so a rerun reproduces the same bytes. **The sweep never writes to
-`src/fydp2/results/` or `src/fydp2/history/`** — the run of record is left
+`src/pinn/results/` or `src/pinn/history/`** — the run of record is left
 exactly as committed, and a test enforces this.
 
 ### 6.1 A caveat on a single seed
@@ -388,7 +388,7 @@ five decimal places, obtained from the differential equations alone.
 ## 9. Reproducibility
 
 The pipeline is deterministic. Retraining the default configuration from scratch
-at seed 0 reproduces `src/fydp2/results/metrics.csv` to the last digit, and this
+at seed 0 reproduces `src/pinn/results/metrics.csv` to the last digit, and this
 was re-verified after the telemetry refactor of Section 5.2: `Config` defaults to
 `snapshot_every=0`, so the run of record's code path is unchanged.
 
@@ -418,7 +418,7 @@ and generation of every figure and table.
 Every knob is a field on `Config`, so no code edits are needed:
 
 ```python
-from fydp2.config import Config
+from pinn.config import Config
 
 Config(depth=3, width=70, activation="gelu", ic="soft", gamma=10.0,
        lbfgs_iters=5000, snapshot_every=50)

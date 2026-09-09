@@ -3,8 +3,8 @@ import pandas as pd
 import pytest
 import torch
 
-from fydp2.config import Config, reference_trajectory
-from fydp2.pinn import PINN, ode_residual
+from pinn.config import Config, reference_trajectory
+from pinn.pinn import PINN, ode_residual
 
 
 def test_hard_ic_exact():
@@ -26,7 +26,7 @@ def test_residual_zero_on_truth():
 
 
 def test_training_reduces_loss():
-    from fydp2.train import train
+    from pinn.train import train
 
     cfg = Config(epochs=100, n_collocation=101, lbfgs_iters=50, seed=0)
     _, history = train(cfg)
@@ -34,7 +34,7 @@ def test_training_reduces_loss():
 
 
 def test_soft_ic_trains():
-    from fydp2.train import train
+    from pinn.train import train
 
     cfg = Config(ic="soft", epochs=200, n_collocation=101, lbfgs_iters=50, seed=0)
     _, history = train(cfg)
@@ -42,7 +42,7 @@ def test_soft_ic_trains():
 
 
 def test_history_records_diagnostics():
-    from fydp2.train import train
+    from pinn.train import train
 
     cfg = Config(epochs=50, n_collocation=64, lbfgs_iters=0, log_every=10, eval_every=25, seed=0)
     _, history = train(cfg)
@@ -55,8 +55,8 @@ def test_history_records_diagnostics():
 
 
 def test_figure_suite_writes_all_panels(tmp_path):
-    from fydp2 import figures
-    from fydp2.train import collect_artifacts, train
+    from pinn import figures
+    from pinn.train import collect_artifacts, train
 
     cfg = Config(depth=1, width=8, epochs=30, n_collocation=64, lbfgs_iters=0,
                  log_every=10, eval_every=15, seed=0)
@@ -71,8 +71,8 @@ def test_figure_suite_writes_all_panels(tmp_path):
 
 
 def test_run_report_writes_tables_and_figures(tmp_path):
-    from fydp2 import figures
-    from fydp2.train import collect_artifacts, train
+    from pinn import figures
+    from pinn.train import collect_artifacts, train
 
     cfg = Config(depth=1, width=8, epochs=20, n_collocation=64, lbfgs_iters=0,
                  log_every=10, eval_every=10, seed=0)
@@ -85,9 +85,9 @@ def test_run_report_writes_tables_and_figures(tmp_path):
 
 
 def test_history_round_trips_through_csv(tmp_path):
-    from fydp2 import figures
-    from fydp2.history import TrainHistory
-    from fydp2.train import collect_artifacts, train
+    from pinn import figures
+    from pinn.history import TrainHistory
+    from pinn.train import collect_artifacts, train
 
     cfg = Config(depth=1, width=8, epochs=20, n_collocation=64, lbfgs_iters=0,
                  log_every=5, eval_every=10, seed=0)
@@ -109,7 +109,7 @@ def test_sweep_figures(tmp_path):
 
     import pandas as pd
 
-    from fydp2 import figures
+    from pinn import figures
 
     rows = [
         {"depth": d, "width": w, "activation": a, "seed": s, "rmse": 10.0 ** -(d + s)}
@@ -125,7 +125,7 @@ def test_sweep_figures(tmp_path):
 # --------------------------------------------------------------------------
 def test_snapshots_are_off_by_default():
     """The run of record must be unaffected: no snapshot files, no extra cost."""
-    from fydp2.train import train
+    from pinn.train import train
 
     assert Config().snapshot_every == 0
     _, history = train(Config(depth=1, width=8, epochs=5, n_collocation=16,
@@ -135,8 +135,8 @@ def test_snapshots_are_off_by_default():
 
 def test_snapshot_rows_reconstruct_the_loss(tmp_path):
     """Every column is recorded, and loss_contribution sums to the reported loss."""
-    from fydp2.history import SNAPSHOT_COLUMNS, load_snapshots, point_history
-    from fydp2.train import train
+    from pinn.history import SNAPSHOT_COLUMNS, load_snapshots, point_history
+    from pinn.train import train
 
     cfg = Config(depth=1, width=8, epochs=21, n_collocation=32, snapshot_every=10,
                  log_every=10, eval_every=10, print_every=0,
@@ -167,8 +167,8 @@ def test_snapshot_rows_reconstruct_the_loss(tmp_path):
 
 
 def test_point_summary_and_residual_grid(tmp_path):
-    from fydp2.history import residual_grid
-    from fydp2.train import train, save_results
+    from pinn.history import residual_grid
+    from pinn.train import train, save_results
 
     cfg = Config(depth=1, width=8, epochs=31, n_collocation=32, snapshot_every=10,
                  log_every=10, eval_every=15, print_every=0,
@@ -189,7 +189,7 @@ def test_point_summary_and_residual_grid(tmp_path):
 
 
 def test_run_summary_columns(tmp_path):
-    from fydp2.train import save_results, train
+    from pinn.train import save_results, train
 
     cfg = Config(depth=2, width=8, epochs=20, n_collocation=32, log_every=10,
                  eval_every=10, print_every=0,
@@ -210,7 +210,7 @@ def test_run_summary_columns(tmp_path):
 
 
 def test_sweep_writes_runs_and_comparison(tmp_path):
-    from fydp2 import sweep as sweep_module
+    from pinn import sweep as sweep_module
 
     base = Config(epochs=12, n_collocation=16, log_every=6, eval_every=6, print_every=0,
                   runs_dir=str(tmp_path))
@@ -236,8 +236,8 @@ def test_sweep_writes_runs_and_comparison(tmp_path):
 
 
 def test_sweep_leaves_the_run_of_record_alone(tmp_path):
-    """The sweep must never write into src/fydp2/results or src/fydp2/history."""
-    from fydp2.sweep import sweep_config
+    """The sweep must never write into src/pinn/results or src/pinn/history."""
+    from pinn.sweep import sweep_config
 
     base = Config(runs_dir=str(tmp_path))
     cfg = sweep_config(base, 5, 70)
@@ -252,8 +252,8 @@ def test_sweep_leaves_the_run_of_record_alone(tmp_path):
 # --------------------------------------------------------------------------
 def test_config_for_round_trips_a_finished_run(tmp_path):
     """A run's own summary is enough to rebuild the Config its weights need."""
-    from fydp2.sweep import config_for
-    from fydp2.train import save_results, train
+    from pinn.sweep import config_for
+    from pinn.train import save_results, train
 
     cfg = Config(depth=3, width=12, activation="gelu", epochs=10, n_collocation=16,
                  log_every=5, eval_every=5, print_every=0,
@@ -267,8 +267,8 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
 
 
 def test_load_run_reproduces_the_saved_prediction(tmp_path):
-    from fydp2.sweep import config_for
-    from fydp2.train import load_run, predict, save_results, train
+    from pinn.sweep import config_for
+    from pinn.train import load_run, predict, save_results, train
 
     cfg = Config(depth=2, width=10, epochs=10, n_collocation=16, log_every=5,
                  eval_every=5, print_every=0,
@@ -284,7 +284,7 @@ def test_load_run_reproduces_the_saved_prediction(tmp_path):
 
 def test_resume_skips_a_finished_run(tmp_path):
     """A completed run is reused, not retrained; an interrupted one is redone."""
-    from fydp2.sweep import run_one, sweep_config
+    from pinn.sweep import run_one, sweep_config
 
     base = Config(epochs=8, n_collocation=16, log_every=4, eval_every=4,
                   print_every=0, runs_dir=str(tmp_path))
