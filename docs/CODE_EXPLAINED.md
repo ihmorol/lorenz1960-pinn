@@ -325,49 +325,85 @@ point. It is exact by construction, and the PinnDE paper says this trains
 better for smooth problems like ours.
 
 ```python
-40 def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
-41     c = torch.as_tensor(coeffs, dtype=u.dtype, device=u.device).reshape(3)
-42     x, y, z = u[:, 0], u[:, 1], u[:, 2]
-43     f = torch.stack([c[0] * y * z, c[1] * x * z, c[2] * x * y], dim=1)
-44     return dudt - f
+def ode_rhs(u: Tensor, coeffs) -> Tensor:
+    c = torch.as_tensor(coeffs, dtype=u.dtype, device=u.device).reshape(3)
+    x, y, z = u[:, 0], u[:, 1], u[:, 2]
+    return torch.stack([c[0] * y * z, c[1] * x * z, c[2] * x * y], dim=1)
+
+
+def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
+    return dudt - ode_rhs(u, coeffs)
 ```
 This is the physics, written as pure math (no network inside, so it is easy to test):
-- Line 41: make sure the coefficients are a tensor on the same device/precision as
-  `u`. (Doing this directly avoids a bug where numpy conversion fails on a GPU.)
-- Line 42: split `u` into columns x, y, z.
-- Line 43: build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]`, the ODE's
-  "what the derivative *should* be."
-- Line 44: return `dudt − f`, the residual. Zero means the ODE is satisfied.
+- Make sure the coefficients are a tensor on the same device/precision as `u`.
+  (Doing this directly avoids a bug where numpy conversion fails on a GPU.)
+- Split `u` into columns x, y, z.
+- Build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]`, the ODE's "what the
+  derivative *should* be."
+- Return `dudt − f`, the residual. Zero means the ODE is satisfied.
+
+`ode_rhs` is split out because `f` is not only an intermediate on the way to the
+residual — it is one of the columns recorded in the per-point breakdown, so it
+needs a name of its own.
 
 ```python
-47 def residual(model: PINN, t: Tensor) -> Tensor:
-48     u = model(t)
-49     cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
-50     dudt = torch.stack(cols, dim=1)
-51     return ode_residual(u, dudt, model.coeffs)
+def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
+    n = model.net(t)
+    u = model.trial(t, n)
+    cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
+    dudt = torch.stack(cols, dim=1)
+    f = ode_rhs(u, model.coeffs)
+    return ResidualParts(n=n, u=u, dudt=dudt, f=f, r=dudt - f)
+
+
+def residual(model: PINN, t: Tensor) -> Tensor:
+    return residual_parts(model, t).r
 ```
 Ties the network to the physics:
-- Line 48: get the network's `(x, y, z)` at the times `t`.
-- Line 49: the key step. For each output column `j`, `torch.autograd.grad`
-  computes its derivative with respect to `t`. This is `dx/dt, dy/dt, dz/dt`,
-  computed **exactly** by PyTorch, not approximated. (`.sum()` is a standard trick:
+- `model.net(t)` is the raw network output `N(t)`; `model.trial(t, n)` wraps it
+  into `u_T = u0 + g(t)·N(t)` so the start point is exact. (Together these are
+  just `model(t)` — they are written separately here only so `N(t)` can be kept.)
+- The key step. For each output column `j`, `torch.autograd.grad` computes its
+  derivative with respect to `t`. This is `dx/dt, dy/dt, dz/dt`, computed
+  **exactly** by PyTorch, not approximated. (`.sum()` is a standard trick:
   because each point's output depends only on its own `t`, summing then
   differentiating gives the per-point derivative. `create_graph=True` keeps the
   result differentiable so training can use it.)
-- Line 50: stack the three derivatives into an `N×3` array.
-- Line 51: plug the network's values and derivatives into the physics from above.
+- Stack the three derivatives into an `N×3` array, evaluate the physics, subtract.
+
+**Why return all five pieces instead of just the residual?** Every one of them —
+raw output, trial solution, derivative, right-hand side, residual — is a column
+in the per-epoch breakdown described in the README. Because the training step has
+to compute them anyway, handing them back means a snapshot costs nothing but the
+CSV write: no second forward pass, no second call to autograd. `residual()` is
+now a one-line wrapper for the callers that only want `r`.
 
 ```python
-54 def pinn_loss(model: PINN, t: Tensor) -> Tensor:
-55     loss = residual(model, t).pow(2).mean()
-56     if model.ic == "soft":
-57         t0 = torch.full((1, 1), model.t0, dtype=t.dtype, device=t.device)
-58         loss = loss + model.gamma * (model(t0) - model.u0).pow(2).mean()
-59     return loss
+def loss_terms(model: PINN, t: Tensor) -> tuple[Tensor, Tensor, ResidualParts]:
+    parts = residual_parts(model, t)
+    res = parts.r.pow(2).mean()
+    if model.ic == "soft":
+        t0 = torch.full((1, 1), model.t0, dtype=t.dtype, device=t.device)
+        ic = (model(t0) - model.u0).pow(2).mean()
+    else:
+        ic = torch.zeros((), dtype=res.dtype, device=res.device)
+    return res, ic, parts
+
+
+def pinn_loss(model: PINN, t: Tensor) -> Tensor:
+    res, ic, _ = loss_terms(model, t)
+    return res + model.gamma * ic if model.ic == "soft" else res
 ```
 The one number we minimize:
-- Line 55: average of the squared residual over all points. Small = the network
-  obeys the physics well.
+- `parts.r.pow(2).mean()` is the average of the squared residual. Small = the
+  network obeys the physics well.
+- **Careful with that mean.** `parts.r` is an `N_c × 3` array, so `.mean()`
+  divides by `3 × N_c`, not by `N_c`. The loss is the average over every residual
+  *entry* — three per collocation point — not the average over points. This is
+  why the breakdown's `loss_contribution` column is `r_sq / (3·N_c)`; summing it
+  down a snapshot's `N_c` rows reproduces the reported loss exactly.
+- The residual and initial-condition parts are returned separately so the loss
+  can be plotted by component, and `parts` comes along for the snapshot writer.
 - Lines 56-58 (soft mode only): add a penalty for missing the start point,
   `gamma · average((network(t0) − u0)²)`. In hard mode this term is unnecessary
   (the start point is already exact), so it's skipped.
@@ -451,9 +487,12 @@ late to settle precisely. (This matches PinnDE's default schedule.)
         logging = epoch % cfg.log_every == 0 or last
 
         adam.zero_grad()
-        res, ic = loss_terms(model, grid.clone().requires_grad_(True))
+        res, ic, parts = loss_terms(model, grid.clone().requires_grad_(True))
         loss = res + model.gamma * ic if cfg.ic == "soft" else res
         loss.backward()
+
+        if history.snapshots is not None and (epoch % cfg.snapshot_every == 0 or last):
+            history.snapshots.write(epoch, parts)
 
         lr = adam.param_groups[0]["lr"]
         before = flat_params(model) if logging else None
@@ -473,6 +512,11 @@ The training loop, repeated `epochs` times:
   and initial-condition parts separate so the loss can be plotted by component.
   `grid.clone().requires_grad_(True)` makes a fresh copy of the time points that
   PyTorch will track for derivatives (the residual needs `d/dt`).
+- the snapshot line: every `snapshot_every` epochs, write all `N_c` points'
+  state to `breakdown/epoch_<n>.csv`. It runs **before** `adam.step()`, so the
+  numbers on disk are exactly the ones this epoch's gradient was built from.
+  Disabled by default (`snapshot_every=0`), which is why the run of record is
+  unaffected by any of this.
 - `backward()`: compute how each weight affects the loss.
 - `adam.step()`: nudge the weights to reduce the loss.
 - `sched.step()`: shrink the learning rate a little.
@@ -783,3 +827,22 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 - This solves a **single** initial value problem. It does **not** learn a solution
   operator over many initial conditions (that is the PinnDE paper's DeepONet, out of scope
   here), and it has not been tested beyond `t ∈ [0, 1]`.
+
+
+---
+
+## What is not covered here
+
+This walkthrough predates two later additions. Both are documented in full in the
+project README rather than repeated here:
+
+- **`history.SnapshotWriter` and the per-epoch breakdown** — the 27-column record
+  of every collocation point at every snapshot epoch, the `point_summary.csv`
+  aggregation built alongside it, and the `point_history()` / `residual_grid()`
+  readers. See README §5.2–5.3.
+- **`sweep.py`** — the depth × width architecture sweep, its `runs/<arch>/`
+  output layout, and the `comparison.csv` table. See README §6, including why a
+  single-seed sweep cannot support "architecture A beats architecture B".
+
+Line numbers in the code excerpts above have been dropped where the source has
+since shifted; the excerpts themselves match the current code.
