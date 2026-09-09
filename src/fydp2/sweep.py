@@ -44,10 +44,20 @@ def sweep_config(base: Config, depth: int, width: int, seed: int | None = None) 
     )
 
 
-def run_one(cfg: Config) -> pd.DataFrame:
-    """Train one architecture and return the summary row it just wrote."""
+def run_one(cfg: Config, resume: bool = False) -> pd.DataFrame:
+    """Train one architecture and return the summary row it just wrote.
+
+    With ``resume``, a run whose ``run_summary.csv`` already exists is reused
+    rather than retrained -- the runs are deterministic, so retraining one would
+    only reproduce it. A run interrupted mid-training has no summary and is
+    therefore redone.
+    """
+    summary = cfg.results_path / "run_summary.csv"
+    if resume and summary.exists():
+        print(f"[skip]  {cfg.arch} already complete -> {summary}", flush=True)
+        return pd.read_csv(summary)
     train_and_save(cfg)
-    return pd.read_csv(cfg.results_path / "run_summary.csv")
+    return pd.read_csv(summary)
 
 
 def sweep(
@@ -56,6 +66,7 @@ def sweep(
     widths: tuple[int, ...] = WIDTHS,
     seeds: tuple[int, ...] = (),
     metric: str = COMPARISON_METRIC,
+    resume: bool = False,
 ) -> pd.DataFrame:
     """Run the full grid, write ``runs/comparison.csv`` and the sweep figures.
 
@@ -75,7 +86,7 @@ def sweep(
         elapsed = time.perf_counter() - started
         print(f"\n=== [{k}/{len(combos)}] {cfg.arch} seed {cfg.seed} "
               f"({elapsed / 60:.1f} min elapsed) -> {cfg.results_path} ===", flush=True)
-        rows.append(run_one(cfg))
+        rows.append(run_one(cfg, resume=resume))
 
     comparison = pd.concat(rows, ignore_index=True).sort_values(
         ["depth", "width", "seed"]).reset_index(drop=True)
@@ -91,6 +102,28 @@ def sweep(
 
 def load_comparison(runs_dir: str | Path = "runs") -> pd.DataFrame:
     return pd.read_csv(Path(runs_dir) / "comparison.csv")
+
+
+def config_for(run_dir: str | Path) -> Config:
+    """Rebuild the Config a finished run was trained with, from its own summary.
+
+    Needed to reload a checkpoint: the weights only fit a network of the same
+    shape. Falls back to the defaults for runs predating ``run_summary.csv``,
+    which is correct for the 4x60 run of record.
+    """
+    run_dir = Path(run_dir)
+    paths = {"results_dir": str(run_dir), "ckpt_dir": str(run_dir / "history")}
+    summary = run_dir / "run_summary.csv"
+    if not summary.exists():
+        return replace(Config(), **paths) if run_dir != Config().results_path else Config()
+
+    row = pd.read_csv(summary).iloc[0]
+    return replace(
+        Config(), **paths,
+        depth=int(row["depth"]), width=int(row["width"]), activation=str(row["activation"]),
+        ic=str(row["ic"]), seed=int(row["seed"]), epochs=int(row["epochs"]),
+        n_collocation=int(row["n_collocation"]),
+    )
 
 
 if __name__ == "__main__":

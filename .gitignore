@@ -5,6 +5,9 @@ data/
 # Regenerated deterministically by `python run_sweep.py`; the tracked
 # point_summary.csv and figures carry the analysis that comes out of it.
 runs/*/breakdown/
+
+# Scratch output of `python run_epoch.py`, a throwaway probe.
+runs/epoch_probe/
 *.pt
 !src/fydp2/history/pinn.pt
 !runs/*/history/pinn.pt

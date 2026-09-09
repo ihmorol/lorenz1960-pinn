@@ -16,4 +16,4 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from fydp2.sweep import sweep  # noqa: E402
 
 if __name__ == "__main__":
-    sweep()
+    sweep(resume=True)

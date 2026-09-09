@@ -313,12 +313,19 @@ def save_results(model: PINN, history: TrainHistory, cfg: Config) -> pd.DataFram
     return metrics
 
 
+def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
+    """Reload a finished run's trained weights and telemetry, with no retraining."""
+    cfg = cfg or Config()
+    device = get_device()
+    model = PINN(cfg).to(device)
+    model.load_state_dict(torch.load(cfg.ckpt_path / "pinn.pt", map_location=device))
+    model.eval()
+    return model, TrainHistory.from_saved(cfg.ckpt_path), cfg
+
+
 def rebuild_figures(cfg: Config | None = None) -> pd.DataFrame:
     """Redraw every figure from a finished run's checkpoint and saved CSVs, no retraining."""
-    cfg = cfg or Config()
-    model = PINN(cfg).to(get_device())
-    model.load_state_dict(torch.load(cfg.ckpt_path / "pinn.pt", map_location=get_device()))
-    history = TrainHistory.from_saved(cfg.ckpt_path)
+    model, history, cfg = load_run(cfg)
     return figures.write_run_report(
         collect_artifacts(model, history, cfg), cfg.results_path, data_dir=cfg.ckpt_path
     )

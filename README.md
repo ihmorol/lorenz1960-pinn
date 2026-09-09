@@ -91,7 +91,7 @@ src/
     history.py               optimisation telemetry + per-point snapshot writer
     figures.py               figure suite (pure arrays in, figures out; no torch)
     sweep.py                 depth × width architecture sweep driver
-    test_pinn.py             15 checks: sanity, training, telemetry, figures, sweep
+    test_pinn.py             18 checks: sanity, training, telemetry, figures, sweep
     report.md                implementation report with the headline results
     results/                 run of record: metrics, figures, summary
     history/                 run of record: checkpoint and bulk telemetry
@@ -100,8 +100,11 @@ src/
     lorenz1960_solver.py     standalone RK4-vs-DOP853 validation script
 runs/                        architecture sweep output (see Section 6)
 notebooks/lorenz_pinn.ipynb  runnable notebook (Kaggle / Colab)
-run_pinn.py                  entry point: single run of record
-run_sweep.py                 entry point: nine-architecture sweep
+run_pinn.py                  entry point: the single run of record
+run_sweep.py                 entry point: all nine architectures (resumable)
+run_single.py                entry point: one architecture
+run_epoch.py                 entry point: one epoch, every collocation point
+run_eval.py                  entry point: score a finished model, no retraining
 docs/CODE_EXPLAINED.md       line-by-line plain-language walkthrough
 docs/the-short-version.md    short plain-words summary
 ```
@@ -121,21 +124,50 @@ Run the test suite:
 python -m pytest
 ```
 
-Train the run of record (≈ 5.5 min on CPU):
+### 4.1 Entry points
+
+Five scripts at the repository root, in decreasing order of how much they run.
+Each is thin glue over the package; the logic they call is covered by the test
+suite.
+
+| Script | Scope | Cost | Writes |
+|---|---|---|---|
+| `run_sweep.py` | all nine architectures | ≈ 60–90 min, ≈ 3.6 GB | `runs/` |
+| `run_single.py [depth width]` | one architecture | ≈ 5–8 min, ≈ 420 MB | `runs/<arch>/` |
+| `run_pinn.py` | the run of record | ≈ 5.5 min | `src/fydp2/results/`, `src/fydp2/history/` |
+| `run_epoch.py [n]` | one epoch, all `N_c` points | seconds | `runs/epoch_probe/` |
+| `run_eval.py [run_dir]` | evaluate a finished model | seconds | nothing |
 
 ```bash
-python run_pinn.py
+python run_sweep.py             # the full grid; skips runs already finished
+python run_single.py 5 70       # just depth 5, width 70
+python run_pinn.py              # the 4x60 run of record
+python run_epoch.py             # print one epoch's 3000-point table
+python run_eval.py runs/5x70    # reload a checkpoint and score it
 ```
 
-Run the nine-architecture sweep (≈ 75–90 min on CPU, ≈ 3.6 GB of breakdown data):
+**`run_sweep.py` resumes.** A run whose `run_summary.csv` exists is reused rather
+than retrained — the runs are deterministic, so retraining one would only
+reproduce it — while a run interrupted mid-training has no summary and is redone.
+An hour-long sweep can therefore be stopped and restarted freely.
 
-```bash
-python run_sweep.py
-```
+**`run_epoch.py`** is the one to reach for when the question is *what actually
+happens in a single step*. It trains for `n` epochs (default 1) taking a snapshot
+every epoch, then prints the whole `N_c`-row table — time, raw network output,
+trial solution, autograd derivative, physics right-hand side, residual — followed
+by the check that `loss_contribution` summed down the table reproduces the
+reported loss. No figures: one epoch is too few points to plot.
+
+**`run_eval.py`** never retrains. It reads the run's own `run_summary.csv` to
+recover the network shape, loads the checkpoint, and reports the error table, the
+mean squared residual on a dense 2001-point grid the network never trained on,
+and the full 63-column summary. For the run of record it falls back to the
+package defaults, which are that run's configuration.
 
 Output paths are anchored to the repository root, not the working directory, so
-both work from anywhere. `fydp2.train.rebuild_figures()` redraws every figure of
-a finished run from its checkpoint and CSVs, with no retraining.
+all five work from anywhere. `fydp2.train.rebuild_figures()` redraws every figure
+of a finished run from its checkpoint and CSVs, and `fydp2.train.load_run()`
+returns its model and telemetry, both with no retraining.
 
 ## 5. Data products
 
@@ -360,11 +392,12 @@ at seed 0 reproduces `src/fydp2/results/metrics.csv` to the last digit, and this
 was re-verified after the telemetry refactor of Section 5.2: `Config` defaults to
 `snapshot_every=0`, so the run of record's code path is unchanged.
 
-The test suite (15 checks) covers the exact initial condition, the residual
+The test suite (18 checks) covers the exact initial condition, the residual
 definition against the reference trajectory, loss reduction in both IC modes,
 telemetry recording and its CSV round trip, the snapshot schema and its
 reconstruction of the loss, the point summary and residual grid, the run-summary
-columns, the sweep's output layout, and generation of every figure and table.
+columns, the sweep's output layout, resume behaviour, checkpoint reloading,
+and generation of every figure and table.
 
 ## 10. Limitations
 

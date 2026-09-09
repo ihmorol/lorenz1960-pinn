@@ -245,3 +245,56 @@ def test_sweep_leaves_the_run_of_record_alone(tmp_path):
     assert cfg.ckpt_path == tmp_path / "5x70" / "history"
     assert cfg.snapshot_every > 0
     assert Config().results_path not in (cfg.results_path, cfg.ckpt_path)
+
+
+# --------------------------------------------------------------------------
+# entry-point helpers
+# --------------------------------------------------------------------------
+def test_config_for_round_trips_a_finished_run(tmp_path):
+    """A run's own summary is enough to rebuild the Config its weights need."""
+    from fydp2.sweep import config_for
+    from fydp2.train import save_results, train
+
+    cfg = Config(depth=3, width=12, activation="gelu", epochs=10, n_collocation=16,
+                 log_every=5, eval_every=5, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history = train(cfg)
+    save_results(model, history, cfg)
+
+    rebuilt = config_for(tmp_path)
+    assert (rebuilt.depth, rebuilt.width, rebuilt.activation) == (3, 12, "gelu")
+    assert rebuilt.ckpt_path == tmp_path / "history"
+
+
+def test_load_run_reproduces_the_saved_prediction(tmp_path):
+    from fydp2.sweep import config_for
+    from fydp2.train import load_run, predict, save_results, train
+
+    cfg = Config(depth=2, width=10, epochs=10, n_collocation=16, log_every=5,
+                 eval_every=5, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history = train(cfg)
+    save_results(model, history, cfg)
+
+    t = np.linspace(0.0, 1.0, 51)
+    reloaded, _, reloaded_cfg = load_run(config_for(tmp_path))
+    assert predict(reloaded, t) == pytest.approx(predict(model, t), abs=0)
+    assert reloaded_cfg.depth == cfg.depth
+
+
+def test_resume_skips_a_finished_run(tmp_path):
+    """A completed run is reused, not retrained; an interrupted one is redone."""
+    from fydp2.sweep import run_one, sweep_config
+
+    base = Config(epochs=8, n_collocation=16, log_every=4, eval_every=4,
+                  print_every=0, runs_dir=str(tmp_path))
+    cfg = sweep_config(base, 1, 6)
+    first = run_one(cfg, resume=True)
+    stamp = (cfg.results_path / "run_summary.csv").stat().st_mtime_ns
+
+    second = run_one(cfg, resume=True)
+    assert (cfg.results_path / "run_summary.csv").stat().st_mtime_ns == stamp
+    assert second["rmse_combined_l2"].iloc[0] == first["rmse_combined_l2"].iloc[0]
+
+    (cfg.results_path / "run_summary.csv").unlink()  # simulate an interrupted run
+    assert run_one(cfg, resume=True)["arch"].iloc[0] == "1x6"
