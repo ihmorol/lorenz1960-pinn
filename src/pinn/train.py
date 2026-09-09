@@ -320,8 +320,11 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
     cfg = cfg or Config()
     device = get_device()
     model = PINN(cfg).to(device)
-    model.load_state_dict(torch.load(cfg.ckpt_path / "pinn.pt", map_location=device))
-    model.eval()
+    try:
+        state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
+    except TypeError:  # older torch
+        state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device)
+    model.load_state_dict(state)
     return model, TrainHistory.from_saved(cfg.ckpt_path), cfg
 
 
