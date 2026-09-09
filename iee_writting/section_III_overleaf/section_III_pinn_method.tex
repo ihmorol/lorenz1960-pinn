@@ -1,0 +1,151 @@
+% Section III only: Physics-Informed Neural Network Method.
+% Insert this file from the paper root with:
+%   \input{section_III_overleaf/section_III_pinn_method.tex}
+% Required packages are listed in README_OVERLEAF.md.
+
+% This path works both when the folder is compiled as a standalone Overleaf
+% project and when the section is input from a full paper at project root.
+\newcommand{\pinnmethodfigure}{fig01_pinn_method_pipeline.pdf}
+\IfFileExists{section_III_overleaf/fig01_pinn_method_pipeline.pdf}{%
+    \renewcommand{\pinnmethodfigure}{section_III_overleaf/fig01_pinn_method_pipeline.pdf}%
+}{}
+
+\section{Physics-Informed Neural Network Method}
+\label{sec:pinn-method}
+
+This section describes the PINN used in this study. The Lorenz--1960 equations,
+their coefficients, and the initial state are defined in Section~II. The model
+takes time as input and returns the three state variables. Figure~\ref{fig:pinn-pipeline}
+shows the full computation used during training.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{\pinnmethodfigure}
+    \caption{PINN training path used in the reported experiment. Time is mapped
+    to a three-state neural output. The output is placed inside a hard trial
+    solution. Automatic differentiation supplies its time derivative. The
+    derivative and the Lorenz right-hand side form the residual used by the loss.}
+    \label{fig:pinn-pipeline}
+\end{figure}
+\FloatBarrier
+
+\subsection{Network Architecture}
+
+Let
+\begin{equation}
+    \mathcal{N}(t;\theta):\mathbb{R}\rightarrow\mathbb{R}^{3}
+    \label{eq:network-map}
+\end{equation}
+denote the neural network. Its input is the scalar time $t$. Its output has
+three entries for $x$, $y$, and $z$. The network is a fully connected multilayer
+perceptron. It has four hidden layers. Each hidden layer has 60 neurons and uses
+the hyperbolic tangent activation. The output layer is linear. We use
+Xavier-uniform weights and zero biases at initialization. The architecture is
+therefore $1\text{-}60\text{-}60\text{-}60\text{-}60\text{-}3$. It has 11,283
+trainable parameters. This count includes all weights and biases.
+
+\subsection{Hard Initial-Condition Enforcement}
+
+The raw network output is not used as the final solution. We define the trial
+solution as
+\begin{equation}
+    u_T(t)=u_0+g(t)\mathcal{N}(t;\theta),
+    \qquad
+    g(t)=\frac{t-t_0}{t_f-t_0},
+    \label{eq:trial-solution}
+\end{equation}
+where $u_0$ is the fixed initial state and $[t_0,t_f]$ is the time interval.
+For the reported experiment, $t_0=0$ and $t_f=1$, so $g(t)=t$. At the initial
+time, $g(t_0)=0$. Therefore,
+\begin{equation}
+    u_T(t_0)=u_0.
+    \label{eq:hard-ic}
+\end{equation}
+This equality holds for every value of $\theta$. The initial condition is thus
+satisfied by construction. The reported run does not add an initial-condition
+penalty to the loss. A soft-penalty option exists in the code, but it is not part
+of the reported experiment.
+
+\subsection{Automatic-Differentiation Residual}
+
+The PINN is trained from the differential equations. For a trial solution
+$u_T=(x_T,y_T,z_T)$, the residual is
+\begin{equation}
+    r(t)=\frac{d u_T(t)}{d t}-f\bigl(u_T(t)\bigr).
+    \label{eq:physics-residual}
+\end{equation}
+The right-hand side uses the reduced Lorenz--1960 form
+\begin{equation}
+    f(u_T)=
+    \left(c_x y_Tz_T,\;c_y x_Tz_T,\;c_z x_Ty_T\right),
+    \label{eq:lorenz-rhs}
+\end{equation}
+with $(c_x,c_y,c_z)=(-0.10,1.60,-0.75)$ for $k=2$ and $l=1$. PyTorch
+automatic differentiation computes each time derivative in \eqref{eq:physics-residual}.
+It uses the computational graph of the trial solution. This avoids finite
+differences and allows the residual loss to update $\theta$ through
+back-propagation.
+
+\subsection{Collocation Loss and Optimization}
+
+We sample $N_c=3000$ time points with a Latin-hypercube design on $[0,1]$.
+The points are sampled once and then kept fixed. At every point $t_i$, the
+three residual components are evaluated. The reported physics-only objective is
+\begin{equation}
+    \mathcal{L}(\theta)=
+    \frac{1}{3N_c}\sum_{i=1}^{N_c}\left\|r(t_i)\right\|_2^2.
+    \label{eq:physics-loss}
+\end{equation}
+No values from the numerical reference trajectory enter \eqref{eq:physics-loss}.
+The reference is used after training for evaluation.
+
+We use full-batch Adam for 20,000 iterations. The learning rate decreases
+linearly from $10^{-3}$ to $10^{-4}$. Training uses single-precision
+(``float32``) arithmetic and random seed 0. The reported run has no L-BFGS
+stage. The main settings are listed in Table~\ref{tab:pinn-settings}.
+Algorithm~\ref{alg:hard-ic-pinn} summarizes the complete procedure.
+
+\begin{table}[t]
+    \caption{Settings used in the reported PINN run}
+    \label{tab:pinn-settings}
+    \centering
+    \footnotesize
+    \begin{tabular}{ll}
+        \hline
+        Item & Value \\
+        \hline
+        Network & $1$--$60$--$60$--$60$--$60$--$3$ MLP \\
+        Activation & tanh hidden layers; linear output \\
+        Initial condition & hard trial solution \\
+        Collocation & 3,000 fixed LHS points \\
+        Optimizer & full-batch Adam, 20,000 iterations \\
+        Learning rate & $10^{-3}$ to $10^{-4}$, linear decay \\
+        Precision and seed & float32 and 0 \\
+        L-BFGS stage & disabled \\
+        \hline
+    \end{tabular}
+\end{table}
+\FloatBarrier
+
+\begin{algorithm}[t]
+\caption{Training and evaluation of the hard-IC Lorenz--1960 PINN}
+\label{alg:hard-ic-pinn}
+\begin{algorithmic}[1]
+\Require $k=2$, $l=1$, $u_0=(0.5,0.75,1.0)$, $[t_0,t_f]=[0,1]$
+\Require $N_c=3000$, $E=20000$, $\eta_0=10^{-3}$, $\eta_f=10^{-4}$, seed $=0$
+\State Compute $(c_x,c_y,c_z)$ from the coefficient formulas.
+\State Draw and fix $\{t_i\}_{i=1}^{N_c}$ with Latin-hypercube sampling.
+\State Initialize the $1$--$60$--$60$--$60$--$60$--$3$ tanh MLP.
+\State Use Xavier-uniform weights and zero biases.
+\For{$e=1,\ldots,E$}
+    \State $u_T(t_i)\gets u_0+\frac{t_i-t_0}{t_f-t_0}\mathcal{N}(t_i;\theta)$
+    \State $\frac{d u_T}{d t}(t_i)\gets\operatorname{AD}(u_T(t_i),t_i)$
+    \State $r(t_i)\gets\frac{d u_T}{d t}(t_i)-f(u_T(t_i))$
+    \State $\mathcal{L}\gets\frac{1}{3N_c}\sum_i\|r(t_i)\|_2^2$
+    \State $\eta_e\gets\eta_0+(\eta_f-\eta_0)e/E$
+    \State Update $\theta$ with one full-batch Adam step using $\nabla_\theta\mathcal{L}$.
+\EndFor
+\State Evaluate $u_T$ on a separate 1,001-point uniform grid.
+\State Compare with the DOP853 reference and report errors and $\|r(t)\|_2$.
+\end{algorithmic}
+\end{algorithm}
