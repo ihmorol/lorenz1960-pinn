@@ -1,7 +1,13 @@
 # Generated data and checkpoints (results/ and the run-of-record history/ are tracked)
 data/
+
+# Per-collocation-point breakdown: ~420 MB per run (400 snapshots x 3000 rows).
+# Regenerated deterministically by `python run_sweep.py`; the tracked
+# point_summary.csv and figures carry the analysis that comes out of it.
+runs/*/breakdown/
 *.pt
 !src/fydp2/history/pinn.pt
+!runs/*/history/pinn.pt
 *.npz
 *.npy
 

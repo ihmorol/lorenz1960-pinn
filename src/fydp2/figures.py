@@ -554,6 +554,27 @@ def fig_physics_residual(t: np.ndarray, residual: np.ndarray, label: str = "") -
     return fig
 
 
+def invariant_series(
+    traj: np.ndarray, coefficients: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Relative drift of every conserved quadratic form along a trajectory.
+
+    The Lorenz-1960 reduced system conserves each :math:`I = \\alpha x^2 + \\beta y^2
+    + \\gamma z^2` whose weights are orthogonal to the coefficient vector. Returns
+    ``(basis, drift)`` where ``basis`` is ``(3, n_inv)`` and ``drift`` is
+    ``(n_time, n_inv)``, each column normalised by its own initial magnitude.
+    """
+    basis = null_space(np.asarray(coefficients, dtype=float).reshape(1, 3))
+    traj = np.asarray(traj, dtype=float)
+    cols = []
+    for i in range(basis.shape[1]):
+        inv = (traj ** 2) @ basis[:, i]
+        scale = abs(inv[0]) if abs(inv[0]) > 0 else 1.0
+        cols.append(np.abs(inv - inv[0]) / scale)
+    drift = np.column_stack(cols) if cols else np.zeros((traj.shape[0], 0))
+    return basis, drift
+
+
 def fig_invariant_drift(
     t: np.ndarray, pred: np.ndarray, ref: np.ndarray, coefficients: np.ndarray, label: str = ""
 ) -> Figure:
@@ -565,18 +586,16 @@ def fig_invariant_drift(
     \\gamma a_3)`. Two independent invariants exist; drift in them measures how much
     physics the network has quietly discarded.
     """
-    basis = null_space(np.asarray(coefficients, dtype=float).reshape(1, 3))
+    basis, pred_drift = invariant_series(pred, coefficients)
+    _, ref_drift = invariant_series(ref, coefficients)
     n_inv = basis.shape[1]
     fig, axes = plt.subplots(1, max(n_inv, 1), figsize=(5.5 * max(n_inv, 1), 4.2), squeeze=False)
 
     for i in range(n_inv):
-        w = basis[:, i]
         ax = axes[0, i]
-        for name, traj, style in (("PINN", pred, "-"), ("reference", ref, "--")):
-            inv = (traj**2) @ w
-            scale = abs(inv[0]) if abs(inv[0]) > 0 else 1.0
-            ax.semilogy(t, _positive(np.abs(inv - inv[0]) / scale), ls=style, label=name)
-        weights = ", ".join(f"{v:+.3f}" for v in w)
+        for name, drift, style in (("PINN", pred_drift, "-"), ("reference", ref_drift, "--")):
+            ax.semilogy(t, _positive(drift[:, i]), ls=style, label=name)
+        weights = ", ".join(f"{v:+.3f}" for v in basis[:, i])
         ax.set_xlabel("t")
         ax.set_ylabel("relative drift")
         ax.set_title(f"$I_{i + 1}$ weights ({weights})")
@@ -684,6 +703,157 @@ def fig_seed_robustness(sweep: pd.DataFrame, value: str = "rmse", by: str = "act
 
 
 # --------------------------------------------------------------------------
+# per-epoch collocation breakdown (epoch x t residual field)
+# --------------------------------------------------------------------------
+def fig_residual_evolution(
+    epochs: np.ndarray, t_centres: np.ndarray, values: np.ndarray, label: str = ""
+) -> Figure:
+    """Every collocation point's residual across the whole run, as one field.
+
+    Rows are snapshot epochs, columns are binned collocation times, colour is
+    log10 |r|. Vertical streaks are regions of the domain that stayed hard long
+    after the rest of the trajectory converged.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.8),
+                             gridspec_kw={"width_ratios": [2.1, 1]})
+
+    ax = axes[0]
+    logv = np.log10(np.where(values > 0, values, np.nan))
+    mesh = ax.pcolormesh(t_centres, epochs, logv, cmap="rocket_r", shading="nearest")
+    fig.colorbar(mesh, ax=ax, label=r"$\log_{10}\|r(t)\|_2$")
+    ax.set_xlabel("t")
+    ax.set_ylabel("epoch")
+    ax.set_title("(a) Residual field over training")
+    ax.grid(False)
+
+    ax = axes[1]
+    with np.errstate(invalid="ignore"):
+        ax.semilogy(epochs, _positive(np.nanmedian(values, axis=1)), label="median over t")
+        ax.semilogy(epochs, _positive(np.nanmax(values, axis=1)), ls="--", label="worst point")
+    ax.set_xlabel("epoch")
+    ax.set_ylabel(r"$\|r\|_2$")
+    ax.set_title("(b) Spread across collocation points")
+    ax.legend(loc="best")
+
+    fig.suptitle(f"Collocation residual evolution{f' — {label}' if label else ''}")
+    fig.tight_layout()
+    return fig
+
+
+def fig_residual_profiles(
+    epochs: np.ndarray, t_centres: np.ndarray, values: np.ndarray,
+    n_profiles: int = 6, label: str = ""
+) -> Figure:
+    """Residual against t at a handful of epochs, showing the error front move."""
+    picks = np.unique(np.linspace(0, len(epochs) - 1, n_profiles).astype(int))
+    palette = sns.color_palette("viridis", len(picks))
+    fig, ax = plt.subplots(figsize=(8.5, 5.0))
+
+    for colour, k in zip(palette, picks):
+        ax.semilogy(t_centres, _positive(values[k]), color=colour, lw=1.4,
+                    label=f"epoch {epochs[k]}")
+    ax.set_xlabel("t")
+    ax.set_ylabel(r"$\|r(t)\|_2$  (binned median)")
+    ax.set_title(f"Residual profile by epoch{f' — {label}' if label else ''}")
+    ax.legend(loc="best", ncol=2, fontsize="small")
+    fig.tight_layout()
+    return fig
+
+
+def fig_point_convergence(summary: pd.DataFrame, label: str = "") -> Figure:
+    """How long each collocation point took to satisfy the ODE, and where it sat."""
+    threshold_col = "epoch_below_1e-4"
+    reached = summary[summary[threshold_col].notna()]
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.3))
+
+    ax = axes[0]
+    if not reached.empty:
+        sns.histplot(x=reached[threshold_col], bins=40, ax=ax,
+                     color=sns.color_palette()[0], edgecolor="white")
+    n_never = len(summary) - len(reached)
+    ax.set_xlabel(r"epoch at which $\|r\|_2 < 10^{-4}$")
+    ax.set_ylabel("collocation points")
+    ax.set_title(f"(a) Convergence epoch ({n_never} never reached)")
+
+    ax = axes[1]
+    ax.scatter(summary["t"], summary[threshold_col], s=6, alpha=0.4,
+               color=sns.color_palette()[2], edgecolors="none")
+    ax.set_xlabel("t")
+    ax.set_ylabel("convergence epoch")
+    ax.set_title("(b) Convergence epoch across the domain")
+
+    ax = axes[2]
+    ax.scatter(summary["t"], _positive(summary["r_final"]), s=6, alpha=0.4,
+               color=sns.color_palette()[3], edgecolors="none", label="final")
+    ax.scatter(summary["t"], _positive(summary["r_max"]), s=6, alpha=0.25,
+               color="0.5", edgecolors="none", label="worst during training")
+    ax.set_yscale("log")
+    ax.set_xlabel("t")
+    ax.set_ylabel(r"$\|r\|_2$")
+    ax.set_title("(c) Final vs worst residual per point")
+    ax.legend(loc="best", fontsize="small")
+
+    fig.suptitle(f"Per-point convergence{f' — {label}' if label else ''}")
+    fig.tight_layout()
+    return fig
+
+
+def fig_architecture_scatter(sweep: pd.DataFrame, value: str = "rmse_combined_l2") -> Figure:
+    """Accuracy and cost against model size across every architecture in the sweep."""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.6))
+
+    for ax, (x, xlabel, title) in zip(axes, (
+        ("n_params", "trainable parameters", "(a) Accuracy vs model size"),
+        ("wall_clock_s", "wall-clock training time (s)", "(b) Accuracy vs training cost"),
+    )):
+        if x not in sweep.columns:
+            continue
+        sns.scatterplot(data=sweep, x=x, y=value, hue="depth", size="width",
+                        palette="colorblind", sizes=(50, 160), ax=ax)
+        for _, r in sweep.iterrows():
+            ax.annotate(f"{int(r['depth'])}x{int(r['width'])}", (r[x], r[value]),
+                        textcoords="offset points", xytext=(5, 4), fontsize="xx-small",
+                        color="0.35")
+        ax.set_yscale("log")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(value)
+        ax.set_title(title)
+        ax.legend(loc="best", fontsize="xx-small", ncol=2)
+
+    fig.suptitle("Architecture sweep — accuracy against size and cost")
+    fig.tight_layout()
+    return fig
+
+
+def write_residual_surface_html(
+    epochs: np.ndarray, t_centres: np.ndarray, values: np.ndarray,
+    path: str | Path, label: str = "",
+) -> Path | None:
+    """Rotatable 3-D residual surface (epoch, t, log10 |r|) as a standalone HTML file.
+
+    Returns ``None`` when plotly is not installed; the static figures already carry
+    the same information, so this is an optional extra rather than a hard dependency.
+    """
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        return None
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    z = np.log10(np.where(values > 0, values, np.nan))
+    fig = go.Figure(go.Surface(x=t_centres, y=epochs, z=z, colorscale="Inferno_r",
+                               colorbar={"title": "log10 |r|"}))
+    fig.update_layout(
+        title=f"Collocation residual surface{f' — {label}' if label else ''}",
+        scene={"xaxis_title": "t", "yaxis_title": "epoch", "zaxis_title": "log10 |r|"},
+        margin={"l": 0, "r": 0, "t": 40, "b": 0},
+    )
+    fig.write_html(str(path), include_plotlyjs="cdn")
+    return path
+
+
+# --------------------------------------------------------------------------
 # orchestration
 # --------------------------------------------------------------------------
 @dataclass
@@ -777,10 +947,13 @@ def generate_sweep(
     if {"depth", "width", "activation"} <= set(sweep.columns):
         written["architecture_heatmap"] = save_figure(
             fig_architecture_heatmap(sweep, value), out, "architecture_heatmap", formats)
-    if "activation" in sweep.columns:
+    if "activation" in sweep.columns and sweep["activation"].nunique() > 1:
         written["activation_comparison"] = save_figure(
             fig_activation_comparison(sweep, value), out, "activation_comparison", formats)
-    if "seed" in sweep.columns:
+    if "seed" in sweep.columns and sweep["seed"].nunique() > 1:
         written["seed_robustness"] = save_figure(
             fig_seed_robustness(sweep, value), out, "seed_robustness", formats)
+    if "n_params" in sweep.columns:
+        written["architecture_scatter"] = save_figure(
+            fig_architecture_scatter(sweep, value), out, "architecture_scatter", formats)
     return written
