@@ -4,9 +4,9 @@
     python run_epoch.py 5         # 5 epochs, one snapshot each
 
 Trains from scratch for the given number of epochs with a snapshot every epoch,
-then prints the full N_c-row table for the last one: for each collocation point,
-its time, the raw network output, the trial solution, the autograd derivative,
-the physics right-hand side, and the residual.
+then prints the first few rows of the N_c-row table for the last one: for each
+collocation point, its time, the raw network output, the trial solution, the
+autograd derivative, the physics right-hand side, and the residual.
 
 No figures are rendered -- one epoch is too few points to plot -- so this is the
 fast way to see exactly what one training step computes.
