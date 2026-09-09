@@ -1,0 +1,40 @@
+% Standalone preview for a blank Overleaf workspace.
+% For the complete team paper, use the team's main IEEE file instead.
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{placeins}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+
+\begin{document}
+
+\title{Physics-Informed Neural Network Method for the Lorenz--1960 System}
+\author{\IEEEauthorblockN{Section III Preview}}
+\maketitle
+
+\begin{abstract}
+This document is a standalone preview of the Physics-Informed Neural Network
+Method section. It is prepared for IEEE conference formatting and uses the
+verified settings of the Lorenz--1960 PINN implementation.
+\end{abstract}
+
+\begin{IEEEkeywords}
+physics-informed neural network, Lorenz--1960 system, automatic differentiation,
+collocation method
+\end{IEEEkeywords}
+
+% Sections I and II are omitted in this preview. This makes the method appear
+% as Section III. Remove this line when inserting the section into the full paper.
+\setcounter{section}{2}
+\IfFileExists{section_III_overleaf/section_III_pinn_method.tex}{%
+    \input{section_III_overleaf/section_III_pinn_method.tex}%
+}{%
+    \input{section_III_pinn_method.tex}%
+}
+
+\end{document}
