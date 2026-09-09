@@ -1,6 +1,6 @@
-# fydp2: the code explained (plain language, line by line)
+# pinn: the code explained (plain language, line by line)
 
-This document explains **every file** in the `src/fydp2/` PINN, in simple language,
+This document explains **every file** in the `src/pinn/` PINN, in simple language,
 for someone new to physics-informed neural networks. It covers *what* each line
 does, *why* it is there, and *how* it helps solve the Lorenz-1960 system.
 
@@ -12,9 +12,7 @@ We want the three functions `x(t), y(t), z(t)` that solve a system of ODEs (the
 Lorenz-1960 equations) on the time interval `t ∈ [0, 1]`.
 
 The classic way (RK4/SciPy) *steps* through time in tiny increments. Our way is
-different: we train a small **neural network** to **be** the solution. After
-training, you can plug in any `t` and it returns `(x, y, z)` directly. There
-is no stepping.
+different: we train a small **neural network** to **be** the solution. After training, you can plug in any `t` and it returns `(x, y, z)` directly. There is no stepping.
 
 How can a network learn the solution **without being shown the answer**? Because
 the ODEs themselves tell us what a correct solution must satisfy:
@@ -50,7 +48,7 @@ config.py   -> all the settings + access to the trusted baseline solver
 pinn.py     -> the network, the physics residual, and the loss
 train.py    -> the training loop (Adam, then optional L-BFGS), evaluation, and plots
 test_pinn.py-> quick checks that the pieces are correct
-__init__.py -> makes `import fydp2` convenient
+__init__.py -> makes `import pinn` convenient
 lorenz_pinn.ipynb -> a notebook to run everything on Kaggle/Colab (notebooks/)
 ```
 
@@ -77,7 +75,7 @@ Data flows left to right: `config` → build `pinn` → `train` it → save resu
 
 ---
 
-## 2. `src/baseline/lorenz1960_baseline.py` (imported, not part of fydp2)
+## 2. `src/baseline/lorenz1960_baseline.py` (imported, not part of pinn)
 
 We do **not** modify this file. It is the locked, trusted reference. We only
 import four things from it:
@@ -92,7 +90,7 @@ import four things from it:
 
 ---
 
-## 3. `src/fydp2/config.py`: every setting in one place
+## 3. `src/pinn/config.py`: every setting in one place
 
 ```python
 1  """Central configuration and locked-baseline access for the FYDP-2 PINN."""
@@ -117,7 +115,7 @@ object, `numpy` for arrays.
 `__file__` is this file's path. `parents[1]` goes up one level to `src/`, and its
 parent is the repository root (used further down to anchor output paths).
 Line 12 adds `src/baseline/` to Python's search path so the next import works.
-**Why:** it lets `src/fydp2/` reuse the locked baseline solver
+**Why:** it lets `src/pinn/` reuse the locked baseline solver
 without copying any code.
 
 ```python
@@ -189,8 +187,8 @@ How many time points we check the physics at (3000, drawn by Latin hypercube
 sampling over `[0,1]`, following PinnDE).
 
 ```python
-    results_dir: str = "src/fydp2/results"
-47     ckpt_dir: str = "src/fydp2/history"
+    results_dir: str = "src/pinn/results"
+47     ckpt_dir: str = "src/pinn/history"
 ```
 Where plots/tables go and where the saved model and telemetry go. Both are
 tracked in git as the run of record.
@@ -236,7 +234,7 @@ The public names other files may import from here.
 
 ---
 
-## 4. `src/fydp2/pinn.py`: the network, the physics, the loss (the heart)
+## 4. `src/pinn/pinn.py`: the network, the physics, the loss (the heart)
 
 ```python
 4  import torch
@@ -327,56 +325,92 @@ point. It is exact by construction, and the PinnDE paper says this trains
 better for smooth problems like ours.
 
 ```python
-40 def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
-41     c = torch.as_tensor(coeffs, dtype=u.dtype, device=u.device).reshape(3)
-42     x, y, z = u[:, 0], u[:, 1], u[:, 2]
-43     f = torch.stack([c[0] * y * z, c[1] * x * z, c[2] * x * y], dim=1)
-44     return dudt - f
+def ode_rhs(u: Tensor, coeffs) -> Tensor:
+    c = torch.as_tensor(coeffs, dtype=u.dtype, device=u.device).reshape(3)
+    x, y, z = u[:, 0], u[:, 1], u[:, 2]
+    return torch.stack([c[0] * y * z, c[1] * x * z, c[2] * x * y], dim=1)
+
+
+def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
+    return dudt - ode_rhs(u, coeffs)
 ```
 This is the physics, written as pure math (no network inside, so it is easy to test):
-- Line 41: make sure the coefficients are a tensor on the same device/precision as
-  `u`. (Doing this directly avoids a bug where numpy conversion fails on a GPU.)
-- Line 42: split `u` into columns x, y, z.
-- Line 43: build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]`, the ODE's
-  "what the derivative *should* be."
-- Line 44: return `dudt − f`, the residual. Zero means the ODE is satisfied.
+- Make sure the coefficients are a tensor on the same device/precision as `u`.
+  (Doing this directly avoids a bug where numpy conversion fails on a GPU.)
+- Split `u` into columns x, y, z.
+- Build the right-hand side `f = [c_x·yz, c_y·xz, c_z·xy]`, the ODE's "what the
+  derivative *should* be."
+- Return `dudt − f`, the residual. Zero means the ODE is satisfied.
+
+`ode_rhs` is split out because `f` is not only an intermediate on the way to the
+residual — it is one of the columns recorded in the per-point breakdown, so it
+needs a name of its own.
 
 ```python
-47 def residual(model: PINN, t: Tensor) -> Tensor:
-48     u = model(t)
-49     cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
-50     dudt = torch.stack(cols, dim=1)
-51     return ode_residual(u, dudt, model.coeffs)
+def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
+    n = model.net(t)
+    u = model.trial(t, n)
+    cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
+    dudt = torch.stack(cols, dim=1)
+    f = ode_rhs(u, model.coeffs)
+    return ResidualParts(n=n, u=u, dudt=dudt, f=f, r=dudt - f)
+
+
+def residual(model: PINN, t: Tensor) -> Tensor:
+    return residual_parts(model, t).r
 ```
 Ties the network to the physics:
-- Line 48: get the network's `(x, y, z)` at the times `t`.
-- Line 49: the key step. For each output column `j`, `torch.autograd.grad`
-  computes its derivative with respect to `t`. This is `dx/dt, dy/dt, dz/dt`,
-  computed **exactly** by PyTorch, not approximated. (`.sum()` is a standard trick:
+- `model.net(t)` is the raw network output `N(t)`; `model.trial(t, n)` wraps it
+  into `u_T = u0 + g(t)·N(t)` so the start point is exact. (Together these are
+  just `model(t)` — they are written separately here only so `N(t)` can be kept.)
+- The key step. For each output column `j`, `torch.autograd.grad` computes its
+  derivative with respect to `t`. This is `dx/dt, dy/dt, dz/dt`, computed
+  **exactly** by PyTorch, not approximated. (`.sum()` is a standard trick:
   because each point's output depends only on its own `t`, summing then
   differentiating gives the per-point derivative. `create_graph=True` keeps the
   result differentiable so training can use it.)
-- Line 50: stack the three derivatives into an `N×3` array.
-- Line 51: plug the network's values and derivatives into the physics from above.
+- Stack the three derivatives into an `N×3` array, evaluate the physics, subtract.
+
+**Why return all five pieces instead of just the residual?** Every one of them —
+raw output, trial solution, derivative, right-hand side, residual — is a column
+in the per-epoch breakdown described in the README. Because the training step has
+to compute them anyway, handing them back means a snapshot costs nothing but the
+CSV write: no second forward pass, no second call to autograd. `residual()` is
+now a one-line wrapper for the callers that only want `r`.
 
 ```python
-54 def pinn_loss(model: PINN, t: Tensor) -> Tensor:
-55     loss = residual(model, t).pow(2).mean()
-56     if model.ic == "soft":
-57         t0 = torch.full((1, 1), model.t0, dtype=t.dtype, device=t.device)
-58         loss = loss + model.gamma * (model(t0) - model.u0).pow(2).mean()
-59     return loss
+def loss_terms(model: PINN, t: Tensor) -> tuple[Tensor, Tensor, ResidualParts]:
+    parts = residual_parts(model, t)
+    res = parts.r.pow(2).mean()
+    if model.ic == "soft":
+        t0 = torch.full((1, 1), model.t0, dtype=t.dtype, device=t.device)
+        ic = (model(t0) - model.u0).pow(2).mean()
+    else:
+        ic = torch.zeros((), dtype=res.dtype, device=res.device)
+    return res, ic, parts
+
+
+def pinn_loss(model: PINN, t: Tensor) -> Tensor:
+    res, ic, _ = loss_terms(model, t)
+    return res + model.gamma * ic if model.ic == "soft" else res
 ```
 The one number we minimize:
-- Line 55: average of the squared residual over all points. Small = the network
-  obeys the physics well.
+- `parts.r.pow(2).mean()` is the average of the squared residual. Small = the
+  network obeys the physics well.
+- **Careful with that mean.** `parts.r` is an `N_c × 3` array, so `.mean()`
+  divides by `3 × N_c`, not by `N_c`. The loss is the average over every residual
+  *entry* — three per collocation point — not the average over points. This is
+  why the breakdown's `loss_contribution` column is `r_sq / (3·N_c)`; summing it
+  down a snapshot's `N_c` rows reproduces the reported loss exactly.
+- The residual and initial-condition parts are returned separately so the loss
+  can be plotted by component, and `parts` comes along for the snapshot writer.
 - Lines 56-58 (soft mode only): add a penalty for missing the start point,
   `gamma · average((network(t0) − u0)²)`. In hard mode this term is unnecessary
   (the start point is already exact), so it's skipped.
 
 ---
 
-## 5. `src/fydp2/train.py`: train, evaluate, and save
+## 5. `src/pinn/train.py`: train, evaluate, and save
 
 ```python
 import numpy as np
@@ -453,9 +487,12 @@ late to settle precisely. (This matches PinnDE's default schedule.)
         logging = epoch % cfg.log_every == 0 or last
 
         adam.zero_grad()
-        res, ic = loss_terms(model, grid.clone().requires_grad_(True))
+        res, ic, parts = loss_terms(model, grid.clone().requires_grad_(True))
         loss = res + model.gamma * ic if cfg.ic == "soft" else res
         loss.backward()
+
+        if history.snapshots is not None and (epoch % cfg.snapshot_every == 0 or last):
+            history.snapshots.write(epoch, parts)
 
         lr = adam.param_groups[0]["lr"]
         before = flat_params(model) if logging else None
@@ -475,6 +512,11 @@ The training loop, repeated `epochs` times:
   and initial-condition parts separate so the loss can be plotted by component.
   `grid.clone().requires_grad_(True)` makes a fresh copy of the time points that
   PyTorch will track for derivatives (the residual needs `d/dt`).
+- the snapshot line: every `snapshot_every` epochs, write all `N_c` points'
+  state to `breakdown/epoch_<n>.csv`. It runs **before** `adam.step()`, so the
+  numbers on disk are exactly the ones this epoch's gradient was built from.
+  Disabled by default (`snapshot_every=0`), which is why the run of record is
+  unaffected by any of this.
 - `backward()`: compute how each weight affects the loss.
 - `adam.step()`: nudge the weights to reduce the loss.
 - `sched.step()`: shrink the learning rate a little.
@@ -571,7 +613,7 @@ def save_results(model, history, cfg) -> pd.DataFrame:
 Saves the trained weights (`pinn.pt`) so you can reload the model without
 retraining, then hands the run to `figures.write_run_report`, which writes
 `metrics.csv`, the `results.png` report figure, and the whole `figures/` suite
-into `src/fydp2/results/`, with the bulk telemetry going to `src/fydp2/history/`. Both paths
+into `src/pinn/results/`, with the bulk telemetry going to `src/pinn/history/`. Both paths
 are anchored to the repository root, so it does not matter which folder you run
 from. An earlier version used bare relative paths and quietly created a
 nested duplicate results folder when run from inside the package.
@@ -593,11 +635,11 @@ if __name__ == "__main__":
 ```
 `main` runs the whole pipeline with default settings: train → save → print the
 error table. The last two lines let you run the file directly with
-`python -m fydp2.train`.
+`python -m pinn.train`.
 
 ---
 
-## 5b. `src/fydp2/history.py`: what the optimiser was doing
+## 5b. `src/pinn/history.py`: what the optimiser was doing
 
 `TrainHistory` is a plain record with one list per quantity. `loss` gets an entry
 every single iteration; everything else is sampled. Two methods fill it:
@@ -613,7 +655,7 @@ every single iteration; everything else is sampled. Two methods fill it:
   trusted solution at that point in training.
 
 `diagnostics_frame()` and `reference_frame()` dump the record to tidy DataFrames,
-which the report writes as CSVs under `src/fydp2/history/`, and `from_saved()` reads
+which the report writes as CSVs under `src/pinn/history/`, and `from_saved()` reads
 them back. **Why bother:** without them the diagnostics exist only in memory, so
 redrawing a gradient figure would mean repeating a 20000-epoch run. They live
 beside the checkpoint rather than in `results/` because they are half a megabyte
@@ -626,7 +668,7 @@ really did drive the true error down.
 
 ---
 
-## 5c. `src/fydp2/figures.py`: every plot in one place
+## 5c. `src/pinn/figures.py`: every plot in one place
 
 The module imports numpy, pandas, matplotlib, seaborn and scipy, but no torch. It
 takes arrays and returns figures.
@@ -665,7 +707,7 @@ reference shows how much conserved structure the network quietly threw away.
 
 ---
 
-## 6. `src/fydp2/test_pinn.py`: correctness checks
+## 6. `src/pinn/test_pinn.py`: correctness checks
 
 ```python
 8  def test_hard_ic_exact():
@@ -718,10 +760,10 @@ Run them all with: `python -m pytest` from the repository root.
 
 ---
 
-## 7. `src/fydp2/__init__.py` and `requirements.txt`
+## 7. `src/pinn/__init__.py` and `requirements.txt`
 
 `__init__.py` (3 lines) just re-exports `Config` and `reference_trajectory` so you
-can write `import fydp2; fydp2.Config()`.
+can write `import pinn; pinn.Config()`.
 
 `requirements.txt` lists the libraries needed: `torch, numpy, scipy, matplotlib,
 seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
@@ -733,8 +775,8 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 1. **(markdown)** Title and one-paragraph description.
 2. **(markdown)** Setup instructions for Kaggle/Colab.
 3. **(code)** Optional `git clone` for Colab, then a few lines that add the repo
-   folder to Python's path so `import fydp2` works.
-4. **(code)** Imports from `fydp2.config` and `fydp2.train`, and prints the device
+   folder to Python's path so `import pinn` works.
+4. **(code)** Imports from `pinn.config` and `pinn.train`, and prints the device
    (GPU or CPU).
 5. **(markdown)** "Configure."
 6. **(code)** `cfg = Config()` holds the settings. Edit here to change the experiment.
@@ -785,3 +827,22 @@ seaborn, pandas, pytest`. Install with `pip install -r requirements.txt`.
 - This solves a **single** initial value problem. It does **not** learn a solution
   operator over many initial conditions (that is the PinnDE paper's DeepONet, out of scope
   here), and it has not been tested beyond `t ∈ [0, 1]`.
+
+
+---
+
+## What is not covered here
+
+This walkthrough predates two later additions. Both are documented in full in the
+project README rather than repeated here:
+
+- **`history.SnapshotWriter` and the per-epoch breakdown** — the 27-column record
+  of every collocation point at every snapshot epoch, the `point_summary.csv`
+  aggregation built alongside it, and the `point_history()` / `residual_grid()`
+  readers. See README §5.2–5.3.
+- **`sweep.py`** — the depth × width architecture sweep, its `runs/<arch>/`
+  output layout, and the `comparison.csv` table. See README §6, including why a
+  single-seed sweep cannot support "architecture A beats architecture B".
+
+Line numbers in the code excerpts above have been dropped where the source has
+since shifted; the excerpts themselves match the current code.

@@ -37,15 +37,15 @@ network only learns how the curve moves away from it.
 
 - `src/baseline/lorenz1960_baseline.py` holds the equations and the trusted
   solver. One source of truth. The PINN imports from it and never edits it.
-- `src/fydp2/config.py` is the settings sheet. Network size, training length,
+- `src/pinn/config.py` is the settings sheet. Network size, training length,
   everything. Change a setting there, no code edits needed.
-- `src/fydp2/pinn.py` is the network itself, plus the residual and the loss.
-- `src/fydp2/train.py` runs training: 20000 rounds of Adam, learning rate
+- `src/pinn/pinn.py` is the network itself, plus the residual and the loss.
+- `src/pinn/train.py` runs training: 20000 rounds of Adam, learning rate
   sliding from 1e-3 down to 1e-4. L-BFGS polish exists but is off by default.
-- `src/fydp2/history.py` writes down what happened during training, so we can
+- `src/pinn/history.py` writes down what happened during training, so we can
   make plots later without training again.
-- `src/fydp2/figures.py` draws all the figures.
-- `src/fydp2/test_pinn.py` has 9 tests. They check the start point is exact,
+- `src/pinn/figures.py` draws all the figures.
+- `src/pinn/test_pinn.py` has 9 tests. They check the start point is exact,
   the physics is coded right, training works, and every figure gets written.
 
 ## What we found
@@ -59,7 +59,7 @@ The network solves the system well. Compared to the trusted SciPy answer:
 For scale: the values of x, y, z are around 0.5 to 1.6. So the network is right
 to about five decimal places, using only the rules, never the answer.
 
-The curves in `src/fydp2/results/` show the same story. The PINN line sits on
+The curves in `src/pinn/results/` show the same story. The PINN line sits on
 top of the reference line. You cannot see a gap by eye. The error plot is the
 interesting one, because the gap only shows up when you zoom in a million times.
 
@@ -81,5 +81,5 @@ python -m pytest          # checks, takes about half a minute
 python run_pinn.py        # full training run, writes all results and figures
 ```
 
-Results land in `src/fydp2/results/`. The training record and the trained
-network land in `src/fydp2/history/`.
+Results land in `src/pinn/results/`. The training record and the trained
+network land in `src/pinn/history/`.
