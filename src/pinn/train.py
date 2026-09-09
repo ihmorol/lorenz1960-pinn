@@ -35,6 +35,8 @@ def make_grid(cfg: Config, device: torch.device) -> Tensor:
 def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     set_seed(cfg.seed)
     device = get_device()
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     model = PINN(cfg).to(device)
     grid = make_grid(cfg, device)
     history = TrainHistory()
