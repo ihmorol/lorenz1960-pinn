@@ -298,3 +298,366 @@ def test_resume_skips_a_finished_run(tmp_path):
 
     (cfg.results_path / "run_summary.csv").unlink()  # simulate an interrupted run
     assert run_one(cfg, resume=True)["arch"].iloc[0] == "1x6"
+
+
+# --------------------------------------------------------------------------
+# trajectory capture and the batching question
+# --------------------------------------------------------------------------
+def test_batched_gradient_equals_sum_of_per_point_gradients():
+    """The central claim: one batched backward pass is not an approximation.
+
+    The residual system is diagonal in the collocation points, so the batched
+    gradient and the summed per-point gradients are the same vector up to float32
+    summation round-off. If this test ever fails, the batching argument in the
+    README is wrong and the loss has grown a cross-point coupling.
+    """
+    from pinn.trajectory import gradient_equivalence
+
+    report = gradient_equivalence(Config(depth=1, width=8, n_collocation=32, seed=0))
+    assert report["rel_loss_diff"] < 1e-5
+    assert report["rel_grad_diff"] < 1e-4
+    assert report["grad_cosine"] > 0.99999
+    # Agreement must be at round-off scale, not merely "close".
+    assert report["rel_grad_diff"] < report["roundoff_bound"]
+
+
+def test_record_per_epoch_walks_the_training_grid(tmp_path):
+    """Every epoch is recorded, on the same points the loss was computed on."""
+    from pinn.trajectory import record_per_epoch
+    from pinn.train import get_device, make_grid
+
+    cfg = Config(depth=1, width=8, epochs=12, n_collocation=16, log_every=6,
+                 eval_every=6, print_every=0, seed=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history, data = record_per_epoch(cfg, every=1)
+
+    # The stock loop snapshots on epoch % snapshot_every == 0, plus the last one.
+    assert list(data.epochs) == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    assert data.pred.shape == (cfg.epochs, cfg.n_collocation, 3)
+    assert data.t.shape == (cfg.n_collocation,)
+    assert data.ref.shape == (cfg.n_collocation, 3)
+    assert np.all(np.diff(data.t) >= 0)          # sorted, so rows join into a curve
+    assert history.snapshots is not None         # recorded by the existing writer
+
+    # And the recorded points are the training grid, in the same order.
+    grid = make_grid(cfg, get_device()).cpu().numpy().reshape(-1)
+    assert data.t == pytest.approx(np.sort(grid))
+
+
+def test_record_per_epoch_honours_the_cadence(tmp_path):
+    from pinn.trajectory import record_per_epoch
+
+    cfg = Config(depth=1, width=8, epochs=20, n_collocation=16, log_every=10,
+                 eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    _, _, data = record_per_epoch(cfg, every=5)
+    assert list(data.epochs) == [0, 5, 10, 15, 19]
+
+
+def test_trajectory_round_trips_through_csv_and_npz(tmp_path):
+    """A breakdown directory and a saved npz describe the same trajectory."""
+    from pinn.trajectory import load_from_breakdown, load_npz, save_npz
+    from pinn.train import train
+
+    cfg = Config(depth=1, width=8, epochs=11, n_collocation=16, snapshot_every=5,
+                 log_every=10, eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    train(cfg)
+
+    data = load_from_breakdown(tmp_path / "breakdown")
+    assert list(data.epochs) == [0, 5, 10]
+    assert data.n_frames == 3 and data.n_points == cfg.n_collocation
+
+    # The npz must be lossless: it is the artefact the figures are redrawn from.
+    path = save_npz(data, tmp_path / "t.npz")
+    again = load_npz(path)
+    assert again.epochs.tolist() == data.epochs.tolist()
+    assert np.array_equal(again.pred, data.pred)
+    assert np.array_equal(again.t, data.t)
+    assert np.array_equal(again.ref, data.ref)
+
+    # RMSE must fall over training, and the last frame must beat the first.
+    rmse = data.rmse()
+    assert rmse[-1] < rmse[0]
+
+
+def test_trajectory_frame_reports_the_batch_extent(tmp_path):
+    from pinn.trajectory import load_from_breakdown, trajectory_frame
+    from pinn.train import train
+
+    cfg = Config(depth=1, width=8, epochs=6, n_collocation=16, snapshot_every=5,
+                 log_every=10, eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    train(cfg)
+    frame = trajectory_frame(load_from_breakdown(tmp_path / "breakdown"))
+
+    assert len(frame) == 2
+    for name in "xyz":
+        assert (frame[f"pred_{name}_max"] >= frame[f"pred_{name}_min"]).all()
+        assert frame[f"spread_{name}"].to_numpy() == pytest.approx(
+            (frame[f"pred_{name}_max"] - frame[f"pred_{name}_min"]).to_numpy())
+    assert (frame["n_points"] == cfg.n_collocation).all()
+
+
+def test_trajectory_figures_render(tmp_path):
+    """Each figure draws the frames it was given, on axes that hold the data."""
+    import matplotlib.pyplot as plt
+
+    from pinn import trajectory_figures as tfig
+    from pinn.trajectory import load_from_breakdown
+    from pinn.train import train
+
+    cfg = Config(depth=1, width=8, epochs=41, n_collocation=24, snapshot_every=10,
+                 log_every=20, eval_every=20, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    train(cfg)
+    data = load_from_breakdown(tmp_path / "breakdown")
+    rmse = data.rmse()
+
+    fig = tfig.fig_trajectory_3d_panels(data.epochs, data.pred, data.ref,
+                                        n_panels=4, rmse=rmse, label=data.label)
+    panels = fig.axes
+    assert len(panels) == 4
+    # Shared limits: every panel must show the same box, sized to hold the data.
+    limits = {(round(a.get_xlim()[0], 9), round(a.get_xlim()[1], 9)) for a in panels}
+    assert len(limits) == 1
+    assert panels[0].get_xlim()[0] <= data.pred[..., 0].min()
+    assert panels[0].get_xlim()[1] >= data.pred[..., 0].max()
+    plt.close(fig)
+
+    fig = tfig.fig_trajectory_projections(data.epochs, data.pred, data.ref,
+                                          max_lines=3, thin=2)
+    assert len(fig.axes) >= 3
+    plt.close(fig)
+
+    fig = tfig.fig_trajectory_time_slices(data.epochs, data.t, data.pred, data.ref,
+                                          max_lines=3, thin=2)
+    assert len(fig.axes) >= 3
+    plt.close(fig)
+
+    fig = tfig.fig_trajectory_extent(data.epochs, data.pred, data.ref, log_epoch=True)
+    assert len(fig.axes) == 3
+    plt.close(fig)
+
+
+def test_animation_writes_moving_frames(tmp_path):
+    """The GIF must actually animate: frames are distinct, not one repeated image."""
+    from PIL import Image, ImageSequence
+
+    from pinn import trajectory_figures as tfig
+    from pinn.trajectory import load_from_breakdown
+    from pinn.train import train
+
+    cfg = Config(depth=1, width=8, epochs=21, n_collocation=16, snapshot_every=5,
+                 log_every=20, eval_every=20, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    train(cfg)
+    data = load_from_breakdown(tmp_path / "breakdown")
+
+    path = tfig.animate_trajectory(data.epochs, data.t, data.pred, data.ref,
+                                   path=tmp_path / "anim.gif", n_frames=5, thin=2, dpi=60)
+    frames = [np.asarray(f.convert("L"), dtype=float)
+              for f in ImageSequence.Iterator(Image.open(path))]
+    assert len(frames) == 5
+    deltas = [np.abs(frames[i + 1] - frames[i]).mean() for i in range(len(frames) - 1)]
+    assert min(deltas) > 0.0
+
+
+def test_batch_size_comparison_matched_compute():
+    """Every arm is scored on the full batch; only the step count differs."""
+    from pinn.trajectory import batch_size_comparison
+
+    cfg = Config(depth=1, width=8, n_collocation=32, seed=0)
+    curves, timing = batch_size_comparison(cfg, batch_sizes=(0, 8), point_budget=320,
+                                           max_wall_s=30.0)
+
+    full = curves[curves["batch_size"] == "full"]
+    mini = curves[curves["batch_size"] == "8"]
+    assert set(curves.columns) == {"batch_size", "step", "points_evaluated",
+                                   "loss", "batch_loss"}
+    # The full-batch arm takes one step per epoch over all 32 points; the
+    # mini-batch arm needs four times as many steps for the same point count.
+    assert full["points_evaluated"].iloc[0] == cfg.n_collocation
+    assert mini["points_evaluated"].iloc[0] == 8
+    assert (curves["loss"] > 0).all()
+
+    # Every row is scored on the whole collocation set, so for the full-batch arm
+    # the score is that arm's own loss object. It is taken after the step, which
+    # makes it exactly what the next step starts from.
+    assert full["loss"].to_numpy()[:-1] == pytest.approx(
+        full["batch_loss"].to_numpy()[1:], rel=1e-6)
+    # A mini-batch arm's own loss is a different quantity entirely, which is the
+    # reason the comparison is plotted on "loss" and not on what each step saw.
+    assert not np.allclose(mini["loss"].to_numpy(), mini["batch_loss"].to_numpy(), rtol=1e-3)
+
+    assert set(timing) == {"full", "8"}
+    assert all(v > 0 for v in timing.values())
+
+
+
+# --------------------------------------------------------------------------
+# time marching
+# --------------------------------------------------------------------------
+def test_marching_stages_tile_the_window():
+    """Stage grids are disjoint, inside their own stage, and total n_collocation."""
+    from pinn.marching import MarchingConfig, segment_grid, segment_sizes
+
+    cfg = MarchingConfig(n_segments=5, n_collocation=103, depth=1, width=8)
+    sizes = segment_sizes(cfg)
+    assert sizes.sum() == cfg.n_collocation
+    assert sizes.max() - sizes.min() <= 1          # the remainder is spread, not dumped
+
+    edges = cfg.edges()
+    assert edges.size == cfg.n_segments + 1
+    assert (np.diff(edges) > 0).all()
+
+    seen = []
+    for k in range(cfg.n_segments):
+        t = segment_grid(cfg, k, "cpu").numpy().reshape(-1)
+        assert len(t) == sizes[k]
+        assert (t >= edges[k]).all() and (t <= edges[k + 1]).all()
+        seen.append(t)
+    union = np.concatenate(seen)
+    assert len(np.unique(union)) == cfg.n_collocation   # no point trained twice
+
+
+def test_marching_hard_ic_holds_at_every_stage():
+    """u(t_k) = v_k exactly, for every stage, by construction."""
+    import torch
+
+    from pinn.marching import MarchingConfig, SegmentedPINN
+
+    cfg = MarchingConfig(n_segments=4, depth=1, width=8)
+    model = SegmentedPINN(cfg)
+    for k in range(cfg.n_segments):
+        anchor = torch.tensor([0.4 + 0.1 * k, 0.7 + 0.1 * k, 0.9 + 0.1 * k])
+        model.enter_segment(k, anchor)
+        got = model(model.edges[k].reshape(1, 1)).detach()
+        assert torch.allclose(got[0], anchor, atol=1e-6)
+
+
+def test_marching_anchor_is_the_previous_stage_endpoint():
+    """The marching step: stage k's IC is stage k-1's own right endpoint."""
+    import torch
+
+    from pinn.marching import MarchingConfig, SegmentedPINN, _stage_anchor
+
+    cfg = MarchingConfig(n_segments=3, depth=1, width=8, seed=0)
+    model = SegmentedPINN(cfg)
+    model.enter_segment(0, torch.tensor(cfg.initial_state))
+    model.activate(0)
+    endpoint = model(model.edges[1].reshape(1, 1)).detach()[0]
+    anchor = _stage_anchor(model, 1)
+    assert torch.allclose(endpoint, anchor, atol=1e-7)
+
+
+def test_marching_prediction_is_piecewise():
+    """Each point is evaluated with its own stage's transform, boundaries included."""
+    import torch
+
+    from pinn.marching import MarchingConfig, SegmentedPINN, predict_marching
+
+    cfg = MarchingConfig(n_segments=4, depth=1, width=8)
+    model = SegmentedPINN(cfg)
+    for k in range(cfg.n_segments):
+        model.enter_segment(k, torch.tensor(cfg.initial_state) + 0.01 * k)
+
+    t = np.linspace(cfg.t_span[0], cfg.t_span[1], 41)
+    pred = predict_marching(model, t)
+    assert pred.shape == (41, 3)
+    # A boundary belongs to the stage starting there, so u(0) is stage 0's anchor.
+    assert pred[0] == pytest.approx(cfg.initial_state, abs=1e-6)
+    assert np.isfinite(pred).all()
+
+
+def test_marching_training_reduces_loss_and_reports_seams(tmp_path):
+    """The loop runs, every stage improves, and both tables come back populated."""
+    from pinn.marching import MarchingConfig, train_marching
+
+    cfg = MarchingConfig(depth=1, width=8, n_segments=4, epochs=200, n_collocation=32,
+                        log_every=50, eval_every=100, print_every=0, seed=0)
+    model, history, frames = train_marching(cfg)
+
+    assert len(history.loss) == cfg.total_epochs
+    assert history.wall_clock_s > 0
+    # Each stage has its own collocation set, so its loss is only comparable within
+    # itself -- never across stages. 200 epochs, not fewer: Adam's opening steps on
+    # a 55-parameter net overshoot the initial loss badly and it takes a couple of
+    # hundred epochs for the stage to come back below where it started.
+    per_stage = np.array(history.loss).reshape(cfg.n_segments, cfg.epochs)
+    assert (per_stage[:, -1] < per_stage[:, 0]).all()
+
+    stages = frames["stages"]
+    assert list(stages["stage"]) == list(range(cfg.n_segments))
+    assert (stages["stage_rmse"] > 0).all()
+    # Stage k+1 starts where stage k ended.
+    assert stages["t_end"].iloc[:-1].to_numpy() == pytest.approx(
+        stages["t_start"].iloc[1:].to_numpy())
+
+    jumps = frames["boundary_jumps"]
+    assert len(jumps) == cfg.n_segments - 1
+    assert (jumps["jump_max"] >= 0).all()
+
+
+def test_marching_summary_is_comparable_to_the_single_domain_row():
+    """The summary carries the same column names the run summary uses."""
+    from pinn.marching import MarchingConfig, marching_summary, train_marching
+
+    cfg = MarchingConfig(depth=1, width=8, n_segments=3, epochs=40, n_collocation=24,
+                         log_every=20, eval_every=20, print_every=0, seed=0)
+    model, history, frames = train_marching(cfg)
+    row = marching_summary(model, history, frames, cfg)
+
+    assert len(row) == 1
+    assert row["n_segments"].iloc[0] == 3
+    assert row["epochs"].iloc[0] == cfg.total_epochs
+    for column in ("rmse_combined_l2", "rmse_x", "mae_y", "max_abs_error_z",
+                   "rel_mae_x", "final_loss", "max_boundary_jump", "wall_clock_s"):
+        assert column in row.columns, column
+    assert np.isfinite(row["rmse_combined_l2"].iloc[0])
+
+
+def test_marching_finetune_moves_the_anchors():
+    """With finetune_epochs > 0 the anchors are optimised, so the seams can close."""
+    import torch
+
+    from pinn.marching import MarchingConfig, train_marching
+
+    cfg = MarchingConfig(depth=1, width=8, n_segments=3, epochs=40, n_collocation=24,
+                         finetune_epochs=30, log_every=20, eval_every=20,
+                         print_every=0, seed=0)
+    model, history, _ = train_marching(cfg)
+
+    assert len(history.loss) == cfg.total_epochs == 3 * 40 + 30
+    assert model.anchors.requires_grad is False     # left frozen again afterwards
+    # The fine-tune phase is the only thing that may move anchors 1 and 2, so
+    # neither may still hold its initialised zeros.
+    assert not torch.allclose(model.anchors[1], torch.zeros(3), atol=1e-12)
+
+
+def test_marching_rejects_soft_ic_with_finetune():
+    from pinn.marching import MarchingConfig
+
+    with pytest.raises(ValueError, match="not supported"):
+        MarchingConfig(ic="soft", finetune_epochs=10)
+    MarchingConfig(ic="soft")           # sequential soft IC on its own is fine
+    with pytest.raises(ValueError):
+        MarchingConfig(n_segments=0)
+
+
+def test_marching_finetune_never_moves_the_initial_condition():
+    """The fine-tune closes interior seams; it must not re-solve a different IVP."""
+    import torch
+
+    from pinn.marching import MarchingConfig, predict_marching, train_marching
+
+    cfg = MarchingConfig(depth=1, width=8, n_segments=3, epochs=100, n_collocation=24,
+                         finetune_epochs=200, log_every=50, eval_every=100,
+                         print_every=0, seed=0)
+    model, _, _ = train_marching(cfg)
+
+    assert torch.allclose(model.anchors[0].detach(),
+                          torch.tensor(cfg.initial_state), atol=1e-6)
+    # And the assembled solution still starts at the stated initial condition.
+    assert predict_marching(model, np.array([cfg.t_span[0]]))[0] == pytest.approx(
+        cfg.initial_state, abs=1e-6)
