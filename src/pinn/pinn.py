@@ -21,7 +21,7 @@ class ResidualParts(NamedTuple):
 
     n: Tensor       # raw network output N(t),          (Nc, 3)
     u: Tensor       # trial solution u_T(t),            (Nc, 3)
-    dudt: Tensor    # autograd time derivative du_T/dt,  (Nc, 3)
+    dudt: Tensor    # du_T/dt: autograd, or the sequential walk's own step (Nc, 3)
     f: Tensor       # physics right-hand side f(u_T),   (Nc, 3)
     r: Tensor       # residual r = du_T/dt - f(u_T),    (Nc, 3)
 
@@ -42,6 +42,7 @@ class PINN(nn.Module):
 
         self.ic = cfg.ic
         self.gamma = cfg.gamma
+        self.sequential = bool(cfg.sequential)
         self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=torch.float32))
         self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=torch.float32).reshape(1, 3))
         self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
@@ -54,7 +55,63 @@ class PINN(nn.Module):
         return n
 
     def forward(self, t: Tensor) -> Tensor:
+        if self.sequential:
+            return sequential_rollout(self, t, self.net(t))
         return self.trial(t, self.net(t))
+
+
+def sequential_rollout(model: PINN, t: Tensor, n: Tensor) -> Tensor:
+    """Walk the collocation points in time order, each step anchored to the last.
+
+    The trial solution becomes a discrete integral of the network's own output::
+
+        u(t_start) = u0
+        u_i        = u_{i-1} + (t_i - t_{i-1}) * s_i
+        s_1        = N(t_1),   s_i = (N(t_{i-1}) + N(t_i)) / 2   for i > 1
+
+    with the ``t_i`` in ascending order: the first interval steps with its own
+    endpoint output (the walk has no left neighbour to average with), every later
+    interval with the trapezoid rule. Anchoring each point to the walk rather
+    than to a global constraint means information enters only through the initial
+    condition and travels forward along the chain — and the IC is then exact at
+    ``t_start`` by construction, not by penalty. The trapezoid slope makes the
+    walk second-order accurate in the step size: fed the exact right-hand side,
+    its error against the true solution drops fourfold per grid refinement
+    instead of twofold, so the read-out grid no longer caps the accuracy the
+    scheme can report.
+
+    Written as a cumulative sum rather than a Python loop over the points. The
+    recurrence above has the closed form ``u0 + cumsum(dt * s)``, which computes
+    the same quantity in the same order and agrees with the literal loop to
+    float32 round-off — but as one kernel instead of ``N_c`` of them. At 3000
+    points over 20 000 epochs the literal loop would be 60 million tiny tensor
+    ops. ``torch.argsort`` handles the fact that the Latin-hypercube design is
+    unsorted: the walk runs on the sorted times and the result is scattered back
+    to the caller's ordering.
+    """
+    return _sequential_walk(model, t, n)[0]
+
+
+def _sequential_walk(model: PINN, t: Tensor, n: Tensor) -> tuple[Tensor, Tensor]:
+    """The walk itself: returns ``(u, du/dt)``, both in the caller's point order.
+
+    ``du/dt`` is the walk's own step — each interval's quadrature slope — so
+    ``(u_i - u_{i-1}) / dt_i == du/dt_i`` holds identically and no autograd
+    through ``t`` is needed anywhere.
+    """
+    flat = t.reshape(-1)
+    order = torch.argsort(flat)
+    inv = torch.empty_like(order)
+    inv[order] = torch.arange(flat.numel(), device=flat.device)
+
+    start = torch.as_tensor([model.t0], dtype=flat.dtype, device=flat.device)
+    edges = torch.cat([start, flat[order]])
+    dt = (edges[1:] - edges[:-1]).reshape(-1, 1)
+    n_sorted = n[order]
+    trapezoid = 0.5 * (n_sorted[:-1] + n_sorted[1:])
+    dudt = torch.cat([n_sorted[:1], trapezoid])   # first interval: no left neighbour
+    u = model.u0 + torch.cumsum(dt * dudt, dim=0)
+    return u[inv], dudt[inv]
 
 
 def ode_rhs(u: Tensor, coeffs) -> Tensor:
@@ -71,9 +128,18 @@ def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
 def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
     """One residual evaluation, keeping every intermediate instead of discarding it."""
     n = model.net(t)
-    u = model.trial(t, n)
-    cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
-    dudt = torch.stack(cols, dim=1)
+    if model.sequential:
+        # The walk's own step IS the derivative estimate: consecutive walked points
+        # differ by exactly dt * s_i, the interval's quadrature slope (the trapezoid
+        # average of the two endpoint outputs; n_1 itself on the first interval), so
+        # (u_i - u_{i-1}) / dt == s_i identically and no autograd through t is
+        # needed. The residual is then the ODE residual of the discrete trajectory:
+        # at zero loss it is the implicit-trapezoid solution on the grid.
+        u, dudt = _sequential_walk(model, t, n)
+    else:
+        u = model.trial(t, n)
+        cols = [torch.autograd.grad(u[:, j].sum(), t, create_graph=True)[0][:, 0] for j in range(u.shape[1])]
+        dudt = torch.stack(cols, dim=1)
     f = ode_rhs(u, model.coeffs)
     return ResidualParts(n=n, u=u, dudt=dudt, f=f, r=dudt - f)
 

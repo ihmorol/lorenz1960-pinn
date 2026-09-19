@@ -44,6 +44,14 @@ class Config:
 
     n_collocation: int = 3000
 
+    # Walk the collocation points in time order instead of evaluating them all
+    # independently: each interval is integrated with the trapezoid rule on the
+    # network's output — the average of its two endpoint slopes — starting from the
+    # exact initial condition, and the whole walk is one differentiable pass. One
+    # optimiser step still happens per epoch, after all N_c points have been walked
+    # and stored. See `pinn.pinn.sequential_rollout`.
+    sequential: bool = False
+
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
     print_every: int = 250    # epochs between console progress lines (0 = silent)
@@ -62,6 +70,12 @@ class Config:
             raise ValueError(f"activation must be one of {ACTIVATIONS}")
         if self.ic not in IC_MODES:
             raise ValueError(f"ic must be one of {IC_MODES}")
+        if self.sequential and self.ic == "soft":
+            raise ValueError(
+                "sequential=True pins the initial condition exactly, so the soft-IC "
+                "penalty is identically zero; it would be a silent no-op. "
+                "Use ic='hard'."
+            )
 
     @property
     def coefficients(self) -> np.ndarray:
@@ -81,15 +95,21 @@ class Config:
 
     @property
     def arch(self) -> str:
-        """Directory-safe architecture tag, e.g. ``4x60``."""
-        return f"{self.depth}x{self.width}"
+        """Directory-safe architecture tag, e.g. ``4x60``, or ``4x60_seq``.
+
+        The scheme is part of the tag so that a sequential run writes to its own
+        directory instead of overwriting the single-domain run of the same shape.
+        """
+        tag = f"{self.depth}x{self.width}"
+        return tag if not self.sequential else f"{tag}_seq"
 
     @property
     def label(self) -> str:
         """Short run descriptor used in figure titles."""
+        scheme = "sequential walk, " if self.sequential else ""
         return (
             f"{self.depth}x{self.width} {self.activation}, {self.ic} IC, "
-            f"{self.n_collocation} LHS points"
+            f"{scheme}{self.n_collocation} LHS points"
         )
 
 
