@@ -86,7 +86,7 @@ def trajectory_html(runs: dict[str, list[pd.DataFrame]]) -> Path:
                              "args": [[str(e)], {"frame": {"duration": 0}, "mode": "immediate"}]}
                             for e in epochs]}],
     )
-    path = OUT / f"trajectory_{'_vs_'.join(runs)}.html"
+    path = OUT / f"trajectory_{'_vs_'.join(runs).replace('/', '-')}.html"
     fig.write_html(str(path), include_plotlyjs="cdn")
     return path
 
@@ -101,5 +101,5 @@ if __name__ == "__main__":
                                           ("r_sq", True, "residual", "log10 |r|")):
             e, t, v = residual_grid(bd, column=column, sqrt=sqrt)
             print(figures.write_residual_surface_html(
-                e, t, v, OUT / f"{tag}_surface_{n}.html", n,
+                e, t, v, OUT / f"{tag}_surface_{n.replace('/', '-')}.html", n,
                 title=f"{tag.capitalize()} over (t, epoch)", zlabel=zlabel))
