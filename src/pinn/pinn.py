@@ -43,6 +43,8 @@ class PINN(nn.Module):
         self.ic = cfg.ic
         self.gamma = cfg.gamma
         self.sequential = bool(cfg.sequential)
+        self.causal_eps = float(cfg.causal_eps)   # mutable: annealed during training
+        self.causal_chunks = int(cfg.causal_chunks)
         self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=torch.float32))
         self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=torch.float32).reshape(1, 3))
         self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
@@ -148,6 +150,24 @@ def residual(model: PINN, t: Tensor) -> Tensor:
     return residual_parts(model, t).r
 
 
+def causal_loss(model: PINN, t: Tensor, r: Tensor) -> Tensor:
+    """Causally weighted residual loss (Wang, Sankaran & Perdikaris 2024, eq. 12-13).
+
+    Sort the points in time, cut them into consecutive chunks, take each chunk's
+    mean squared residual L_i, and weight it by w_i = exp(-eps * sum_{k<i} L_k),
+    with the weights detached so they steer but are not themselves optimised.
+    eps is annealed in place on the model: x10 whenever every w_i > 0.99.
+    """
+    order = torch.argsort(t.reshape(-1))
+    chunks = torch.chunk(r[order].pow(2).mean(dim=1), model.causal_chunks)
+    L = torch.stack([c.mean() for c in chunks])
+    prior = torch.cat([torch.zeros(1, dtype=L.dtype, device=L.device), torch.cumsum(L, 0)[:-1]])
+    w = torch.exp(-model.causal_eps * prior).detach()
+    if w.min() > 0.99 and model.causal_eps < 1e2:
+        model.causal_eps *= 10
+    return (w * L).mean()
+
+
 def loss_terms(model: PINN, t: Tensor) -> tuple[Tensor, Tensor, ResidualParts]:
     """Return (residual loss, initial-condition loss, per-point intermediates).
 
@@ -155,7 +175,7 @@ def loss_terms(model: PINN, t: Tensor) -> tuple[Tensor, Tensor, ResidualParts]:
     is the same tensor set the loss was built from, so recording it is free.
     """
     parts = residual_parts(model, t)
-    res = parts.r.pow(2).mean()
+    res = causal_loss(model, t, parts.r) if model.causal_eps > 0 else parts.r.pow(2).mean()
     if model.ic == "soft":
         t0 = torch.full((1, 1), model.t0, dtype=t.dtype, device=t.device)
         ic = (model(t0) - model.u0).pow(2).mean()

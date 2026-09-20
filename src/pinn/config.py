@@ -52,6 +52,16 @@ class Config:
     # and stored. See `pinn.pinn.sequential_rollout`.
     sequential: bool = False
 
+    # Causal training (Wang, Sankaran & Perdikaris, CMAME 2024, "Respecting
+    # causality for training physics-informed neural networks"): the collocation
+    # points are sorted in time and split into `causal_chunks` consecutive blocks;
+    # block i's residual is weighted by w_i = exp(-eps * sum_{k<i} L_k), so later
+    # times only count once earlier times are already satisfied. eps starts at
+    # causal_eps and is multiplied by 10 whenever min_i w_i > 0.99, up to 1e2.
+    # 0 = off.
+    causal_eps: float = 0.0
+    causal_chunks: int = 32
+
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
     print_every: int = 250    # epochs between console progress lines (0 = silent)
@@ -101,12 +111,16 @@ class Config:
         directory instead of overwriting the single-domain run of the same shape.
         """
         tag = f"{self.depth}x{self.width}"
-        return tag if not self.sequential else f"{tag}_seq"
+        if self.sequential:
+            tag += "_seq"
+        if self.causal_eps > 0:
+            tag += "_causal"
+        return tag
 
     @property
     def label(self) -> str:
         """Short run descriptor used in figure titles."""
-        scheme = "sequential walk, " if self.sequential else ""
+        scheme = "sequential walk, " if self.sequential else ("causal, " if self.causal_eps > 0 else "")
         return (
             f"{self.depth}x{self.width} {self.activation}, {self.ic} IC, "
             f"{scheme}{self.n_collocation} LHS points"
