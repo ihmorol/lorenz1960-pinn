@@ -523,3 +523,24 @@ def test_batched_and_per_point_accumulation_train_identically():
     # Round-off, not error: the relative difference must sit at float32 scale.
     assert (np.abs(batched - looped) / np.abs(batched)).max() < 1e-5
     assert torch.allclose(params["batched"], params["looped"], rtol=1e-3, atol=0)
+
+
+def test_param_trail_follows_the_snapshots(tmp_path):
+    """One flattened weight vector per snapshot epoch, taken before that epoch's step
+    (so it matches the residuals in the snapshot); row 0 is therefore the initial weights."""
+    import numpy as np
+
+    from pinn.history import flat_params
+    from pinn.pinn import PINN
+    from pinn.train import set_seed, train
+
+    cfg = Config(depth=1, width=8, epochs=21, n_collocation=32, snapshot_every=10,
+                 log_every=10, eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history = train(cfg)
+    assert history.param_epochs == [0, 10, 20]
+    trail = np.stack(history.param_trail)
+    assert trail.shape == (3, sum(p.numel() for p in model.parameters()))
+    set_seed(cfg.seed)
+    assert np.allclose(trail[0], flat_params(PINN(cfg)).cpu().numpy())
+    assert not np.allclose(trail[-1], flat_params(model).cpu().numpy())   # one step behind

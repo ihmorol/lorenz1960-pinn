@@ -81,6 +81,8 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
         # the tensors are already in hand.
         if history.snapshots is not None and (epoch % cfg.snapshot_every == 0 or last):
             history.snapshots.write(epoch, parts)
+            history.param_epochs.append(epoch)
+            history.param_trail.append(flat_params(model).cpu().numpy())
 
         lr = adam.param_groups[0]["lr"]
         before = flat_params(model) if logging else None
@@ -293,6 +295,9 @@ def write_breakdown_figures(cfg: Config, formats=figures.FORMATS) -> dict[str, l
 def save_results(model: PINN, history: TrainHistory, cfg: Config) -> pd.DataFrame:
     cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), cfg.ckpt_path / "pinn.pt")
+    if history.param_trail:
+        np.savez_compressed(cfg.ckpt_path / "param_trail.npz",
+                            epochs=np.asarray(history.param_epochs), params=np.stack(history.param_trail))
     if cfg.print_every:
         print(f"[save]  checkpoint + telemetry -> {cfg.ckpt_path}", flush=True)
         print(f"[save]  rendering figures -> {cfg.results_path} ...", flush=True)

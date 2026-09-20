@@ -123,6 +123,7 @@ def config_for(run_dir: str | Path) -> Config:
         depth=int(row["depth"]), width=int(row["width"]), activation=str(row["activation"]),
         ic=str(row["ic"]), seed=int(row["seed"]), epochs=int(row["epochs"]),
         n_collocation=int(row["n_collocation"]),
+        t_span=(float(row["t_start"]), float(row["t_end"])),
     )
 
 

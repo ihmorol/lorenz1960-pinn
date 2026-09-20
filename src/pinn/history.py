@@ -65,6 +65,10 @@ class TrainHistory:
     # Live snapshot writer for the run, when ``cfg.snapshot_every`` is enabled.
     # Not part of the CSV round trip: the breakdown files are the record.
     snapshots: "SnapshotWriter | None" = field(default=None, repr=False, compare=False)
+    # Flattened weights at every snapshot epoch, for the loss-landscape /
+    # optimiser-path view. Saved as history/param_trail.npz by save_results.
+    param_epochs: list[int] = field(default_factory=list, repr=False, compare=False)
+    param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
 
     log_epoch: list[int] = field(default_factory=list)
     logged_loss: list[float] = field(default_factory=list)
