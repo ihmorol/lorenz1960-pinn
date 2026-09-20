@@ -124,6 +124,13 @@ def config_for(run_dir: str | Path) -> Config:
         ic=str(row["ic"]), seed=int(row["seed"]), epochs=int(row["epochs"]),
         n_collocation=int(row["n_collocation"]),
         t_span=(float(row["t_start"]), float(row["t_end"])),
+        lbfgs_iters=int(row["lbfgs_iters"]), gamma=float(row["gamma"]),
+        lr_start=float(row["lr_start"]), lr_end=float(row["lr_end"]),
+        # Scheme flags were added later; older summaries lack the columns.
+        sequential=bool(row.get("sequential", False)),
+        causal_eps=float(row.get("causal_eps", 0.0)),
+        causal_chunks=int(row.get("causal_chunks", 32)),
+        normalize_input=bool(row.get("normalize_input", False)),
     )
 
 

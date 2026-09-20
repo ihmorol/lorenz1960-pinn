@@ -150,9 +150,11 @@ if __name__ == "__main__":
     # ---- which layers learn when ----------------------------------------------
     layers = [c for c in diag.columns if c.startswith("layer_") and c.endswith("_grad_norm")]
     fig4, ax = plt.subplots(figsize=(9, 4))
+    smooth = lambda v: pd.Series(v).rolling(25, center=True, min_periods=1).median()
     for c in layers:
-        ax.semilogy(diag.epoch, diag[c], lw=0.8, label=c.replace("_grad_norm", ""))
-    ax.semilogy(diag.epoch, diag.grad_norm, "k-", lw=1.2, label="total")
+        ax.semilogy(diag.epoch, smooth(diag[c]), lw=1, label=c.replace("_grad_norm", ""))
+    ax.semilogy(diag.epoch, diag.grad_norm, color="0.8", lw=0.5, label="total (raw)")
+    ax.semilogy(diag.epoch, smooth(diag.grad_norm), "k-", lw=1.4, label="total (rolling median)")
     ax.set_xlabel("epoch"); ax.set_ylabel("gradient norm"); ax.legend(ncol=3, fontsize=8)
     ax.set_title("gradient norm per layer: flat = plateau, rising = the escape, falling = convergence")
     fig4.tight_layout(); fig4.savefig(out / "layer_grad_norms.png", dpi=120)

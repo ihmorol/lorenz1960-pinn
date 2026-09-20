@@ -49,7 +49,8 @@ def march(base: Config, out: Path) -> None:
         p = residual_parts(model, grid.clone().requires_grad_(True))
         grids.append(grid.detach()); parts.append(p)
         with torch.no_grad():
-            state = tuple(float(v) for v in model(torch.tensor([[b]], dtype=torch.float32))[0])
+            t_end = torch.tensor([[b]], dtype=torch.float32, device=grid.device)
+            state = tuple(float(v) for v in model(t_end)[0])
         print(f"[march] window [{a:.0f}, {b:.0f}] loss {hist.loss[-1]:.2e} end state {np.round(state, 4)}",
               flush=True)
 

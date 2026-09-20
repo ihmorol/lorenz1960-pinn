@@ -68,7 +68,7 @@ def trajectory_html(runs: dict[str, list[pd.DataFrame]]) -> Path:
 
     epochs = [int(f.epoch.iloc[0]) for f in next(iter(runs.values()))]
     fig = go.Figure(
-        data=traces(0),
+        data=traces(len(epochs) - 1),      # open on the trained network, not the random init
         frames=[go.Frame(data=traces(k), name=str(e)) for k, e in enumerate(epochs)],
     )
     fig.update_layout(
@@ -81,7 +81,7 @@ def trajectory_html(runs: dict[str, list[pd.DataFrame]]) -> Path:
                                    "args": [None, {"frame": {"duration": 150}, "fromcurrent": True}]},
                                   {"label": "Pause", "method": "animate",
                                    "args": [[None], {"frame": {"duration": 0}, "mode": "immediate"}]}]}],
-        sliders=[{"currentvalue": {"prefix": "epoch "},
+        sliders=[{"currentvalue": {"prefix": "epoch "}, "active": len(epochs) - 1,
                   "steps": [{"label": str(e), "method": "animate",
                              "args": [[str(e)], {"frame": {"duration": 0}, "mode": "immediate"}]}
                             for e in epochs]}],

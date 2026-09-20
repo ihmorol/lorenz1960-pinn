@@ -544,3 +544,36 @@ def test_param_trail_follows_the_snapshots(tmp_path):
     set_seed(cfg.seed)
     assert np.allclose(trail[0], flat_params(PINN(cfg)).cpu().numpy())
     assert not np.allclose(trail[-1], flat_params(model).cpu().numpy())   # one step behind
+
+
+def test_normalize_input_keeps_ic_and_scales_the_first_layer():
+    """With normalisation the first layer sees [-1, 1] on any window; the hard IC still holds."""
+    import torch
+
+    from pinn.pinn import PINN
+
+    cfg = Config(t_span=(0.0, 10.0), normalize_input=True, depth=1, width=8)
+    torch.manual_seed(0)
+    model = PINN(cfg)
+    t = torch.tensor([[0.0], [5.0], [10.0]])
+    scaled = 2.0 * (t - 0.0) / 10.0 - 1.0
+    assert torch.allclose(model.raw(t), model.net(scaled))
+    assert torch.allclose(model(t[:1]), model.u0)
+    assert cfg.arch == "1x8_norm"
+
+
+def test_config_for_round_trips_scheme_flags(tmp_path):
+    """Every flag that changes the network or the loss survives the summary round trip."""
+    from dataclasses import replace
+
+    from pinn.sweep import config_for, train_and_save
+
+    cfg = Config(depth=1, width=8, epochs=5, n_collocation=16, log_every=5, eval_every=5,
+                 print_every=0, t_span=(0.0, 3.0), normalize_input=True, causal_eps=1e-2,
+                 lbfgs_iters=0, lr_start=5e-4, lr_end=5e-5,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    train_and_save(cfg)
+    back = config_for(tmp_path)
+    for f in ("t_span", "normalize_input", "causal_eps", "causal_chunks", "sequential",
+              "lbfgs_iters", "gamma", "lr_start", "lr_end", "depth", "width", "seed"):
+        assert getattr(back, f) == getattr(cfg, f), f

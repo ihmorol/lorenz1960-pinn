@@ -62,6 +62,11 @@ class Config:
     causal_eps: float = 0.0
     causal_chunks: int = 32
 
+    # Feed the network 2*(t - t0)/(tf - t0) - 1 instead of raw t, so the first tanh
+    # layer sees [-1, 1] whatever the window (Wang et al. 2023, "An expert's guide
+    # to training PINNs", sec. 4.1). Off by default: the run of record used raw t.
+    normalize_input: bool = False
+
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
     print_every: int = 250    # epochs between console progress lines (0 = silent)
@@ -115,6 +120,10 @@ class Config:
             tag += "_seq"
         if self.causal_eps > 0:
             tag += "_causal"
+        if self.normalize_input:
+            tag += "_norm"
+        if self.lbfgs_iters > 0:
+            tag += "_lbfgs"
         return tag
 
     @property

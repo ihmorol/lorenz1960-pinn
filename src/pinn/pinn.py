@@ -44,6 +44,7 @@ class PINN(nn.Module):
         self.gamma = cfg.gamma
         self.sequential = bool(cfg.sequential)
         self.causal_eps = float(cfg.causal_eps)   # mutable: annealed during training
+        self.normalize_input = bool(cfg.normalize_input)
         self.causal_chunks = int(cfg.causal_chunks)
         self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=torch.float32))
         self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=torch.float32).reshape(1, 3))
@@ -56,10 +57,16 @@ class PINN(nn.Module):
             return self.u0 + g * n
         return n
 
+    def raw(self, t: Tensor) -> Tensor:
+        """The bare network N(t), with the input scaled to [-1, 1] when enabled."""
+        if self.normalize_input:
+            t = 2.0 * (t - self.t0) / (self.tf - self.t0) - 1.0
+        return self.net(t)
+
     def forward(self, t: Tensor) -> Tensor:
         if self.sequential:
-            return sequential_rollout(self, t, self.net(t))
-        return self.trial(t, self.net(t))
+            return sequential_rollout(self, t, self.raw(t))
+        return self.trial(t, self.raw(t))
 
 
 def sequential_rollout(model: PINN, t: Tensor, n: Tensor) -> Tensor:
@@ -129,7 +136,7 @@ def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
 
 def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
     """One residual evaluation, keeping every intermediate instead of discarding it."""
-    n = model.net(t)
+    n = model.raw(t)
     if model.sequential:
         # The walk's own step IS the derivative estimate: consecutive walked points
         # differ by exactly dt * s_i, the interval's quadrature slope (the trapezoid

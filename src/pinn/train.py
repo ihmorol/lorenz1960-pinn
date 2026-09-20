@@ -208,6 +208,8 @@ def run_summary(
         "n_collocation": cfg.n_collocation,
         "lr_start": cfg.lr_start, "lr_end": cfg.lr_end,
         "t_start": cfg.t_span[0], "t_end": cfg.t_span[1],
+        "sequential": cfg.sequential, "causal_eps": cfg.causal_eps,
+        "causal_chunks": cfg.causal_chunks, "normalize_input": cfg.normalize_input,
     }
 
     # --- accuracy, per state and combined
