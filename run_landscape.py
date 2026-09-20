@@ -51,7 +51,7 @@ def loss_on_plane(model: PINN, grid: torch.Tensor, centre: np.ndarray, d1: np.nd
             theta = torch.as_tensor(centre + aa * d1 + bb * d2, dtype=torch.float32)
             torch.nn.utils.vector_to_parameters(theta, model.parameters())
             res, ic, _ = loss_terms(model, grid.clone().requires_grad_(True))
-            z[i, j] = float(res + model.gamma * ic if model.ic == "soft" else res)
+            z[i, j] = (res + model.gamma * ic if model.ic == "soft" else res).item()
     return z
 
 
