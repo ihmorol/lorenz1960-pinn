@@ -31,7 +31,7 @@ if __name__ == "__main__":
     runs = [Path(a) for a in sys.argv[1:]] or [Path("runs/t10/4x60"), Path("runs/t10/4x60_seq")]
     snaps = {r.name: last_snapshot(r) for r in runs}
     losses = {r.name: pd.read_csv(r / "history" / "loss_history.csv") for r in runs}
-    colors = dict(zip(snaps, ["tab:blue", "tab:red", "tab:green"]))
+    colors = dict(zip(snaps, ["tab:blue", "tab:red", "tab:green", "tab:purple"]))
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 8))
     ref = next(iter(snaps.values()))
