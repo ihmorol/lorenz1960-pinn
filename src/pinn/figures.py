@@ -827,9 +827,10 @@ def fig_architecture_scatter(sweep: pd.DataFrame, value: str = "rmse_combined_l2
 
 def write_residual_surface_html(
     epochs: np.ndarray, t_centres: np.ndarray, values: np.ndarray,
-    path: str | Path, label: str = "",
+    path: str | Path, label: str = "", title: str = "Collocation residual surface",
+    zlabel: str = "log10 |r|",
 ) -> Path | None:
-    """Rotatable 3-D residual surface (epoch, t, log10 |r|) as a standalone HTML file.
+    """Rotatable 3-D surface (epoch, t, log10 value) as a standalone HTML file.
 
     Returns ``None`` when plotly is not installed; the static figures already carry
     the same information, so this is an optional extra rather than a hard dependency.

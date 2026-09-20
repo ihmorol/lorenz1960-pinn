@@ -275,7 +275,7 @@ def point_history(breakdown_dir: Path | str, i: int) -> pd.DataFrame:
 
 
 def residual_grid(
-    breakdown_dir: Path | str, n_bins: int = 240, column: str = "r_sq"
+    breakdown_dir: Path | str, n_bins: int = 240, column: str = "r_sq", sqrt: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Reduce a breakdown directory to an ``(epoch x t)`` field for plotting.
 
@@ -285,7 +285,8 @@ def residual_grid(
     sample does not have. Reads one snapshot at a time, so memory stays flat.
 
     Returns ``(epochs, t_centres, values)`` with ``values`` shaped
-    ``(n_epochs, n_bins)`` holding the binned median of ``sqrt(column)``.
+    ``(n_epochs, n_bins)`` holding the binned median of ``sqrt(column)`` (or of
+    ``column`` itself with ``sqrt=False``, for columns that are already a norm).
     """
     files = sorted(Path(breakdown_dir).glob("epoch_*.csv"))
     if not files:
@@ -299,7 +300,9 @@ def residual_grid(
     for f in files:
         frame = pd.read_csv(f, usecols=["epoch", "t", column])
         which = np.clip(np.digitize(frame["t"].to_numpy(), edges) - 1, 0, n_bins - 1)
-        magnitude = np.sqrt(frame[column].to_numpy())
+        magnitude = frame[column].to_numpy()
+        if sqrt:
+            magnitude = np.sqrt(magnitude)
         binned = pd.Series(magnitude).groupby(which).median()
         row = np.full(n_bins, np.nan)
         row[binned.index.to_numpy()] = binned.to_numpy()
