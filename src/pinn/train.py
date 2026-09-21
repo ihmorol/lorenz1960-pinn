@@ -13,7 +13,7 @@ from .config import Config, compute_error_metrics, reference_at, reference_traje
 from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_grads, flat_params, residual_grid
 from .functions.collocation import latin_hypercube_points, uniform_points
 from .functions.optimizers import adam_with_decay, run_lbfgs
-from .pinn import PINN, loss_terms, pinn_loss, residual_of as residual
+from .pinn import PINN, WindowedPINN, build_model, loss_terms, pinn_loss, residual_of as residual
 
 
 def get_device() -> torch.device:
@@ -36,7 +36,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     device = get_device()
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
-    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
+    model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
     grid = make_grid(cfg, device)
     history = TrainHistory()
     t_ref, ys_ref = reference_trajectory(cfg, n=cfg.n_eval)
@@ -204,6 +204,7 @@ def run_summary(
     row: dict[str, object] = {
         # --- configuration
         "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
+        "n_windows": cfg.n_windows,
         "n_params": int(sum(p.numel() for p in model.parameters())),
         "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
         "epochs": cfg.epochs, "lbfgs_iters": cfg.lbfgs_iters, "seed": cfg.seed,
@@ -330,7 +331,7 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
     """Reload a finished run's trained weights and telemetry, with no retraining."""
     cfg = cfg or Config()
     device = get_device()
-    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
+    model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
     try:
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
     except TypeError:  # older torch

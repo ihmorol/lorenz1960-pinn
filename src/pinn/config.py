@@ -30,6 +30,7 @@ class Config:
     t_span: tuple[float, float] = (0.0, 1.0)
     problem: str = "lorenz1960"
     end_state: tuple[float, float, float] | None = None   # set for a two-point BVP
+    n_windows: int = 1        # >1: one network per time window, chained by end state
 
     depth: int = 4
     width: int = 60
@@ -120,6 +121,8 @@ class Config:
             tag += "_f64"
         if self.ic_scale == "unit":
             tag += "_unit"
+        if self.n_windows > 1:
+            tag += f"_win{self.n_windows}"
         return tag
 
     @property

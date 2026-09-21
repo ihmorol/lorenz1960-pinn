@@ -445,3 +445,19 @@ def test_split_windows_tile_the_span():
 
     assert split_windows((0.0, 2.0), 4) == [(0.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 2.0)]
     assert split_windows((0.0, 2.0), 1) == [(0.0, 2.0)]
+
+
+def test_windowed_pinn_routes_and_is_continuous():
+    import torch
+    from pinn.pinn import WindowedPINN, residual_parts
+
+    cfg = Config(t_span=(0.0, 2.0), n_windows=4, depth=1, width=8)
+    torch.manual_seed(0)
+    m = WindowedPINN(cfg)
+    assert len(m.windows) == 4 and cfg.arch == "1x8_win4"
+    t = torch.tensor([[0.1], [0.6], [1.2], [1.9]], requires_grad=True)
+    assert m.window_of(t).tolist() == [0, 1, 2, 3]
+    joint = torch.tensor([[0.5]])
+    m.set_window_start(1, m(joint)[0])
+    assert torch.allclose(m.windows[0](joint), m.windows[1](joint), atol=1e-6)
+    assert residual_parts(m, t).r.shape == (4, 3)
