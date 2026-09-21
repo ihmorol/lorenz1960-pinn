@@ -1127,6 +1127,7 @@ change `for epoch in range(cfg.epochs):` to `for epoch in range(start, cfg.epoch
     python run_batch.py            # writes runs/4x60_f64_unit/
 """
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -1139,9 +1140,10 @@ T_LOOP = 13.26446   # first return of the reference orbit to u0 (|u(T) - u0| = 6
 CFG = Config(t_span=(0.0, T_LOOP), points_per_unit=3000, eval_per_unit=1000,
              dtype="float64", ic_scale="unit", epochs=40000, lr_decay=0.9, lr_decay_every=5000,
              lbfgs_iters=5000, checkpoint_every=5000)
+SNAPSHOT_EVERY = 500   # 50 (the sweep default) would write ~10 GB of breakdown CSVs at 40k points
 
 if __name__ == "__main__":
-    cfg = sweep_config(CFG, CFG.depth, CFG.width)
+    cfg = replace(sweep_config(CFG, CFG.depth, CFG.width), snapshot_every=SNAPSHOT_EVERY)
     row = run_one(cfg, resume=True)
     print(row[["arch", "rmse_combined_l2", "max_abs_error_combined_l2", "final_loss",
                "wall_clock_s"]].to_string(index=False))
@@ -1806,6 +1808,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
     python run_causal.py           # writes runs/4x60_f64_unit_win27_causal/
 """
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
@@ -1819,9 +1822,10 @@ CFG = Config(t_span=(0.0, T_LOOP), points_per_unit=3000, eval_per_unit=1000,
              dtype="float64", ic_scale="unit", collocation="uniform", n_windows=27,
              causal_eps_schedule=(1e-2, 1e-1, 1.0, 10.0, 100.0), causal_delta=0.99,
              causal_max_iters=20000, lr_decay=0.9, lr_decay_every=5000, lbfgs_iters=5000)
+SNAPSHOT_EVERY = 500
 
 if __name__ == "__main__":
-    cfg = sweep_config(CFG, CFG.depth, CFG.width)
+    cfg = replace(sweep_config(CFG, CFG.depth, CFG.width), snapshot_every=SNAPSHOT_EVERY)
     row = run_one(cfg, resume=True)
     print(row[["arch", "rmse_combined_l2", "max_abs_error_combined_l2", "final_loss",
                "wall_clock_s"]].to_string(index=False))
