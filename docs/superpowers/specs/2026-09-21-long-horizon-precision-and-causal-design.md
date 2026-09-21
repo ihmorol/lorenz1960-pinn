@@ -4,12 +4,12 @@ Date: 2026-09-21. Status: approved design, awaiting implementation plan.
 
 ## 1. Goal
 
-Reach the lowest achievable trajectory error for the Lorenz-1960 PINN on t in [0, 20]
-with the existing 4x60 tanh network, under two training schemes that the literature
+Reach the lowest achievable trajectory error for the Lorenz-1960 PINN over one full closed loop of the orbit, t in [0, 13.26446] (the state returns to u0 to 6e-9
+at T = 13.26446; x has period 6.63, y and z have 13.26), with the existing 4x60 tanh network, under two training schemes that the literature
 supports, and make every phase of training and evaluation visible in figures that
 expose problems rather than decorate results.
 
-Target: RMSE <= 1e-6 against the DOP853 reference on 20 201 evaluation points, seed 0.
+Target: RMSE <= 1e-6 against the DOP853 reference on 13 265 evaluation points (1000 per time unit), seed 0.
 Honest expectation from the evidence (Rathore et al. 2024; Xu et al. 2025; Wang and
 Lai 2024): float64 with an L-BFGS finisher moves a single network from the current
 1.6e-3 (measured on [0, 10]) into the 1e-5 to 1e-6 range; 1e-6 is not guaranteed. The number reached is
@@ -22,21 +22,23 @@ initial condition stay; knobs are added with today's behaviour as default).
 
 ## 2. The two runs
 
-Shared by both: 4x60 tanh, raw t input, float64, 60 000 collocation points (3000 per time unit, as on the [0, 1]
-run of record), 20 201 evaluation points, hard initial condition in Lagaris form u = u0 + (t - t0) N(t),
+Shared by both: 4x60 tanh, raw t input, float64, collocation and evaluation densities fixed per time unit rather than as
+counts (`points_per_unit = 3000`, `eval_per_unit = 1000`, the run-of-record density; on one
+loop that is 39 793 collocation and 13 265 evaluation points; speed along the orbit varies
+only 2.3x so uniform-in-time sampling wastes nothing), hard initial condition in Lagaris form u = u0 + (t - t0) N(t),
 Adam then L-BFGS.
 
-Run A, batch (branch `feat/batch-precision-run`): one network on [0, 20]; 60 000
+Run A, batch (branch `feat/batch-precision-run`): one network on the full loop; 39 793
 Latin-hypercube points; loss = mean squared residual; Adam 40 000 epochs at lr 1e-3
 with exponential decay 0.9 every 5000 epochs; then L-BFGS up to 5000 iterations,
 strong-Wolfe line search, in float64.
 
 Run B, causal windows (branch `feat/causal-window-training`, stacked on A): the
 Lorenz recipe of Wang, Sankaran and Perdikaris (CMAME 2024, Algorithm 1 and
-Appendix E), adapted to our network. [0, 20] is split into 40 windows of 0.5, exactly
-the paper's Lorenz layout; each
+Appendix E), adapted to our network. the loop is split into 27 windows of 0.491, the closest
+to the paper's 0.5; each
 window trains a fresh 4x60 whose initial state is the previous window's prediction at
-the joint; per window 1500 uniform points; per-point causal weights
+the joint; per window 1474 uniform points (39 793 / 27); per-point causal weights
 w_i = exp(-eps * sum_{k<i} L(t_k)) with stop-gradient; eps runs through
 [1e-2, 1e-1, 1, 10, 100], advancing when min_i w_i > 0.99, capped at 20 000 Adam
 iterations per eps; then L-BFGS per window (our one addition to the paper, for the
@@ -99,21 +101,21 @@ and viz, so figures can be regenerated from a saved run.
 |---|---|---|---|
 | `dtype` | "float32" | "float64" | "float64" |
 | `ic_scale` | "span" (g = (t-t0)/(tf-t0)) | "unit" (g = t-t0) | "unit" |
-| `n_collocation` | 3000 | 60000 | 60000 |
+| `points_per_unit` | 3000 (n_collocation = 3000 on [0, 1]) | 3000 | 3000 |
 | `collocation` | "lhs" | "lhs" | "uniform" |
-| `n_eval` | 1001 | 20201 | 20201 |
+| `eval_per_unit` | 1000 (n_eval = 1001 on [0, 1]) | 1000 | 1000 |
 | `epochs` | 20000 | 40000 | (per eps cap 20000) |
 | `lr_decay`, `lr_decay_every` | none (linear 1e-3 to 1e-4 today) | 0.9, 5000 | 0.9, 5000 |
 | `lbfgs_iters` | 0 | 5000 | 5000 per window |
-| `t_span` | (0, 1) | (0, 20) | (0, 20) |
+| `t_span` | (0, 1) | (0, 13.26446) | (0, 13.26446) |
 | `problem` | "lorenz1960" | same | same |
-| `n_windows` (B) | 1 | 1 | 40 |
+| `n_windows` (B) | 1 | 1 | 27 |
 | `causal_eps_schedule` (B) | () | () | (1e-2, 1e-1, 1, 10, 100) |
 | `causal_delta` (B) | 0.99 | - | 0.99 |
 | `causal_max_iters` (B) | 0 | - | 20000 |
 
 `lr_decay=None` keeps today's linear schedule so `Config()` reproduces the run of
-record. The run tag gains suffixes for non-default knobs (`_f64`, `_unit`, `_win40`,
+record. The run tag gains suffixes for non-default knobs (`_f64`, `_unit`, `_win27`,
 `_causal`) so runs never overwrite each other.
 
 ### 4.2 `Problem` (branch A)
@@ -164,7 +166,8 @@ save; viz.generate_all(run_dir)
 ```
 
 Logged per snapshot: epoch, loss, eps, min_w, w(t) profile (branch B), per-layer
-gradient norms, weights (param trail), per-point residual and error (breakdown CSV).
+gradient norms, weights (param trail), flattened gradient (grad trail), per-point
+residual and error (breakdown CSV).
 
 ### 4.5 Precision
 
@@ -193,6 +196,13 @@ coloured by log error; (11) phase portraits and invariant drift from
 continuity: value and slope jumps at each window boundary (B only); (15) the
 multi-run six-panel comparison (existing `run_compare`).
 
+Training dynamics, the views PINN papers use for "how the gradient changes":
+(16) gradient direction stability: cosine similarity between gradients at consecutive
+snapshots and the gradient norm (needs the flattened gradient saved per snapshot, like
+the weight trail); (17) per-layer gradient histograms at chosen snapshots; (18) NTK
+eigenvalue spectrum at snapshots on 256 subsampled points (Wang, Yu and Perdikaris
+2022), showing which frequencies the network can learn at that moment.
+
 ## 6. Tests
 
 One check per non-trivial piece, in `test_pinn.py` (existing tests move with the
@@ -213,9 +223,9 @@ functions they cover):
 
 ## 7. Compute plan
 
-Run A on a Colab T4: 60 000 points x 40 000 epochs float64 about 40-60 min plus
-L-BFGS about 15 min. Run B: 40 windows x up to 5 eps stages; with the min-w stop most
-stages end early; budget 2-4 h. Both scripts checkpoint (per 5000 epochs on A, per
+Run A on a Colab T4: 40 000 points x 40 000 epochs float64 about 30-45 min plus
+L-BFGS about 10 min. Run B: 27 windows x up to 5 eps stages; with the min-w stop most
+stages end early; budget 1.5-3 h. Both scripts checkpoint (per 5000 epochs on A, per
 window on B) and resume. `colab.ipynb` clones the branch, installs
 `requirements.txt`, runs one script, zips `runs/`.
 
