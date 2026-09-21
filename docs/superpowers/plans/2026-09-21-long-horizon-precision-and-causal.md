@@ -1847,15 +1847,15 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 ### Task 14: Execute the runs on Colab and compare
 
-- [ ] **Step 1: Push both branches**
+- [x] **Step 1: Push both branches**
 
 ```bash
 git push -u origin feat/batch-precision-run feat/causal-window-training
 ```
 
-- [ ] **Step 2: Run A on Colab** with `colab.ipynb`, `BRANCH='feat/batch-precision-run'`. Download `runs.zip`, unzip into the local repo's `runs/`.
+- [x] **Step 2: Run A on Colab** with `colab.ipynb`, `BRANCH='feat/batch-precision-run'`. Download `runs.zip`, unzip into the local repo's `runs/`.
 
-- [ ] **Step 3: Run B on Colab** with `BRANCH='feat/causal-window-training'` and the fourth cell changed to `!python run_causal.py`. Download and unzip.
+- [x] **Step 3: Run B on Colab** with `BRANCH='feat/causal-window-training'` and the fourth cell changed to `!python run_causal.py`. Download and unzip.
 
 - [ ] **Step 4: Comparison page, precision panel, films**
 
