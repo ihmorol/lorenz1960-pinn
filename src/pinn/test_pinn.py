@@ -417,3 +417,12 @@ def test_adam_checkpoint_resumes(tmp_path):
     assert (tmp_path / "adam_000003.pt").exists()
     _, history = train(cfg)
     assert history.resumed_from == 3 and len(history.loss) == 3
+
+
+def test_root_scripts_compile():
+    import py_compile
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py"):
+        py_compile.compile(str(root / name), doraise=True)
