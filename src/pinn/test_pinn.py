@@ -298,3 +298,26 @@ def test_resume_skips_a_finished_run(tmp_path):
 
     (cfg.results_path / "run_summary.csv").unlink()  # simulate an interrupted run
     assert run_one(cfg, resume=True)["arch"].iloc[0] == "1x6"
+
+
+def test_hard_initial_condition_forms():
+    import torch
+    from pinn.functions.trial import hard_initial_condition
+
+    u0 = torch.tensor([[0.5, 0.75, 1.0]])
+    t = torch.tensor([[0.0], [5.0], [10.0]])
+    n = torch.ones(3, 3)
+    for form in ("span", "unit"):
+        assert torch.allclose(hard_initial_condition(t, n, u0, 0.0, 10.0, form)[0], u0[0])
+    assert torch.allclose(hard_initial_condition(t, n, u0, 0.0, 10.0, "span")[2], u0[0] + 1.0)
+    assert torch.allclose(hard_initial_condition(t, n, u0, 0.0, 10.0, "unit")[2], u0[0] + 10.0)
+
+
+def test_collocation_samplers_cover_the_span():
+    from pinn.functions.collocation import latin_hypercube_points, uniform_points
+
+    lhs = latin_hypercube_points((0.0, 2.0), 50, seed=0)
+    uni = uniform_points((0.0, 2.0), 50)
+    assert lhs.shape == uni.shape == (50, 1)
+    assert 0.0 <= lhs.min() and lhs.max() <= 2.0
+    assert uni[0, 0] == 0.0 and uni[-1, 0] == 2.0

@@ -35,6 +35,7 @@ class Config:
 
     ic: str = "hard"          # "hard" trial solution, or "soft" IC penalty (Raissi-style)
     gamma: float = 1.0        # soft-IC penalty weight (unused when ic="hard")
+    ic_scale: str = "span"    # "span": g = (t - t0)/(tf - t0); "unit": g = t - t0
 
     epochs: int = 20000       # Adam epochs
     lbfgs_iters: int = 0   # L-BFGS fine-tuning iterations (0 disables)
@@ -62,6 +63,8 @@ class Config:
             raise ValueError(f"activation must be one of {ACTIVATIONS}")
         if self.ic not in IC_MODES:
             raise ValueError(f"ic must be one of {IC_MODES}")
+        if self.ic_scale not in ("span", "unit"):
+            raise ValueError("ic_scale must be 'span' or 'unit'")
 
     @property
     def coefficients(self) -> np.ndarray:

@@ -6,13 +6,13 @@ import time
 import numpy as np
 import pandas as pd
 import torch
-from scipy.stats import qmc
 from torch import Tensor
 
 from . import viz as figures
 from .config import Config, compute_error_metrics, reference_at, reference_trajectory
 from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_params, residual_grid
-from .pinn import PINN, loss_terms, pinn_loss, residual
+from .functions.collocation import latin_hypercube_points
+from .pinn import PINN, loss_terms, pinn_loss, residual_of as residual
 
 
 def get_device() -> torch.device:
@@ -25,11 +25,8 @@ def set_seed(seed: int) -> None:
 
 
 def make_grid(cfg: Config, device: torch.device) -> Tensor:
-    # Latin hypercube sampling over [t0, tf], following Matthews & Bihlo (PinnDE).
-    t0, tf = cfg.t_span
-    sample = qmc.LatinHypercube(d=1, seed=cfg.seed).random(cfg.n_collocation)
-    t = t0 + (tf - t0) * sample  # Linear interpolation onto [t0, tf].
-    return torch.as_tensor(t, dtype=torch.float32, device=device).reshape(-1, 1)
+    t = latin_hypercube_points(cfg.t_span, cfg.n_collocation, cfg.seed)
+    return torch.as_tensor(t, dtype=torch.float32, device=device)
 
 
 def train(cfg: Config) -> tuple[PINN, TrainHistory]:
