@@ -489,3 +489,14 @@ def test_causal_extras_are_written(tmp_path):
     names = {p.name for p in viz.generate_run_extras(tmp_path)}
     for expected in ("causal_weights.png", "min_w.png", "window_grid.png", "joint_continuity.png"):
         assert expected in names, expected
+
+
+def test_windowed_resume_skips_saved_windows(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=5,
+                 depth=1, width=8, n_collocation=20, collocation="uniform",
+                 log_every=5, eval_every=5, print_every=1, ckpt_dir=str(tmp_path))
+    train(cfg)
+    _, history = train(cfg)          # every window restored; must not raise
+    assert history.loss == [] and len(history.window_marks) == 2

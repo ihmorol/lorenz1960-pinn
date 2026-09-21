@@ -167,6 +167,8 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
         pts = grid[model.window_of(grid) == k] if isinstance(model, WindowedPINN) else grid
         if saved.exists():
             sub.load_state_dict(torch.load(saved, map_location=device))
+            if cfg.print_every:
+                print(f"[window] {k:>2} restored from {saved.name}", flush=True)
         else:
             adam, sched = adam_with_decay(sub.parameters(), cfg)
             for eps in stages:
@@ -215,7 +217,7 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
             with torch.no_grad():
                 end = torch.tensor([[model.edges[k + 1]]], dtype=grid.dtype, device=device)
                 model.set_window_start(k + 1, sub(end)[0])
-        if cfg.print_every:
+        if cfg.print_every and history.loss:
             print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
                   f"{time.perf_counter() - t_start:7.1f}s", flush=True)
     history.wall_clock_s = time.perf_counter() - t_start
