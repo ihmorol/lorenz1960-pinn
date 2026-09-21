@@ -65,6 +65,7 @@ class TrainHistory:
 
     loss: list[float] = field(default_factory=list)
     adam_iters: int = 0
+    resumed_from: int = 0
     wall_clock_s: float = 0.0
 
     # Live snapshot writer for the run, when ``cfg.snapshot_every`` is enabled.

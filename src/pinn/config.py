@@ -62,6 +62,7 @@ class Config:
     # entirely, which is the default so the run-of-record pipeline is unchanged;
     # the architecture sweep sets it to 50.
     snapshot_every: int = 0
+    checkpoint_every: int = 0   # Adam epochs between resumable checkpoints (0 = off)
 
     results_dir: str = "src/pinn/results"
     ckpt_dir: str = "src/pinn/history"

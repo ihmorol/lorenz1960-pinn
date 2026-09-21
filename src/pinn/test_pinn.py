@@ -405,3 +405,15 @@ def test_run_extras_are_written(tmp_path):
                      "gradient_stability.png", "gradient_histograms.png", "ntk_spectrum.png",
                      "error_vs_t.png", "error_growth.png"):
         assert expected in names, expected
+
+
+def test_adam_checkpoint_resumes(tmp_path):
+    from dataclasses import replace
+    from pinn.train import train
+
+    cfg = Config(depth=1, width=8, epochs=6, n_collocation=16, checkpoint_every=3,
+                 log_every=3, eval_every=3, print_every=0, ckpt_dir=str(tmp_path))
+    train(replace(cfg, epochs=3))
+    assert (tmp_path / "adam_000003.pt").exists()
+    _, history = train(cfg)
+    assert history.resumed_from == 3 and len(history.loss) == 3

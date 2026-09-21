@@ -61,8 +61,17 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     t_start = time.perf_counter()
 
     adam, sched = adam_with_decay(model.parameters(), cfg)
+    start = 0
+    if cfg.checkpoint_every:
+        cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
+        saved = sorted(cfg.ckpt_path.glob("adam_*.pt"))
+        if saved:
+            state = torch.load(saved[-1], map_location=device)
+            model.load_state_dict(state["model"]); adam.load_state_dict(state["adam"])
+            sched.load_state_dict(state["sched"]); start = state["epoch"]
+            history.resumed_from = start
 
-    for epoch in range(cfg.epochs):
+    for epoch in range(start, cfg.epochs):
         last = epoch == cfg.epochs - 1
         logging = epoch % cfg.log_every == 0 or last
 
@@ -92,6 +101,10 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
         if epoch % cfg.eval_every == 0 or last:
             history.record_reference(epoch, float(np.mean((predict(model, t_ref) - ys_ref) ** 2)))
 
+        if cfg.checkpoint_every and (epoch + 1) % cfg.checkpoint_every == 0:
+            torch.save({"model": model.state_dict(), "adam": adam.state_dict(),
+                        "sched": sched.state_dict(), "epoch": epoch + 1},
+                       cfg.ckpt_path / f"adam_{epoch + 1:06d}.pt")
         if cfg.print_every and (epoch % cfg.print_every == 0 or last):
             elapsed = time.perf_counter() - t_start
             eta = elapsed / (epoch + 1) * (cfg.epochs - epoch - 1)
