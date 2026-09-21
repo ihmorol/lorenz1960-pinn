@@ -827,7 +827,8 @@ def fig_architecture_scatter(sweep: pd.DataFrame, value: str = "rmse_combined_l2
 
 def write_residual_surface_html(
     epochs: np.ndarray, t_centres: np.ndarray, values: np.ndarray,
-    path: str | Path, label: str = "",
+    path: str | Path, label: str = "", title: str = "Collocation residual surface",
+    zlabel: str = "log10 |r|",
 ) -> Path | None:
     """Rotatable 3-D residual surface (epoch, t, log10 |r|) as a standalone HTML file.
 
@@ -843,10 +844,10 @@ def write_residual_surface_html(
     path.parent.mkdir(parents=True, exist_ok=True)
     z = np.log10(np.where(values > 0, values, np.nan))
     fig = go.Figure(go.Surface(x=t_centres, y=epochs, z=z, colorscale="Inferno_r",
-                               colorbar={"title": "log10 |r|"}))
+                               colorbar={"title": zlabel}))
     fig.update_layout(
-        title=f"Collocation residual surface{f' — {label}' if label else ''}",
-        scene={"xaxis_title": "t", "yaxis_title": "epoch", "zaxis_title": "log10 |r|"},
+        title=f"{title}{f' — {label}' if label else ''}",
+        scene={"xaxis_title": "t", "yaxis_title": "epoch", "zaxis_title": zlabel},
         margin={"l": 0, "r": 0, "t": 40, "b": 0},
     )
     fig.write_html(str(path), include_plotlyjs="cdn")

@@ -390,3 +390,18 @@ def test_trails_follow_the_snapshots(tmp_path):
     assert np.stack(history.param_trail).shape == np.stack(history.grad_trail).shape == (3, n)
     set_seed(cfg.seed)
     assert np.allclose(history.param_trail[0], flat_params(PINN(cfg)).cpu().numpy())
+
+
+def test_run_extras_are_written(tmp_path):
+    from pinn import viz
+    from pinn.train import main
+
+    cfg = Config(depth=1, width=8, epochs=21, n_collocation=32, snapshot_every=10,
+                 log_every=10, eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    main(cfg)
+    names = {p.name for p in viz.generate_run_extras(tmp_path)}
+    for expected in ("trajectory.html", "loss_landscape.png", "loss_phases.png",
+                     "gradient_stability.png", "gradient_histograms.png", "ntk_spectrum.png",
+                     "error_vs_t.png", "error_growth.png"):
+        assert expected in names, expected

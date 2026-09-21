@@ -301,6 +301,7 @@ def save_results(model: PINN, history: TrainHistory, cfg: Config) -> pd.DataFram
     if history.snapshots is not None:
         history.snapshots.finalize(cfg.results_path)
         breakdown = write_breakdown_figures(cfg)
+        figures.generate_run_extras(cfg.results_path)
         if cfg.print_every:
             print(f"[save]  {len(history.snapshots.epochs)} snapshots + point_summary.csv + "
                   f"{len(breakdown)} breakdown figures"

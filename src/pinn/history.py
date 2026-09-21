@@ -73,6 +73,7 @@ class TrainHistory:
     param_epochs: list[int] = field(default_factory=list, repr=False, compare=False)
     param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     grad_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
+    eps_marks: list[tuple[int, float]] = field(default_factory=list)
 
     log_epoch: list[int] = field(default_factory=list)
     logged_loss: list[float] = field(default_factory=list)
@@ -283,7 +284,7 @@ def point_history(breakdown_dir: Path | str, i: int) -> pd.DataFrame:
 
 
 def residual_grid(
-    breakdown_dir: Path | str, n_bins: int = 240, column: str = "r_sq"
+    breakdown_dir: Path | str, n_bins: int = 240, column: str = "r_sq", sqrt: bool = True,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Reduce a breakdown directory to an ``(epoch x t)`` field for plotting.
 
@@ -307,7 +308,9 @@ def residual_grid(
     for f in files:
         frame = pd.read_csv(f, usecols=["epoch", "t", column])
         which = np.clip(np.digitize(frame["t"].to_numpy(), edges) - 1, 0, n_bins - 1)
-        magnitude = np.sqrt(frame[column].to_numpy())
+        magnitude = frame[column].to_numpy()
+        if sqrt:
+            magnitude = np.sqrt(magnitude)
         binned = pd.Series(magnitude).groupby(which).median()
         row = np.full(n_bins, np.nan)
         row[binned.index.to_numpy()] = binned.to_numpy()
