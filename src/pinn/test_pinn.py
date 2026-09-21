@@ -461,3 +461,17 @@ def test_windowed_pinn_routes_and_is_continuous():
     m.set_window_start(1, m.windows[0](joint)[0])
     assert torch.allclose(m.windows[0](joint), m.windows[1](joint), atol=1e-6)
     assert residual_parts(m, t).r.shape == (4, 3)
+
+
+def test_eps_advances_only_when_all_weights_exceed_delta(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2, 1e-1), causal_delta=0.99,
+                 causal_max_iters=15, depth=1, width=8, n_collocation=20, collocation="uniform",
+                 lbfgs_iters=2, log_every=5, eval_every=5, print_every=0, ckpt_dir=str(tmp_path))
+    model, history = train(cfg)
+    assert cfg.arch == "1x8_win2_causal"
+    assert len(history.eps_marks) == 4 and len(history.window_marks) == 2
+    assert 0 < len(history.min_w) <= 4 * 15                   # every stage ends by delta or by the cap
+    assert all(m <= len(history.loss) for m, _ in history.eps_marks)
+    assert (tmp_path / "window_00.pt").exists() and (tmp_path / "window_01.pt").exists()

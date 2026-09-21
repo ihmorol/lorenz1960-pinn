@@ -75,6 +75,9 @@ class TrainHistory:
     param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     grad_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     eps_marks: list[tuple[int, float]] = field(default_factory=list)
+    min_w: list[float] = field(default_factory=list)
+    window_marks: list[int] = field(default_factory=list)
+    weight_profiles: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
 
     log_epoch: list[int] = field(default_factory=list)
     logged_loss: list[float] = field(default_factory=list)
@@ -141,7 +144,17 @@ class TrainHistory:
         ref = pd.read_csv(out / "reference_error.csv")
         loss = pd.read_csv(out / "loss_history.csv")["loss"].tolist()
         layer_cols = [c for c in diag.columns if c.endswith("_grad_norm")]
+        causal = out / "causal.csv"
+        marks = out / "marks.csv"
+        extra = {}
+        if causal.exists():
+            extra["min_w"] = pd.read_csv(causal)["min_w"].tolist()
+        if marks.exists():
+            m = pd.read_csv(marks)
+            extra["eps_marks"] = [(int(i), float(e)) for i, e in zip(m["iteration"], m["eps"]) if e == e]
+            extra["window_marks"] = [int(i) for i, k in zip(m["iteration"], m["kind"]) if k == "window"]
         return cls(
+            **extra,
             loss=loss,
             adam_iters=int(diag["epoch"].max()) + 1,
             log_epoch=diag["epoch"].tolist(),

@@ -31,6 +31,12 @@ class Config:
     problem: str = "lorenz1960"
     end_state: tuple[float, float, float] | None = None   # set for a two-point BVP
     n_windows: int = 1        # >1: one network per time window, chained by end state
+    # Causal training (Wang, Sankaran & Perdikaris 2024, Algorithm 1): per window, run
+    # Adam under each eps in turn, advancing when min_i w_i > causal_delta or after
+    # causal_max_iters. Empty schedule = plain mean-squared residual.
+    causal_eps_schedule: tuple[float, ...] = ()
+    causal_delta: float = 0.99
+    causal_max_iters: int = 0
 
     depth: int = 4
     width: int = 60
@@ -123,6 +129,8 @@ class Config:
             tag += "_unit"
         if self.n_windows > 1:
             tag += f"_win{self.n_windows}"
+        if self.causal_eps_schedule:
+            tag += "_causal"
         return tag
 
     @property
