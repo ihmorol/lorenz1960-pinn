@@ -426,3 +426,22 @@ def test_root_scripts_compile():
     root = Path(__file__).resolve().parents[2]
     for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py"):
         py_compile.compile(str(root / name), doraise=True)
+
+
+def test_causal_weights_gate_later_times():
+    import torch
+    from pinn.functions.losses import causal_loss, causal_weights
+
+    w = causal_weights(torch.tensor([1.0, 1.0, 0.0, 0.0]), eps=1.0)
+    assert w[0] == 1.0 and torch.all(w[1:] <= w[:-1]) and not w.requires_grad
+    assert torch.allclose(causal_weights(torch.zeros(4), eps=100.0), torch.ones(4))
+    t = torch.tensor([[0.3], [0.1], [0.2]])
+    loss, w_sorted = causal_loss(torch.ones(3, 3), t, eps=0.5)
+    assert w_sorted.shape == (3,) and loss <= 1.0
+
+
+def test_split_windows_tile_the_span():
+    from pinn.functions.windows import split_windows
+
+    assert split_windows((0.0, 2.0), 4) == [(0.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 2.0)]
+    assert split_windows((0.0, 2.0), 1) == [(0.0, 2.0)]
