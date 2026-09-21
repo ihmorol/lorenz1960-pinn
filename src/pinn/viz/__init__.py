@@ -26,7 +26,7 @@ def generate_run_extras(run_dir) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     cfg = config_for(run)
     model, history, _ = load_run(cfg)
-    dtype = next(model.parameters()).dtype
+    p = next(model.parameters())
     written: list[Path] = []
 
     if (run / "breakdown").exists():
@@ -43,8 +43,8 @@ def generate_run_extras(run_dir) -> list[Path]:
         grid = make_grid(cfg, next(model.parameters()).device)
         spectra = {}
         for k in np.unique(np.linspace(0, len(trail["epochs"]) - 1, 4).round().astype(int)):
-            torch.nn.utils.vector_to_parameters(torch.as_tensor(trail["params"][k], dtype=dtype),
-                                                model.parameters())
+            torch.nn.utils.vector_to_parameters(
+                torch.as_tensor(trail["params"][k], dtype=p.dtype, device=p.device), model.parameters())
             spectra[int(trail["epochs"][k])] = training.ntk_eigenvalues(model, grid)
         written += save_figure(training.fig_ntk_spectrum(spectra), out, "ntk_spectrum", ("png",))
         model, history, _ = load_run(cfg)

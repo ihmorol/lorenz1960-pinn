@@ -15,11 +15,11 @@ MARGIN = 0.25
 def loss_on_plane(model, grid, centre, d1, d2, a, b) -> np.ndarray:
     from ..pinn import pinn_loss
 
-    dtype = next(model.parameters()).dtype
+    p = next(model.parameters())
     z = np.empty((len(b), len(a)))
     for i, bb in enumerate(b):
         for j, aa in enumerate(a):
-            theta = torch.as_tensor(centre + aa * d1 + bb * d2, dtype=dtype)
+            theta = torch.as_tensor(centre + aa * d1 + bb * d2, dtype=p.dtype, device=p.device)
             torch.nn.utils.vector_to_parameters(theta, model.parameters())
             z[i, j] = pinn_loss(model, grid.clone().requires_grad_(True)).item()
     return z
