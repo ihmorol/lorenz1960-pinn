@@ -12,7 +12,7 @@ RUN = Path(os.environ.get("RUN", "runs/4x60_f64_unit"))
 BG = "#1C1C1C"
 
 
-def frames(n_frames=40, n_points=300):
+def frames(n_frames=30, n_points=60):
     files = sorted((RUN / "breakdown").glob("epoch_*.csv"))
     pick = np.unique(np.linspace(0, len(files) - 1, n_frames).round().astype(int))
     out = []
@@ -40,8 +40,8 @@ class LearningTheLoop(ThreeDScene):
         for f in fr:
             pts = f[["x", "y", "z"]].to_numpy() * scale
             err = np.clip((np.log10(f.err_norm.to_numpy() + 1e-9) + 6) / 6, 0, 1)
-            new = VGroup(*[Dot3D(p, radius=0.03, color=interpolate_color(BLUE, RED, float(e)))
-                           for p, e in zip(pts, err)])
+            new = VGroup(*[VMobject(color=interpolate_color(BLUE, RED, float(err[i])), stroke_width=4)
+                           .set_points_as_corners([pts[i], pts[i + 1]]) for i in range(len(pts) - 1)])
             label = Text(f"epoch {int(f.epoch.iloc[0])}", font_size=28).to_corner(UL)
             self.add_fixed_in_frame_mobjects(label)
             if curve is None:
