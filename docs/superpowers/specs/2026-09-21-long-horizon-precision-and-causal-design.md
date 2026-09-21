@@ -203,6 +203,12 @@ the weight trail); (17) per-layer gradient histograms at chosen snapshots; (18) 
 eigenvalue spectrum at snapshots on 256 subsampled points (Wang, Yu and Perdikaris
 2022), showing which frequencies the network can learn at that moment.
 
+Film: (19) a Manim video per run (`viz/film/`, rendered from saved artifacts with the
+`manim-video` skill, never during training) in three 3-D acts: the trajectory drawn per
+snapshot epoch against the reference loop, coloured by per-point error; the PCA loss
+surface with the Adam path and a gradient arrow per epoch; the residual front L(t, epoch)
+and, for the causal run, the weight curve w(t) sweeping forward as eps advances.
+
 ## 6. Tests
 
 One check per non-trivial piece, in `test_pinn.py` (existing tests move with the
