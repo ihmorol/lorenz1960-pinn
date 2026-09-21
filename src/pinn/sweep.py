@@ -123,6 +123,13 @@ def config_for(run_dir: str | Path) -> Config:
         depth=int(row["depth"]), width=int(row["width"]), activation=str(row["activation"]),
         ic=str(row["ic"]), seed=int(row["seed"]), epochs=int(row["epochs"]),
         n_collocation=int(row["n_collocation"]),
+        t_span=(float(row["t_start"]), float(row["t_end"])),
+        lbfgs_iters=int(row["lbfgs_iters"]), gamma=float(row["gamma"]),
+        lr_start=float(row["lr_start"]), lr_end=float(row["lr_end"]),
+        dtype=str(row.get("dtype", "float32")), ic_scale=str(row.get("ic_scale", "span")),
+        collocation=str(row.get("collocation", "lhs")), n_eval=int(row.get("n_eval", 1001)),
+        lr_decay=None if pd.isna(row.get("lr_decay", float("nan"))) else float(row["lr_decay"]),
+        lr_decay_every=int(row.get("lr_decay_every", 5000)),
     )
 
 

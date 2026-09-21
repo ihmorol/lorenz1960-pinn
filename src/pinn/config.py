@@ -44,6 +44,13 @@ class Config:
     seed: int = 0
 
     n_collocation: int = 3000
+    n_eval: int = 1001
+    points_per_unit: float | None = None    # overrides n_collocation as density x window length
+    eval_per_unit: float | None = None      # overrides n_eval the same way
+    collocation: str = "lhs"                # "lhs" | "uniform"
+    dtype: str = "float32"                  # "float32" | "float64"
+    lr_decay: float | None = None           # None: linear lr_start -> lr_end; else StepLR gamma
+    lr_decay_every: int = 5000
 
     log_every: int = 10       # epochs between gradient/loss-component diagnostics
     eval_every: int = 100     # epochs between reference-solution error evaluations
@@ -65,6 +72,15 @@ class Config:
             raise ValueError(f"ic must be one of {IC_MODES}")
         if self.ic_scale not in ("span", "unit"):
             raise ValueError("ic_scale must be 'span' or 'unit'")
+        if self.dtype not in ("float32", "float64"):
+            raise ValueError("dtype must be 'float32' or 'float64'")
+        if self.collocation not in ("lhs", "uniform"):
+            raise ValueError("collocation must be 'lhs' or 'uniform'")
+        span = self.t_span[1] - self.t_span[0]
+        if self.points_per_unit is not None:
+            object.__setattr__(self, "n_collocation", int(round(self.points_per_unit * span)))
+        if self.eval_per_unit is not None:
+            object.__setattr__(self, "n_eval", int(round(self.eval_per_unit * span)) + 1)
 
     @property
     def coefficients(self) -> np.ndarray:
@@ -83,9 +99,19 @@ class Config:
         return _resolve(self.runs_dir)
 
     @property
+    def torch_dtype(self):
+        import torch
+        return torch.float64 if self.dtype == "float64" else torch.float32
+
+    @property
     def arch(self) -> str:
-        """Directory-safe architecture tag, e.g. ``4x60``."""
-        return f"{self.depth}x{self.width}"
+        """Directory-safe run tag: ``4x60``, plus a suffix per non-default knob."""
+        tag = f"{self.depth}x{self.width}"
+        if self.dtype == "float64":
+            tag += "_f64"
+        if self.ic_scale == "unit":
+            tag += "_unit"
+        return tag
 
     @property
     def label(self) -> str:

@@ -11,7 +11,8 @@ from torch import Tensor
 from . import viz as figures
 from .config import Config, compute_error_metrics, reference_at, reference_trajectory
 from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_params, residual_grid
-from .functions.collocation import latin_hypercube_points
+from .functions.collocation import latin_hypercube_points, uniform_points
+from .functions.optimizers import adam_with_decay, run_lbfgs
 from .pinn import PINN, loss_terms, pinn_loss, residual_of as residual
 
 
@@ -25,8 +26,9 @@ def set_seed(seed: int) -> None:
 
 
 def make_grid(cfg: Config, device: torch.device) -> Tensor:
-    t = latin_hypercube_points(cfg.t_span, cfg.n_collocation, cfg.seed)
-    return torch.as_tensor(t, dtype=torch.float32, device=device)
+    t = (uniform_points(cfg.t_span, cfg.n_collocation) if cfg.collocation == "uniform"
+         else latin_hypercube_points(cfg.t_span, cfg.n_collocation, cfg.seed))
+    return torch.as_tensor(t, dtype=cfg.torch_dtype, device=device)
 
 
 def train(cfg: Config) -> tuple[PINN, TrainHistory]:
@@ -34,10 +36,10 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     device = get_device()
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
-    model = PINN(cfg).to(device)
+    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
     grid = make_grid(cfg, device)
     history = TrainHistory()
-    t_ref, ys_ref = reference_trajectory(cfg, n=1001)
+    t_ref, ys_ref = reference_trajectory(cfg, n=cfg.n_eval)
 
     if cfg.snapshot_every > 0:
         grid_t = grid.detach().cpu().numpy().reshape(-1)
@@ -58,11 +60,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
                   f"(~{n_snap} files) -> {history.snapshots.dir}", flush=True)
     t_start = time.perf_counter()
 
-    adam = torch.optim.Adam(model.parameters(), lr=cfg.lr_start)
-    decay = cfg.lr_end / cfg.lr_start
-    sched = torch.optim.lr_scheduler.LambdaLR(
-        adam, lambda e: 1.0 + (decay - 1.0) * min(e, cfg.epochs) / cfg.epochs
-    )
+    adam, sched = adam_with_decay(model.parameters(), cfg)
 
     for epoch in range(cfg.epochs):
         last = epoch == cfg.epochs - 1
@@ -107,15 +105,8 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
               f"final loss {history.loss[-1]:.4e} | best loss {min(history.loss):.4e}", flush=True)
 
     if cfg.lbfgs_iters > 0:
-        lbfgs = torch.optim.LBFGS(
-            model.parameters(), max_iter=cfg.lbfgs_iters, history_size=50,
-            tolerance_grad=1e-12, tolerance_change=1e-14, line_search_fn="strong_wolfe",
-        )
-
         def closure() -> Tensor:
-            lbfgs.zero_grad()
             loss = pinn_loss(model, grid.clone().requires_grad_(True))
-            loss.backward()
             history.loss.append(loss.item())
             n = len(history.loss) - history.adam_iters
             if cfg.print_every and n % 10 == 1:
@@ -123,7 +114,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
                       f"{time.perf_counter() - t_start:6.1f}s elapsed", flush=True)
             return loss
 
-        lbfgs.step(closure)
+        run_lbfgs(model.parameters(), closure, cfg.lbfgs_iters, cfg.torch_dtype)
         history.wall_clock_s = time.perf_counter() - t_start
         if cfg.print_every:
             print(f"[lbfgs] done after {len(history.loss) - history.adam_iters} evals | "
@@ -133,27 +124,27 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
 
 
 def predict(model: PINN, t: np.ndarray) -> np.ndarray:
-    device = next(model.parameters()).device
-    tt = torch.as_tensor(t, dtype=torch.float32, device=device).reshape(-1, 1)
+    p = next(model.parameters())
+    tt = torch.as_tensor(t, dtype=p.dtype, device=p.device).reshape(-1, 1)
     with torch.no_grad():
         return model(tt).cpu().numpy().astype(np.float64)
 
 
 def residual_at(model: PINN, t: np.ndarray) -> np.ndarray:
     """ODE residual r(t) = du/dt - f(u) evaluated at arbitrary times."""
-    device = next(model.parameters()).device
-    tt = torch.as_tensor(t, dtype=torch.float32, device=device).reshape(-1, 1).requires_grad_(True)
+    p = next(model.parameters())
+    tt = torch.as_tensor(t, dtype=p.dtype, device=p.device).reshape(-1, 1).requires_grad_(True)
     return residual(model, tt).detach().cpu().numpy().astype(np.float64)
 
 
 def evaluate(model: PINN, cfg: Config) -> pd.DataFrame:
-    t, ys = reference_trajectory(cfg, n=1001)
+    t, ys = reference_trajectory(cfg, n=cfg.n_eval)
     return compute_error_metrics(ys, predict(model, t))
 
 
 def collect_artifacts(model: PINN, history: TrainHistory, cfg: Config) -> figures.RunArtifacts:
     """Bundle a finished run into the plain-array record the figure suite reads."""
-    t, ref = reference_trajectory(cfg, n=1001)
+    t, ref = reference_trajectory(cfg, n=cfg.n_eval)
     grid = make_grid(cfg, next(model.parameters()).device).cpu().numpy().reshape(-1)
     return figures.RunArtifacts(
         t=t,
@@ -203,6 +194,9 @@ def run_summary(
         "n_collocation": cfg.n_collocation,
         "lr_start": cfg.lr_start, "lr_end": cfg.lr_end,
         "t_start": cfg.t_span[0], "t_end": cfg.t_span[1],
+        "dtype": cfg.dtype, "ic_scale": cfg.ic_scale, "collocation": cfg.collocation,
+        "n_eval": cfg.n_eval, "lr_decay": cfg.lr_decay if cfg.lr_decay is not None else float("nan"),
+        "lr_decay_every": cfg.lr_decay_every,
     }
 
     # --- accuracy, per state and combined
@@ -316,7 +310,7 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
     """Reload a finished run's trained weights and telemetry, with no retraining."""
     cfg = cfg or Config()
     device = get_device()
-    model = PINN(cfg).to(device)
+    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
     try:
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
     except TypeError:  # older torch

@@ -321,3 +321,27 @@ def test_collocation_samplers_cover_the_span():
     assert lhs.shape == uni.shape == (50, 1)
     assert 0.0 <= lhs.min() and lhs.max() <= 2.0
     assert uni[0, 0] == 0.0 and uni[-1, 0] == 2.0
+
+
+def test_density_knobs_scale_with_the_window():
+    cfg = Config(t_span=(0.0, 4.0), points_per_unit=100, eval_per_unit=10)
+    assert cfg.n_collocation == 400 and cfg.n_eval == 41
+    assert Config().n_collocation == 3000 and Config().n_eval == 1001
+
+
+def test_float64_trains_end_to_end():
+    import torch
+    from pinn.train import train
+
+    cfg = Config(dtype="float64", depth=1, width=8, epochs=5, n_collocation=16, lbfgs_iters=3,
+                 log_every=5, eval_every=5, print_every=0)
+    model, history = train(cfg)
+    assert next(model.parameters()).dtype == torch.float64
+    assert cfg.arch == "1x8_f64" and len(history.loss) > 5
+
+
+def test_run_of_record_config_is_unchanged():
+    cfg = Config()
+    assert (cfg.dtype, cfg.ic_scale, cfg.collocation, cfg.lr_decay, cfg.n_eval) == \
+        ("float32", "span", "lhs", None, 1001)
+    assert cfg.arch == "4x60"
