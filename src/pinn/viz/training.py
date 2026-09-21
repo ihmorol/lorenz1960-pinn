@@ -5,34 +5,53 @@ import pandas as pd
 import torch
 
 
-def fig_loss_phases(loss: np.ndarray, adam_iters: int, eps_marks=()):
+def lbfgs_spans(n: int, adam_iters: int, eps_marks=(), window_marks=()):
+    """(start, adam_end, end) per window; one window with adam_iters when the run is not windowed."""
+    ends = list(window_marks) or [n]
+    out, start = [], 0
+    for end in ends:
+        inside = [it for it, _ in eps_marks if start < it <= end]
+        adam_end = max(inside) if inside else (adam_iters if len(ends) == 1 else end)
+        out.append((start, adam_end, end))
+        start = end
+    return out
+
+
+def fig_loss_phases(loss: np.ndarray, adam_iters: int, eps_marks=(), window_marks=()):
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.semilogy(loss, lw=0.6, color="0.6", label="per iteration")
     ax.semilogy(pd.Series(loss).rolling(101, center=True, min_periods=1).median(), "k", lw=1.2,
                 label="rolling median")
-    ax.axvspan(0, adam_iters, color="tab:blue", alpha=0.06, label="Adam")
-    if adam_iters < len(loss):
-        ax.axvspan(adam_iters, len(loss), color="tab:orange", alpha=0.1, label="L-BFGS")
-    for it, eps in eps_marks:
-        ax.axvline(it, color="tab:red", lw=0.8, ls="--")
-        ax.annotate(f"eps={eps:g}", (it, loss.max()), fontsize=7, rotation=90, va="top")
+    for i, (a, adam_end, b) in enumerate(lbfgs_spans(len(loss), adam_iters, eps_marks, window_marks)):
+        ax.axvspan(a, adam_end, color="tab:blue", alpha=0.06, label="Adam" if i == 0 else None)
+        if adam_end < b:
+            ax.axvspan(adam_end, b, color="tab:orange", alpha=0.15, label="L-BFGS" if i == 0 else None)
+        if i:
+            ax.axvline(a, color="0.3", lw=0.5)
+    if len(eps_marks) <= 10:
+        for it, eps in eps_marks:
+            ax.axvline(it, color="tab:red", lw=0.8, ls="--")
+            ax.annotate(f"eps={eps:g}", (it, loss.max()), fontsize=7, rotation=90, va="top")
     ax.set_xlabel("iteration"); ax.set_ylabel("loss"); ax.legend(fontsize=8)
-    ax.set_title("loss by phase: a flat stretch is a plateau; a step down in the L-BFGS band means "
-                 "Adam had stalled", fontsize=9)
+    ax.set_title("loss by phase: blue = Adam, orange = L-BFGS, thin lines = window starts; a flat "
+                 "stretch is a plateau, a step down in orange means Adam had stalled", fontsize=9)
     return fig
 
 
-def fig_gradient_stability(epochs: np.ndarray, grads: np.ndarray):
+def fig_gradient_stability(epochs: np.ndarray, grads: np.ndarray, window_marks=()):
     g = grads / np.maximum(np.linalg.norm(grads, axis=1, keepdims=True), 1e-30)
     cos = (g[1:] * g[:-1]).sum(1)
+    if len(window_marks):
+        win = np.searchsorted(np.asarray(window_marks), epochs, side="right")
+        cos = np.where(win[1:] == win[:-1], cos, np.nan)
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.plot(epochs[1:], cos, "tab:blue", lw=1, label="cos(g_k, g_k-1)")
     ax.set_ylim(-1.05, 1.05); ax.set_ylabel("cosine"); ax.set_xlabel("epoch")
     ax2 = ax.twinx()
     ax2.semilogy(epochs, np.maximum(np.linalg.norm(grads, axis=1), 1e-30), "0.4", lw=0.8, label="|g|")
     ax2.set_ylabel("gradient norm")
-    ax.set_title("gradient direction stability: near-zero cosine = wandering on a plateau; "
-                 "steady positive = descending a valley", fontsize=9)
+    ax.set_title("gradient direction stability (snapshot to snapshot, same window only): near-zero cosine = "
+                 "wandering on a plateau; steady positive = descending a valley", fontsize=9)
     fig.legend(loc="lower left", fontsize=8)
     return fig
 
@@ -92,15 +111,28 @@ def fig_causal_weights(epochs, W):
     return fig
 
 
-def fig_min_w(min_w, delta, eps_marks):
+def causal_index(eps_marks, window_marks):
+    """Map global iteration marks to Adam-only (causal) iteration numbers by dropping L-BFGS evals."""
+    ends = list(window_marks) or [max((it for it, _ in eps_marks), default=0)]
+    out, offset, start = [], 0, 0
+    for end in ends:
+        inside = [(it, e) for it, e in eps_marks if start < it <= end]
+        out += [(it - offset, e) for it, e in inside]
+        adam_end = max((it for it, _ in inside), default=end)
+        offset += end - adam_end
+        start = end
+    return out
+
+
+def fig_min_w(min_w, delta, eps_marks, window_marks=()):
     fig, ax = plt.subplots(figsize=(9, 3.5))
     ax.plot(min_w, lw=0.8)
     ax.axhline(delta, color="k", ls="--", lw=0.8, label=f"delta={delta}")
-    for it, _ in eps_marks:
-        ax.axvline(min(it, len(min_w)), color="tab:red", lw=0.6)
-    ax.set_xlabel("causal iteration"); ax.set_ylabel("min w"); ax.legend(fontsize=8)
-    ax.set_title("min temporal weight: each crossing of delta ends an eps stage; a stage that never "
-                 "crosses hit the iteration cap", fontsize=9)
+    for it, _ in causal_index(eps_marks, window_marks):
+        ax.axvline(it, color="tab:red", lw=0.6)
+    ax.set_xlabel("causal iteration (Adam steps only)"); ax.set_ylabel("min w"); ax.legend(fontsize=8)
+    ax.set_title("min temporal weight: each crossing of delta ends an eps stage (red line); a stage that "
+                 "never crosses hit the iteration cap", fontsize=9)
     return fig
 
 

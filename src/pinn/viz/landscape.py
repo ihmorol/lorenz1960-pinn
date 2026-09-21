@@ -12,17 +12,17 @@ GRID = 41
 MARGIN = 0.25
 
 
-def loss_on_plane(model, grid, centre, d1, d2, a, b) -> np.ndarray:
+def loss_at(model, grid, theta) -> float:
     from ..pinn import pinn_loss
 
     p = next(model.parameters())
-    z = np.empty((len(b), len(a)))
-    for i, bb in enumerate(b):
-        for j, aa in enumerate(a):
-            theta = torch.as_tensor(centre + aa * d1 + bb * d2, dtype=p.dtype, device=p.device)
-            torch.nn.utils.vector_to_parameters(theta, model.parameters())
-            z[i, j] = pinn_loss(model, grid.clone().requires_grad_(True)).item()
-    return z
+    torch.nn.utils.vector_to_parameters(torch.as_tensor(theta, dtype=p.dtype, device=p.device),
+                                        model.parameters())
+    return pinn_loss(model, grid.clone().requires_grad_(True)).item()
+
+
+def loss_on_plane(model, grid, centre, d1, d2, a, b) -> np.ndarray:
+    return np.array([[loss_at(model, grid, centre + aa * d1 + bb * d2) for aa in a] for bb in b])
 
 
 def fig_landscape(a, b, logZ, proj, log_path, epochs, var2, label):
@@ -73,7 +73,6 @@ def write_all(run: Path) -> list[Path]:
     cfg = config_for(run)
     trail = np.load(run / "history" / "param_trail.npz")
     epochs, P = trail["epochs"], trail["params"].astype(np.float64)
-    losses = pd.read_csv(run / "history" / "loss_history.csv").loss.to_numpy()[epochs]
     diag = pd.read_csv(run / "history" / "training_diagnostics.csv")
 
     centre = P[-1]
@@ -90,6 +89,7 @@ def write_all(run: Path) -> list[Path]:
     model, _, _ = load_run(cfg)
     grid = make_grid(cfg, next(model.parameters()).device)
     logZ = np.log10(np.maximum(loss_on_plane(model, grid, centre, Vt[0], Vt[1], a, b), 1e-300))
+    losses = np.array([loss_at(model, grid, theta) for theta in P])
     log_path = np.log10(np.maximum(losses, 1e-300))
     np.savez(out / "loss_landscape.npz", a=a, b=b, logZ=logZ, proj=proj, log_path=log_path, epochs=epochs)
 

@@ -141,7 +141,9 @@ class Config:
         """Short run descriptor used in figure titles."""
         return (
             f"{self.depth}x{self.width} {self.activation}, {self.ic} IC, "
-            f"{self.n_collocation} LHS points"
+            f"{self.n_collocation} {self.collocation.upper() if self.collocation == 'lhs' else self.collocation} points"
+            + (f", {self.n_windows} windows" if self.n_windows > 1 else "")
+            + (", causal" if self.causal_eps_schedule else "")
         )
 
 

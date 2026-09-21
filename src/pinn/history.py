@@ -224,6 +224,10 @@ class SnapshotWriter:
         path = self.dir / ("epoch_%06d.csv" % epoch)
         frame.to_csv(path, index=False, float_format=FLOAT_FORMAT)
 
+        self._accumulate(epoch, r_norm, contrib, err_norm)
+        return path
+
+    def _accumulate(self, epoch: int, r_norm, contrib, err_norm) -> None:
         self.epochs.append(epoch)
         self._sum += r_norm
         self._sumsq += r_norm ** 2
@@ -234,7 +238,18 @@ class SnapshotWriter:
         self._last, self._last_contrib, self._last_err = r_norm.copy(), contrib, err_norm
         hit = np.isnan(self._converged_at) & (r_norm < CONVERGED_RESIDUAL)
         self._converged_at[hit] = epoch
-        return path
+
+    @classmethod
+    def replay(cls, breakdown_dir: Path | str) -> "SnapshotWriter":
+        """Rebuild the running statistics from every ``epoch_*.csv`` already on disk."""
+        files = sorted(Path(breakdown_dir).glob("epoch_*.csv"))
+        first = pd.read_csv(files[0])
+        writer = cls(breakdown_dir, first.t.to_numpy(), first[["ref_x", "ref_y", "ref_z"]].to_numpy())
+        for f in files:
+            frame = pd.read_csv(f)
+            writer._accumulate(int(frame.epoch.iloc[0]), np.sqrt(frame.r_sq.to_numpy()),
+                               frame.loss_contribution.to_numpy(), frame.err_norm.to_numpy())
+        return writer
 
     def summary_frame(self) -> pd.DataFrame:
         """One row per collocation point, aggregated over every snapshot taken."""

@@ -124,9 +124,12 @@ def _positive(values: np.ndarray) -> np.ndarray:
 
 def _mark_optimizer_switch(ax: plt.Axes, history: "TrainHistory") -> None:
     total = len(history.loss)
-    if history.adam_iters < total:
-        ax.axvspan(history.adam_iters, total, color="0.85", zorder=0)
-        ax.axvline(history.adam_iters, color="crimson", ls="--", lw=1.2, label="L-BFGS start")
+    from .training import lbfgs_spans
+
+    for i, (_, adam_end, end) in enumerate(lbfgs_spans(total, history.adam_iters, history.eps_marks,
+                                                       history.window_marks)):
+        if adam_end < end:
+            ax.axvspan(adam_end, end, color="0.85", zorder=0, label="L-BFGS" if i == 0 else None)
 
 
 def _long_layer_frame(history: "TrainHistory") -> pd.DataFrame:

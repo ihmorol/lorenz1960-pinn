@@ -35,7 +35,7 @@ def generate_run_extras(run_dir) -> list[Path]:
     if trail_path.exists():
         written += landscape.write_all(run)
         trail = np.load(trail_path)
-        written += save_figure(training.fig_gradient_stability(trail["epochs"], trail["grads"]),
+        written += save_figure(training.fig_gradient_stability(trail["epochs"], trail["grads"], history.window_marks),
                                out, "gradient_stability", ("png",))
         sizes = [(n, p.numel()) for n, p in model.named_parameters()]
         written += save_figure(training.fig_gradient_histograms(trail["epochs"], trail["grads"], sizes),
@@ -50,11 +50,12 @@ def generate_run_extras(run_dir) -> list[Path]:
         model, history, _ = load_run(cfg)
 
     loss = np.asarray(history.loss)
-    written += save_figure(training.fig_loss_phases(loss, history.adam_iters, history.eps_marks),
+    written += save_figure(training.fig_loss_phases(loss, history.adam_iters, history.eps_marks,
+                                                    history.window_marks),
                            out, "loss_phases", ("png",))
     if history.min_w:
         written += save_figure(training.fig_min_w(np.asarray(history.min_w), cfg.causal_delta,
-                                                  history.eps_marks), out, "min_w", ("png",))
+                                                  history.eps_marks, history.window_marks), out, "min_w", ("png",))
         if trail_path.exists() and "weights" in np.load(trail_path):
             trail = np.load(trail_path)
             written += save_figure(training.fig_causal_weights(trail["epochs"], trail["weights"]),

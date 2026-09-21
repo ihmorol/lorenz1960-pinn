@@ -424,7 +424,8 @@ def test_root_scripts_compile():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py", "run_causal.py"):
+    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py", "run_causal.py",
+                 "run_index.py"):
         py_compile.compile(str(root / name), doraise=True)
 
 
@@ -523,3 +524,35 @@ def test_warm_start_copies_previous_window_weights(tmp_path):
     for p, q in zip(model.windows[1].net.parameters(), model.windows[0].net.parameters()):
         assert torch.equal(p, q)
     assert "_warm" in cfg.arch
+
+
+def test_index_page_links_every_run(tmp_path):
+    from pinn.viz.index import write_index
+
+    for name in ("a", "b"):
+        (tmp_path / name / "figures").mkdir(parents=True)
+        (tmp_path / name / "figures" / "trajectory.html").write_text("x")
+    page = write_index(tmp_path, ["a", "b"]).read_text()
+    assert "a/figures/trajectory.html" in page and "b/figures/trajectory.html" in page
+
+
+def test_causal_index_drops_lbfgs_evals():
+    from pinn.viz.training import causal_index
+
+    # window 0: Adam 0-10 (eps ends at 4, 10), L-BFGS 10-30; window 1: Adam 30-36, L-BFGS 36-50
+    marks = causal_index([(4, 0.1), (10, 1.0), (36, 0.1)], [30, 50])
+    assert marks == [(4, 0.1), (10, 1.0), (16, 0.1)]
+
+
+def test_snapshot_replay_matches_live_summary(tmp_path):
+    from pinn.history import SnapshotWriter
+    from pinn.train import main
+
+    cfg = Config(t_span=(0.0, 0.2), epochs=4, lbfgs_iters=0, snapshot_every=2, depth=1, width=8,
+                 n_collocation=10, collocation="uniform", log_every=2, eval_every=2, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    main(cfg)
+    live = pd.read_csv(tmp_path / "point_summary.csv")
+    replayed = SnapshotWriter.replay(tmp_path / "breakdown").summary_frame()
+    assert list(live.epoch_of_max) == list(replayed.epoch_of_max)
+    assert np.allclose(live.r_final, replayed.r_final, rtol=1e-4)

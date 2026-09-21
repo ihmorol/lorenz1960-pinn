@@ -216,6 +216,8 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
                 run_lbfgs(sub.parameters(), closure, cfg.lbfgs_iters, cfg.torch_dtype)
             cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
             torch.save(sub.state_dict(), saved)
+            done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
+            snapshot(len(history.loss) - 1, done, final=True)
         history.window_marks.append(len(history.loss))
         if isinstance(model, WindowedPINN) and k + 1 < len(windows):
             with torch.no_grad():
@@ -224,9 +226,6 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
         if cfg.print_every and history.loss:
             print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
                   f"{time.perf_counter() - t_start:7.1f}s", flush=True)
-    if history.loss:
-        done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
-        snapshot(len(history.loss) - 1, done, final=True)
     history.wall_clock_s = time.perf_counter() - t_start
 
 
