@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from . import figures
+from . import viz as figures
 from .config import Config
 from .history import FLOAT_FORMAT
 from .train import main as train_and_save

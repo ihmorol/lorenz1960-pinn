@@ -55,7 +55,7 @@ def test_history_records_diagnostics():
 
 
 def test_figure_suite_writes_all_panels(tmp_path):
-    from pinn import figures
+    from pinn import viz as figures
     from pinn.train import collect_artifacts, train
 
     cfg = Config(depth=1, width=8, epochs=30, n_collocation=64, lbfgs_iters=0,
@@ -71,7 +71,7 @@ def test_figure_suite_writes_all_panels(tmp_path):
 
 
 def test_run_report_writes_tables_and_figures(tmp_path):
-    from pinn import figures
+    from pinn import viz as figures
     from pinn.train import collect_artifacts, train
 
     cfg = Config(depth=1, width=8, epochs=20, n_collocation=64, lbfgs_iters=0,
@@ -85,7 +85,7 @@ def test_run_report_writes_tables_and_figures(tmp_path):
 
 
 def test_history_round_trips_through_csv(tmp_path):
-    from pinn import figures
+    from pinn import viz as figures
     from pinn.history import TrainHistory
     from pinn.train import collect_artifacts, train
 
@@ -109,7 +109,7 @@ def test_sweep_figures(tmp_path):
 
     import pandas as pd
 
-    from pinn import figures
+    from pinn import viz as figures
 
     rows = [
         {"depth": d, "width": w, "activation": a, "seed": s, "rmse": 10.0 ** -(d + s)}

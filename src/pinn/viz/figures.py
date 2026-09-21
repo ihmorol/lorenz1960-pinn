@@ -24,7 +24,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import MaxNLocator
 from scipy.linalg import null_space
 
-from .config import compute_error_metrics
+from ..config import compute_error_metrics
 
 if TYPE_CHECKING:
     from .history import TrainHistory

@@ -9,7 +9,7 @@ import torch
 from scipy.stats import qmc
 from torch import Tensor
 
-from . import figures
+from . import viz as figures
 from .config import Config, compute_error_metrics, reference_at, reference_trajectory
 from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_params, residual_grid
 from .pinn import PINN, loss_terms, pinn_loss, residual
