@@ -45,12 +45,14 @@ class PINN(nn.Module):
                 nn.init.zeros_(m.bias)
 
         self.ic, self.ic_scale, self.gamma = cfg.ic, cfg.ic_scale, cfg.gamma
+        self.problem = cfg.spec
+        self.end_state = None if cfg.end_state is None else torch.tensor([cfg.end_state])
         self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=torch.float32))
         self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=torch.float32).reshape(1, 3))
         self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
 
     def rhs(self, u: Tensor) -> Tensor:
-        return lorenz1960_rhs(u, self.coeffs)
+        return self.problem.rhs(u)
 
     def trial(self, t: Tensor, n: Tensor) -> Tensor:
         if self.ic == "hard":
@@ -88,9 +90,12 @@ def loss_terms(model: PINN, t: Tensor) -> tuple[Tensor, Tensor, ResidualParts]:
         ic = (model(t0) - model.u0).pow(2).mean()
     else:
         ic = torch.zeros((), dtype=res.dtype, device=res.device)
+    if model.end_state is not None:
+        tf = torch.full((1, 1), model.tf, dtype=t.dtype, device=t.device)
+        ic = ic + (model(tf) - model.end_state.to(t)).pow(2).mean()
     return res, ic, parts
 
 
 def pinn_loss(model: PINN, t: Tensor) -> Tensor:
     res, ic, _ = loss_terms(model, t)
-    return res + model.gamma * ic if model.ic == "soft" else res
+    return res + model.gamma * ic if (model.ic == "soft" or model.end_state is not None) else res

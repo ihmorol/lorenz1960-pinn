@@ -68,7 +68,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
 
         adam.zero_grad()
         res, ic, parts = loss_terms(model, grid.clone().requires_grad_(True))
-        loss = res + model.gamma * ic if cfg.ic == "soft" else res
+        loss = res + model.gamma * ic if (cfg.ic == "soft" or cfg.end_state is not None) else res
         loss.backward()
 
         # Snapshot before the step, so the recorded residuals are exactly the ones
@@ -187,7 +187,7 @@ def run_summary(
 
     row: dict[str, object] = {
         # --- configuration
-        "arch": cfg.arch, "depth": cfg.depth, "width": cfg.width,
+        "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
         "n_params": int(sum(p.numel() for p in model.parameters())),
         "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
         "epochs": cfg.epochs, "lbfgs_iters": cfg.lbfgs_iters, "seed": cfg.seed,

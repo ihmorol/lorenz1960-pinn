@@ -28,6 +28,8 @@ class Config:
     l: float = 1.0
     initial_state: tuple[float, float, float] = (0.5, 0.75, 1.0)
     t_span: tuple[float, float] = (0.0, 1.0)
+    problem: str = "lorenz1960"
+    end_state: tuple[float, float, float] | None = None   # set for a two-point BVP
 
     depth: int = 4
     width: int = 60
@@ -97,6 +99,12 @@ class Config:
     @property
     def runs_path(self) -> Path:
         return _resolve(self.runs_dir)
+
+    @property
+    def spec(self):
+        from .problems import PROBLEMS
+        return PROBLEMS[self.problem](self.coefficients, self.initial_state, self.t_span,
+                                      self.end_state, lambda t: reference_at(self, t))
 
     @property
     def torch_dtype(self):

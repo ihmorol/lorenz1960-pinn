@@ -345,3 +345,31 @@ def test_run_of_record_config_is_unchanged():
     assert (cfg.dtype, cfg.ic_scale, cfg.collocation, cfg.lr_decay, cfg.n_eval) == \
         ("float32", "span", "lhs", None, 1001)
     assert cfg.arch == "4x60"
+
+
+def test_problem_registry_matches_locked_baseline():
+    import numpy as np
+    from dataclasses import replace
+    from pinn.config import reference_trajectory
+    from pinn.functions.reference import solve_reference
+
+    cfg = Config(t_span=(0.0, 2.0))
+    t, ys = reference_trajectory(cfg, n=201)
+    generic = solve_reference(replace(cfg.spec, reference=None), t)
+    assert cfg.spec.name == "lorenz1960" and cfg.spec.dim == 3
+    assert np.abs(generic - ys).max() < 1e-8
+    assert np.abs(solve_reference(cfg.spec, t) - ys).max() < 1e-8
+
+
+def test_end_state_penalty_enters_the_loss():
+    import torch
+    from dataclasses import replace
+    from pinn.pinn import PINN, pinn_loss
+
+    cfg = Config(depth=1, width=8)
+    t = torch.linspace(0, 1, 8).reshape(-1, 1)
+    torch.manual_seed(0)
+    plain = pinn_loss(PINN(cfg), t.clone().requires_grad_(True))
+    torch.manual_seed(0)
+    penalised = pinn_loss(PINN(replace(cfg, end_state=(9.0, 9.0, 9.0))), t.clone().requires_grad_(True))
+    assert penalised > plain

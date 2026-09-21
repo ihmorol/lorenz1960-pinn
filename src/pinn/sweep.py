@@ -130,6 +130,7 @@ def config_for(run_dir: str | Path) -> Config:
         collocation=str(row.get("collocation", "lhs")), n_eval=int(row.get("n_eval", 1001)),
         lr_decay=None if pd.isna(row.get("lr_decay", float("nan"))) else float(row["lr_decay"]),
         lr_decay_every=int(row.get("lr_decay_every", 5000)),
+        problem=str(row.get("problem", "lorenz1960")),
     )
 
 
