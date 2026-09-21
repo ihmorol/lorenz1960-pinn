@@ -458,6 +458,6 @@ def test_windowed_pinn_routes_and_is_continuous():
     t = torch.tensor([[0.1], [0.6], [1.2], [1.9]], requires_grad=True)
     assert m.window_of(t).tolist() == [0, 1, 2, 3]
     joint = torch.tensor([[0.5]])
-    m.set_window_start(1, m(joint)[0])
+    m.set_window_start(1, m.windows[0](joint)[0])
     assert torch.allclose(m.windows[0](joint), m.windows[1](joint), atol=1e-6)
     assert residual_parts(m, t).r.shape == (4, 3)
