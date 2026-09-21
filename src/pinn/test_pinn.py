@@ -373,3 +373,20 @@ def test_end_state_penalty_enters_the_loss():
     torch.manual_seed(0)
     penalised = pinn_loss(PINN(replace(cfg, end_state=(9.0, 9.0, 9.0))), t.clone().requires_grad_(True))
     assert penalised > plain
+
+
+def test_trails_follow_the_snapshots(tmp_path):
+    import numpy as np
+    from pinn.history import flat_params
+    from pinn.pinn import PINN
+    from pinn.train import set_seed, train
+
+    cfg = Config(depth=1, width=8, epochs=21, n_collocation=32, snapshot_every=10,
+                 log_every=10, eval_every=10, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history = train(cfg)
+    assert history.param_epochs == [0, 10, 20]
+    n = sum(p.numel() for p in model.parameters())
+    assert np.stack(history.param_trail).shape == np.stack(history.grad_trail).shape == (3, n)
+    set_seed(cfg.seed)
+    assert np.allclose(history.param_trail[0], flat_params(PINN(cfg)).cpu().numpy())

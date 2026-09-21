@@ -35,6 +35,11 @@ def flat_params(model: PINN) -> Tensor:
     return torch.cat([p.detach().reshape(-1) for p in model.parameters()])
 
 
+def flat_grads(model: PINN) -> Tensor:
+    return torch.cat([(p.grad if p.grad is not None else torch.zeros_like(p)).reshape(-1)
+                      for p in model.parameters()]).detach()
+
+
 def _grad_norms(model: PINN) -> tuple[float, dict[str, float]]:
     """Global L2 gradient norm plus one norm per weight matrix."""
     total = 0.0
@@ -65,6 +70,9 @@ class TrainHistory:
     # Live snapshot writer for the run, when ``cfg.snapshot_every`` is enabled.
     # Not part of the CSV round trip: the breakdown files are the record.
     snapshots: "SnapshotWriter | None" = field(default=None, repr=False, compare=False)
+    param_epochs: list[int] = field(default_factory=list, repr=False, compare=False)
+    param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
+    grad_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
 
     log_epoch: list[int] = field(default_factory=list)
     logged_loss: list[float] = field(default_factory=list)
