@@ -7,5 +7,5 @@ from pinn import viz  # noqa: E402
 
 if __name__ == "__main__":
     for run in sys.argv[1:]:
-        print(*viz.generate_run_extras(run), sep="
-")
+        for path in viz.generate_run_extras(run):
+            print(path)

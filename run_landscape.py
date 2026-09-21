@@ -7,5 +7,5 @@ from pinn import viz  # noqa: E402
 
 if __name__ == "__main__":
     for run in sys.argv[1:]:
-        print(*viz.landscape.write_all(Path(run)), sep="
-")
+        for path in viz.landscape.write_all(Path(run)):
+            print(path)
