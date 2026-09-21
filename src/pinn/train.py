@@ -152,8 +152,8 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
     cap = cfg.causal_max_iters if cfg.causal_eps_schedule else cfg.epochs
     device = grid.device
 
-    def snapshot(epoch: int, w) -> None:
-        if history.snapshots is None or epoch % cfg.snapshot_every:
+    def snapshot(epoch: int, w, final: bool = False) -> None:
+        if history.snapshots is None or (epoch % cfg.snapshot_every and not final):
             return
         history.snapshots.write(epoch, residual_parts(model, grid.clone().requires_grad_(True)))
         history.param_epochs.append(epoch)
@@ -224,6 +224,9 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
         if cfg.print_every and history.loss:
             print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
                   f"{time.perf_counter() - t_start:7.1f}s", flush=True)
+    if history.loss:
+        done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
+        snapshot(len(history.loss) - 1, done, final=True)
     history.wall_clock_s = time.perf_counter() - t_start
 
 

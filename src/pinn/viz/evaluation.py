@@ -46,11 +46,12 @@ def fig_joint_continuity(model, edges, h=1e-4):
 
     p = next(model.parameters())
     jumps, slopes = [], []
-    for e in edges[1:-1]:
+    for k, e in enumerate(edges[1:-1]):
         with torch.no_grad():
-            u = model(torch.tensor([[e - 2 * h], [e - h], [e + h], [e + 2 * h]], dtype=p.dtype, device=p.device))
-        jumps.append(float((u[2] - u[1]).norm()))
-        slopes.append(float(((u[3] - u[2]) / h - (u[1] - u[0]) / h).norm()))
+            te = torch.tensor([[e - h], [e], [e + h]], dtype=p.dtype, device=p.device)
+            a, b = model.windows[k](te), model.windows[k + 1](te)
+        jumps.append(float((b[1] - a[1]).norm()))
+        slopes.append(float(((b[2] - b[1]) / h - (a[1] - a[0]) / h).norm()))
     fig, ax = plt.subplots(figsize=(8, 3.5))
     ax.semilogy(edges[1:-1], np.maximum(jumps, 1e-16), "o-", ms=3, label="|u(t+) - u(t-)|")
     ax.semilogy(edges[1:-1], np.maximum(slopes, 1e-16), "s-", ms=3, label="slope mismatch")

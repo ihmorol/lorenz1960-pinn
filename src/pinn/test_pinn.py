@@ -502,6 +502,16 @@ def test_windowed_resume_skips_saved_windows(tmp_path):
     assert history.loss == [] and len(history.window_marks) == 2
 
 
+def test_windowed_run_ends_with_final_snapshot(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=3,
+                 lbfgs_iters=2, snapshot_every=1000, depth=1, width=8, n_collocation=20,
+                 collocation="uniform", ckpt_dir=str(tmp_path), results_dir=str(tmp_path))
+    _, history = train(cfg)
+    assert history.param_epochs[-1] == len(history.loss) - 1
+
+
 def test_warm_start_copies_previous_window_weights(tmp_path):
     import torch
     from pinn.train import train
