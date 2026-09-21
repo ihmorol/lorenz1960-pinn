@@ -80,6 +80,8 @@ def write_all(run: Path) -> list[Path]:
     X = P - centre
     _, S, Vt = np.linalg.svd(X, full_matrices=False)
     var = S**2 / max((S**2).sum(), 1e-300)
+    Vt = np.vstack([Vt, np.zeros((max(0, 3 - len(Vt)), Vt.shape[1]))])
+    var = np.append(var, np.zeros(max(0, 3 - len(var))))
     proj = X @ Vt[:3].T
     span = np.maximum(proj[:, :2].max(0) - proj[:, :2].min(0), 1e-6)
     lo, hi = proj[:, :2].min(0) - MARGIN * span, proj[:, :2].max(0) + MARGIN * span
