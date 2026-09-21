@@ -167,7 +167,7 @@ def reference_at(cfg: Config, t: np.ndarray) -> np.ndarray:
     uniform grid: linear interpolation of a 1001-point trajectory carries ~1e-6
     error, the same order as the PINN error it would be used to measure.
     """
-    t = np.asarray(t, dtype=float).reshape(-1)
+    t = np.clip(np.asarray(t, dtype=float).reshape(-1), *cfg.t_span)   # float32 grids overshoot tf
     order = np.argsort(t)
     _, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg), t_eval=t[order])
     out = np.empty_like(ys)

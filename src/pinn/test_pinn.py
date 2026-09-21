@@ -475,3 +475,17 @@ def test_eps_advances_only_when_all_weights_exceed_delta(tmp_path):
     assert 0 < len(history.min_w) <= 4 * 15                   # every stage ends by delta or by the cap
     assert all(m <= len(history.loss) for m, _ in history.eps_marks)
     assert (tmp_path / "window_00.pt").exists() and (tmp_path / "window_01.pt").exists()
+
+
+def test_causal_extras_are_written(tmp_path):
+    from pinn import viz
+    from pinn.train import main
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=12,
+                 depth=1, width=8, n_collocation=20, collocation="uniform", snapshot_every=6,
+                 log_every=6, eval_every=6, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    main(cfg)
+    names = {p.name for p in viz.generate_run_extras(tmp_path)}
+    for expected in ("causal_weights.png", "min_w.png", "window_grid.png", "joint_continuity.png"):
+        assert expected in names, expected

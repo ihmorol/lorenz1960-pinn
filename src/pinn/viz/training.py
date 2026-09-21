@@ -78,3 +78,45 @@ def fig_ntk_spectrum(spectra: dict[int, np.ndarray]):
     ax.set_title("NTK spectrum: a fast-decaying tail means high-frequency residual modes learn slowly",
                  fontsize=9)
     return fig
+
+
+def fig_causal_weights(epochs, W):
+    fig, ax = plt.subplots(figsize=(8, 4))
+    for k in np.unique(np.linspace(0, len(epochs) - 1, 6).round().astype(int)):
+        w = W[k][~np.isnan(W[k])]
+        ax.plot(np.linspace(0, 1, len(w)), w, lw=1, label=f"epoch {epochs[k]}")
+    ax.set_xlabel("position in window (0 = start, 1 = end)"); ax.set_ylabel("temporal weight w")
+    ax.legend(fontsize=7)
+    ax.set_title("causal weights: the front where w drops to 0 is where training currently stops; "
+                 "it must reach the right edge before eps advances", fontsize=9)
+    return fig
+
+
+def fig_min_w(min_w, delta, eps_marks):
+    fig, ax = plt.subplots(figsize=(9, 3.5))
+    ax.plot(min_w, lw=0.8)
+    ax.axhline(delta, color="k", ls="--", lw=0.8, label=f"delta={delta}")
+    for it, _ in eps_marks:
+        ax.axvline(min(it, len(min_w)), color="tab:red", lw=0.6)
+    ax.set_xlabel("causal iteration"); ax.set_ylabel("min w"); ax.legend(fontsize=8)
+    ax.set_title("min temporal weight: each crossing of delta ends an eps stage; a stage that never "
+                 "crosses hit the iteration cap", fontsize=9)
+    return fig
+
+
+def fig_window_grid(loss, window_marks):
+    edges = [0] + list(window_marks)
+    n = len(edges) - 1
+    cols = min(n, 5)
+    rows = -(-n // cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(3.2 * cols, 2.4 * rows), squeeze=False)
+    for k in range(n):
+        ax = axes[k // cols][k % cols]
+        ax.semilogy(loss[edges[k]:edges[k + 1]], lw=0.7)
+        ax.set_title(f"window {k}", fontsize=8)
+    for k in range(n, rows * cols):
+        axes[k // cols][k % cols].axis("off")
+    fig.suptitle("loss per window: a window that ends high inherits error into every later window",
+                 fontsize=9)
+    fig.tight_layout()
+    return fig
