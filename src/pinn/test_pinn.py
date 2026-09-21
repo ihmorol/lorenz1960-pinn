@@ -424,7 +424,7 @@ def test_root_scripts_compile():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py"):
+    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py", "run_causal.py"):
         py_compile.compile(str(root / name), doraise=True)
 
 
