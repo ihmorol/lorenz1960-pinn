@@ -170,6 +170,10 @@ def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_sta
             if cfg.print_every:
                 print(f"[window] {k:>2} restored from {saved.name}", flush=True)
         else:
+            if k and cfg.warm_start:
+                with torch.no_grad():
+                    for p, q in zip(sub.net.parameters(), windows[k - 1].net.parameters()):
+                        p.copy_(q)
             adam, sched = adam_with_decay(sub.parameters(), cfg)
             for eps in stages:
                 for _ in range(cap):
@@ -289,7 +293,7 @@ def run_summary(
         # --- configuration
         "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
         "n_windows": cfg.n_windows, "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
-        "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters,
+        "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters, "warm_start": cfg.warm_start,
         "n_params": int(sum(p.numel() for p in model.parameters())),
         "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
         "epochs": cfg.epochs, "lbfgs_iters": cfg.lbfgs_iters, "seed": cfg.seed,

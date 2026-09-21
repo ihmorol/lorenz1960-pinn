@@ -16,7 +16,8 @@ T_LOOP = 13.26446
 CFG = Config(t_span=(0.0, T_LOOP), points_per_unit=3000, eval_per_unit=1000,
              dtype="float64", ic_scale="unit", collocation="uniform", n_windows=27,
              causal_eps_schedule=(1e-2, 1e-1, 1.0, 10.0), causal_delta=0.99,
-             causal_max_iters=4000, lr_decay=0.9, lr_decay_every=5000, lbfgs_iters=1500)
+             causal_max_iters=4000, lr_decay=0.9, lr_decay_every=5000, lbfgs_iters=1500,
+             warm_start=True)
 SNAPSHOT_EVERY = 2000
 
 if __name__ == "__main__":

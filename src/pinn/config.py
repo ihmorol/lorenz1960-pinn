@@ -37,6 +37,7 @@ class Config:
     causal_eps_schedule: tuple[float, ...] = ()
     causal_delta: float = 0.99
     causal_max_iters: int = 0
+    warm_start: bool = False
 
     depth: int = 4
     width: int = 60
@@ -131,6 +132,8 @@ class Config:
             tag += f"_win{self.n_windows}"
         if self.causal_eps_schedule:
             tag += "_causal"
+        if self.warm_start:
+            tag += "_warm"
         return tag
 
     @property

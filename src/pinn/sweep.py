@@ -134,6 +134,7 @@ def config_for(run_dir: str | Path) -> Config:
         causal_eps_schedule=tuple(float(e) for e in str(row.get("causal_eps_schedule", "")).split()
                                   if e not in ("", "nan")),
         causal_delta=float(row.get("causal_delta", 0.99)), causal_max_iters=int(row.get("causal_max_iters", 0)),
+        warm_start=bool(row.get("warm_start", False)),
     )
 
 

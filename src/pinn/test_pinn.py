@@ -500,3 +500,16 @@ def test_windowed_resume_skips_saved_windows(tmp_path):
     train(cfg)
     _, history = train(cfg)          # every window restored; must not raise
     assert history.loss == [] and len(history.window_marks) == 2
+
+
+def test_warm_start_copies_previous_window_weights(tmp_path):
+    import torch
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=0,
+                 lbfgs_iters=0, warm_start=True, depth=1, width=8, n_collocation=20,
+                 collocation="uniform", ckpt_dir=str(tmp_path))
+    model, _ = train(cfg)            # zero iterations: window 1 must equal window 0 exactly
+    for p, q in zip(model.windows[1].net.parameters(), model.windows[0].net.parameters()):
+        assert torch.equal(p, q)
+    assert "_warm" in cfg.arch
