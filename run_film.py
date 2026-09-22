@@ -12,7 +12,9 @@ if __name__ == "__main__":
     out = run / "film"
     out.mkdir(exist_ok=True)
     script = Path(__file__).resolve().parent / "src" / "pinn" / "viz" / "film" / "script.py"
-    scenes = ["LearningTheLoop", "DescendingTheSurface"]
+    scenes = ["LearningTheLoop"]
+    if (run / "figures" / "loss_landscape.npz").exists():
+        scenes.append("DescendingTheSurface")
     trail = run / "history" / "param_trail.npz"
     if trail.exists() and "weights" in np.load(trail):
         scenes.append("TheCausalFront")

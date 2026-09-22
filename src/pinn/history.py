@@ -16,14 +16,14 @@ from .pinn import PINN, ResidualParts
 FLOAT_FORMAT = "%.9g"
 
 SNAPSHOT_COLUMNS = (
-    "epoch", "i", "t",                          # index
+    "epoch", "i", "t", "trained_until",         # index and trained prefix
     "n_x", "n_y", "n_z",                        # raw network output N(t)
     "x", "y", "z",                              # trial solution u_T = u0 + g(t) N(t)
     "dx_dt", "dy_dt", "dz_dt",                  # autograd time derivative
     "f_x", "f_y", "f_z",                        # physics RHS f(u_T)
     "r_x", "r_y", "r_z",                        # residual r = du_T/dt - f(u_T)
     "r_sq",                                     # r_x^2 + r_y^2 + r_z^2
-    "loss_contribution",                        # r_sq / (3 Nc); sums to the reported loss
+    "loss_contribution",                        # r_sq / (3 trained points); raw prefix residual
     "ref_x", "ref_y", "ref_z",                  # EVALUATION ONLY - never enters the loss
     "err_x", "err_y", "err_z", "err_norm",      # EVALUATION ONLY
 )
@@ -64,9 +64,12 @@ class TrainHistory:
     """
 
     loss: list[float] = field(default_factory=list)
+    loss_phase: list[str] = field(default_factory=list)
+    loss_window: list[int] = field(default_factory=list)
     adam_iters: int = 0
     resumed_from: int = 0
     wall_clock_s: float = 0.0
+    saved_n_snapshots: int = 0
 
     # Live snapshot writer for the run, when ``cfg.snapshot_every`` is enabled.
     # Not part of the CSV round trip: the breakdown files are the record.
@@ -75,6 +78,7 @@ class TrainHistory:
     param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     grad_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     eps_marks: list[tuple[int, float]] = field(default_factory=list)
+    stage_status: list[dict] = field(default_factory=list)
     min_w: list[float] = field(default_factory=list)
     window_marks: list[int] = field(default_factory=list)
     weight_profiles: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
@@ -90,6 +94,7 @@ class TrainHistory:
 
     ref_epoch: list[int] = field(default_factory=list)
     ref_mse: list[float] = field(default_factory=list)
+    ref_until: list[float] = field(default_factory=list)
 
     def record_step(
         self,
@@ -114,9 +119,10 @@ class TrainHistory:
         for name, value in per_layer.items():
             self.layer_grad_norms.setdefault(name, []).append(value)
 
-    def record_reference(self, epoch: int, mse: float) -> None:
+    def record_reference(self, epoch: int, mse: float, trained_until: float | None = None) -> None:
         self.ref_epoch.append(epoch)
         self.ref_mse.append(mse)
+        self.ref_until.append(float(trained_until) if trained_until is not None else float("nan"))
 
     def diagnostics_frame(self) -> pd.DataFrame:
         """Sampled optimiser diagnostics, one row per logged epoch."""
@@ -134,18 +140,22 @@ class TrainHistory:
 
     def reference_frame(self) -> pd.DataFrame:
         """Error against the trusted solution, sampled on its own cadence."""
-        return pd.DataFrame({"epoch": self.ref_epoch, "ref_mse": self.ref_mse})
+        return pd.DataFrame({"epoch": self.ref_epoch, "ref_mse": self.ref_mse,
+                             "trained_until": self.ref_until or [float("nan")] * len(self.ref_epoch)})
 
     @classmethod
-    def from_saved(cls, data_dir: Path | str) -> "TrainHistory":
+    def from_saved(cls, data_dir: Path | str, results_dir: Path | str | None = None) -> "TrainHistory":
         """Reload a finished run's telemetry, so figures can be redrawn without retraining."""
         out = Path(data_dir)
+        results = Path(results_dir) if results_dir is not None else out.parent
         diag = pd.read_csv(out / "training_diagnostics.csv")
         ref = pd.read_csv(out / "reference_error.csv")
-        loss = pd.read_csv(out / "loss_history.csv")["loss"].tolist()
-        layer_cols = [c for c in diag.columns if c.endswith("_grad_norm")]
+        loss_frame = pd.read_csv(out / "loss_history.csv")
+        loss = loss_frame["loss"].tolist()
+        layer_cols = [c for c in diag.columns if c.startswith("layer_") and c.endswith("_grad_norm")]
         causal = out / "causal.csv"
         marks = out / "marks.csv"
+        stages = out / "stages.csv"
         extra = {}
         if causal.exists():
             extra["min_w"] = pd.read_csv(causal)["min_w"].tolist()
@@ -153,10 +163,23 @@ class TrainHistory:
             m = pd.read_csv(marks)
             extra["eps_marks"] = [(int(i), float(e)) for i, e in zip(m["iteration"], m["eps"]) if e == e]
             extra["window_marks"] = [int(i) for i, k in zip(m["iteration"], m["kind"]) if k == "window"]
+        if stages.exists():
+            extra["stage_status"] = pd.read_csv(stages).to_dict("records")
+        summary_path = results / "run_summary.csv"
+        summary = pd.read_csv(summary_path).iloc[0] if summary_path.exists() else None
+        breakdown_count = len(list((results / "breakdown").glob("epoch_*.csv")))
         return cls(
             **extra,
             loss=loss,
-            adam_iters=int(diag["epoch"].max()) + 1,
+            loss_phase=loss_frame["phase"].tolist() if "phase" in loss_frame else [],
+            loss_window=loss_frame["window"].astype(int).tolist() if "window" in loss_frame else [],
+            adam_iters=(int(summary["adam_steps"]) if summary is not None and "adam_steps" in summary
+                        else (sum(loss_frame["phase"] == "adam") if "phase" in loss_frame
+                              else (len(extra["min_w"]) if "min_w" in extra
+                                    else int(diag["epoch"].max()) + 1))),
+            wall_clock_s=float(summary["wall_clock_s"]) if summary is not None else 0.0,
+            saved_n_snapshots=(breakdown_count or
+                               (int(summary["n_snapshots"]) if summary is not None else 0)),
             log_epoch=diag["epoch"].tolist(),
             logged_loss=diag["loss"].tolist(),
             residual_loss=diag["residual_loss"].tolist(),
@@ -168,6 +191,7 @@ class TrainHistory:
                               for c in layer_cols},
             ref_epoch=ref["epoch"].tolist(),
             ref_mse=ref["ref_mse"].tolist(),
+            ref_until=ref["trained_until"].tolist() if "trained_until" in ref else [],
         )
 
 
@@ -175,8 +199,9 @@ class SnapshotWriter:
     """Streams the full per-collocation-point state to ``breakdown/epoch_<n>.csv``.
 
     One file per snapshot epoch, ``Nc`` rows wide (see :data:`SNAPSHOT_COLUMNS`).
-    The tensors come straight from the training step's own residual evaluation,
-    so snapshotting adds no forward or backward passes - only the CSV write.
+    Single-domain Adam snapshots use the training step's residual tensors.
+    Windowed snapshots evaluate the full model separately and mask windows
+    that have not yet been trained.
 
     Running per-point statistics are accumulated as the snapshots stream past and
     written once at the end as ``point_summary.csv``, which answers "which
@@ -193,23 +218,28 @@ class SnapshotWriter:
 
         zeros = np.zeros(self.n_points)
         self._sum, self._sumsq = zeros.copy(), zeros.copy()
+        self._count = np.zeros(self.n_points, dtype=int)
         self._max, self._argmax = zeros.copy(), np.zeros(self.n_points, dtype=int)
-        self._first: np.ndarray | None = None
+        self._first = np.full(self.n_points, np.nan)
         self._last, self._last_contrib, self._last_err = zeros.copy(), zeros.copy(), zeros.copy()
         self._converged_at = np.full(self.n_points, np.nan)
 
-    def write(self, epoch: int, parts: ResidualParts) -> Path:
-        """Record one snapshot. ``parts`` is the training step's own intermediates."""
+    def write(self, epoch: int, parts: ResidualParts, trained_until: float | None = None) -> Path:
+        """Record a snapshot; ``trained_until`` masks the untrained future."""
         cols = {k: v.detach().cpu().numpy().astype(np.float64) for k, v in parts._asdict().items()}
         r = cols["r"]
         r_sq = (r ** 2).sum(axis=1)
         r_norm = np.sqrt(r_sq)
         err = cols["u"] - self.reference
         err_norm = np.linalg.norm(err, axis=1)
-        contrib = r_sq / (3.0 * self.n_points)
+        valid = self.t <= trained_until if trained_until is not None else np.ones(self.n_points, dtype=bool)
+        if not valid.any():
+            raise ValueError("snapshot has no trained collocation points")
+        contrib = r_sq / (3.0 * valid.sum())
 
         frame = pd.DataFrame({
             "epoch": epoch, "i": np.arange(self.n_points), "t": self.t,
+            "trained_until": trained_until if trained_until is not None else float(self.t.max()),
             **{"n_" + a: cols["n"][:, j] for j, a in enumerate("xyz")},
             **{a: cols["u"][:, j] for j, a in enumerate("xyz")},
             **{"d" + a + "_dt": cols["dudt"][:, j] for j, a in enumerate("xyz")},
@@ -220,23 +250,30 @@ class SnapshotWriter:
             **{"err_" + a: err[:, j] for j, a in enumerate("xyz")},
             "err_norm": err_norm,
         })[list(SNAPSHOT_COLUMNS)]
+        measured = [c for c in frame if c not in ("epoch", "i", "t", "trained_until")
+                    and not c.startswith("ref_")]
+        frame.loc[~valid, measured] = np.nan
 
         path = self.dir / ("epoch_%06d.csv" % epoch)
         frame.to_csv(path, index=False, float_format=FLOAT_FORMAT)
 
-        self._accumulate(epoch, r_norm, contrib, err_norm)
+        self._accumulate(epoch, np.where(valid, r_norm, np.nan),
+                         np.where(valid, contrib, np.nan), np.where(valid, err_norm, np.nan))
         return path
 
     def _accumulate(self, epoch: int, r_norm, contrib, err_norm) -> None:
         self.epochs.append(epoch)
-        self._sum += r_norm
-        self._sumsq += r_norm ** 2
-        beat = r_norm > self._max
+        valid = np.isfinite(r_norm)
+        self._count += valid
+        self._sum += np.nan_to_num(r_norm)
+        self._sumsq += np.nan_to_num(r_norm) ** 2
+        beat = valid & (r_norm > self._max)
         self._max[beat], self._argmax[beat] = r_norm[beat], epoch
-        if self._first is None:
-            self._first = r_norm.copy()
-        self._last, self._last_contrib, self._last_err = r_norm.copy(), contrib, err_norm
-        hit = np.isnan(self._converged_at) & (r_norm < CONVERGED_RESIDUAL)
+        first = valid & np.isnan(self._first)
+        self._first[first] = r_norm[first]
+        self._last[valid], self._last_contrib[valid], self._last_err[valid] = (
+            r_norm[valid], contrib[valid], err_norm[valid])
+        hit = valid & np.isnan(self._converged_at) & (r_norm < CONVERGED_RESIDUAL)
         self._converged_at[hit] = epoch
 
     @classmethod
@@ -256,8 +293,9 @@ class SnapshotWriter:
         n = len(self.epochs)
         if n == 0:
             return pd.DataFrame(columns=["i", "t"])
-        mean = self._sum / n
-        var = np.maximum(self._sumsq / n - mean ** 2, 0.0)
+        count = np.maximum(self._count, 1)
+        mean = self._sum / count
+        var = np.maximum(self._sumsq / count - mean ** 2, 0.0)
         frame = pd.DataFrame({
             "i": np.arange(self.n_points),
             "t": self.t,
@@ -270,7 +308,7 @@ class SnapshotWriter:
             "loss_contribution_final": self._last_contrib,
             "err_norm_final": self._last_err,
             "epoch_below_1e-4": self._converged_at,
-            "n_snapshots": n,
+            "n_snapshots": self._count,
         })
         frame["rank_by_final_residual"] = frame["r_final"].rank(ascending=False).astype(int)
         return frame

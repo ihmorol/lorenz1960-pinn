@@ -7,6 +7,11 @@ governing equations alone, and is validated against a locked high-accuracy
 numerical reference. This repository holds code, data, and figures only; no
 manuscript or reference material.
 
+For the long-horizon causal-window implementation and the preserved September
+2026 runs, see the [run catalog](runs/README.md), [source audit](docs/results/2026-09-22-two-branch-code-audit.md),
+and [repair and configuration note](docs/results/2026-09-22-causal-window-repair.md).
+The historical figures have not been regenerated after the repairs.
+
 ## 1. Problem
 
 Lorenz's 1960 maximum simplification of the barotropic vorticity equation reduces

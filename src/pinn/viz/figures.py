@@ -117,9 +117,9 @@ def _thin(n: int, max_points: int = 4000) -> np.ndarray:
 def _positive(values: np.ndarray) -> np.ndarray:
     """Clip to the smallest positive value so log axes never see zeros."""
     v = np.asarray(values, dtype=float)
-    good = v[v > 0]
+    good = v[np.isfinite(v) & (v > 0)]
     floor = good.min() if good.size else 1e-16
-    return np.where(v > 0, v, floor)
+    return np.where(np.isfinite(v), np.where(v > 0, v, floor), np.nan)
 
 
 def _mark_optimizer_switch(ax: plt.Axes, history: "TrainHistory") -> None:
@@ -127,7 +127,7 @@ def _mark_optimizer_switch(ax: plt.Axes, history: "TrainHistory") -> None:
     from .training import lbfgs_spans
 
     for i, (_, adam_end, end) in enumerate(lbfgs_spans(total, history.adam_iters, history.eps_marks,
-                                                       history.window_marks)):
+                                                       history.window_marks, history.loss_phase)):
         if adam_end < end:
             ax.axvspan(adam_end, end, color="0.85", zorder=0, label="L-BFGS" if i == 0 else None)
 
@@ -208,13 +208,15 @@ def fig_training_dynamics(history: "TrainHistory", label: str = "") -> Figure:
 
     ax = axes[1, 1]
     if history.ref_epoch:
-        ax.semilogy(history.ref_epoch, _positive(history.ref_mse), label="MSE vs reference solution")
+        ax.semilogy(history.ref_epoch, _positive(history.ref_mse),
+                    label="MSE vs reference on trained prefix" if history.ref_until and
+                    np.isfinite(history.ref_until).any() else "MSE vs reference solution")
         train_at_eval = [history.loss[min(e, len(history.loss) - 1)] for e in history.ref_epoch]
         ax.semilogy(history.ref_epoch, _positive(train_at_eval), ls="--", label="training loss")
         ax.legend(loc="best")
     ax.set_xlabel("epoch")
     ax.set_ylabel("error")
-    ax.set_title("(d) Physics loss vs true error")
+    ax.set_title("(d) Logged loss vs reference error (coverage may grow)")
 
     for ax in axes.flat:
         _thin_ticks(ax)
@@ -776,14 +778,14 @@ def fig_point_convergence(summary: pd.DataFrame, label: str = "") -> Figure:
     n_never = len(summary) - len(reached)
     ax.set_xlabel(r"epoch at which $\|r\|_2 < 10^{-4}$")
     ax.set_ylabel("collocation points")
-    ax.set_title(f"(a) Convergence epoch ({n_never} never reached)")
+    ax.set_title(f"(a) First observed threshold crossing ({n_never} never reached)")
 
     ax = axes[1]
     ax.scatter(summary["t"], summary[threshold_col], s=6, alpha=0.4,
                color=sns.color_palette()[2], edgecolors="none")
     ax.set_xlabel("t")
-    ax.set_ylabel("convergence epoch")
-    ax.set_title("(b) Convergence epoch across the domain")
+    ax.set_ylabel("first observed crossing")
+    ax.set_title("(b) First observed crossing across the domain")
 
     ax = axes[2]
     ax.scatter(summary["t"], _positive(summary["r_final"]), s=6, alpha=0.4,
@@ -796,7 +798,7 @@ def fig_point_convergence(summary: pd.DataFrame, label: str = "") -> Figure:
     ax.set_title("(c) Final vs worst residual per point")
     ax.legend(loc="best", fontsize="small")
 
-    fig.suptitle(f"Per-point convergence{f' — {label}' if label else ''}")
+    fig.suptitle(f"Per-point residual threshold crossings{f' — {label}' if label else ''}")
     fig.tight_layout()
     return fig
 
@@ -899,7 +901,10 @@ def write_run_report(
 
     metrics = run.metrics
     metrics.to_csv(out / "metrics.csv", index=False)
-    pd.DataFrame({"iteration": np.arange(len(run.history.loss)), "loss": run.history.loss}).to_csv(
+    phases = run.history.loss_phase or ["unknown"] * len(run.history.loss)
+    windows = run.history.loss_window or [0] * len(run.history.loss)
+    pd.DataFrame({"iteration": np.arange(len(run.history.loss)), "loss": run.history.loss,
+                  "phase": phases, "window": windows}).to_csv(
         data / "loss_history.csv", index=False
     )
     run.history.diagnostics_frame().to_csv(data / "training_diagnostics.csv", index=False)

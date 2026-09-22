@@ -48,9 +48,9 @@ class PINN(nn.Module):
 
         self.ic, self.ic_scale, self.gamma = cfg.ic, cfg.ic_scale, cfg.gamma
         self.problem = cfg.spec
-        self.end_state = None if cfg.end_state is None else torch.tensor([cfg.end_state])
-        self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=torch.float32))
-        self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=torch.float32).reshape(1, 3))
+        self.end_state = None if cfg.end_state is None else torch.tensor([cfg.end_state], dtype=cfg.torch_dtype)
+        self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=cfg.torch_dtype))
+        self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=cfg.torch_dtype).reshape(1, 3))
         self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
 
     def rhs(self, u: Tensor) -> Tensor:

@@ -1,10 +1,10 @@
-"""Training film. Render: RUN=<run dir> manim -ql script.py LearningTheLoop DescendingTheSurface"""
+"""Training film. Render: RUN=<run dir> manim -ql script.py LearningTheLoop"""
 import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from manim import (BLUE, BLUE_D, BLUE_E, DEGREES, GREY, RED, UL, YELLOW, Arrow3D, Create, Dot3D,
+from manim import (BLUE, BLUE_D, BLUE_E, DEGREES, GREY, RED, UL, YELLOW, Create, Dot3D,
                    FadeIn, Surface, Text, ThreeDAxes, ThreeDScene, Transform, VGroup, VMobject,
                    interpolate_color)
 
@@ -17,7 +17,7 @@ def frames(n_frames=30, n_points=60):
     pick = np.unique(np.linspace(0, len(files) - 1, n_frames).round().astype(int))
     out = []
     for i in pick:
-        f = pd.read_csv(files[i]).sort_values("t")
+        f = pd.read_csv(files[i]).sort_values("t").dropna(subset=["x", "y", "z"])
         out.append(f.iloc[:: max(1, len(f) // n_points)])
     return out
 
@@ -26,7 +26,8 @@ class LearningTheLoop(ThreeDScene):
     def construct(self):
         self.camera.background_color = BG
         fr = frames()
-        ref = fr[0][["ref_x", "ref_y", "ref_z"]].to_numpy()
+        first = sorted((RUN / "breakdown").glob("epoch_*.csv"))[0]
+        ref = pd.read_csv(first).sort_values("t")[["ref_x", "ref_y", "ref_z"]].to_numpy()
         scale = 2.0 / np.abs(ref).max()
         self.set_camera_orientation(phi=65 * DEGREES, theta=-45 * DEGREES)
         self.add(ThreeDAxes(x_range=[-2, 2], y_range=[-2, 2], z_range=[-2, 2]).set_opacity(0.15))
@@ -56,6 +57,9 @@ class DescendingTheSurface(ThreeDScene):
     def construct(self):
         self.camera.background_color = BG
         d = np.load(RUN / "figures" / "loss_landscape.npz")
+        caption = Text("Final-anchor global residual diagnostic", font_size=24).to_corner(UL)
+        self.add_fixed_in_frame_mobjects(caption)
+        self.add(caption)
         a, b, Z, proj, lp = d["a"], d["b"], d["logZ"], d["proj"], d["log_path"]
         sx, sy = 4 / (a[-1] - a[0]), 4 / (b[-1] - b[0])
         z0, sz = Z.min(), 3 / max(Z.max() - Z.min(), 1e-9)
@@ -75,14 +79,8 @@ class DescendingTheSurface(ThreeDScene):
         dot = Dot3D(path[0], color=YELLOW, radius=0.06)
         self.add(trace, dot)
         for k in range(1, len(path)):
-            step = path[k] - path[k - 1]
-            if np.linalg.norm(step) > 1e-6:
-                arrow = Arrow3D(path[k - 1], path[k - 1] - 3 * step, color=YELLOW, thickness=0.01)
-                self.add(arrow)
             trace.add_points_as_corners([path[k]])
             self.play(dot.animate.move_to(path[k]), run_time=0.15)
-            if np.linalg.norm(step) > 1e-6:
-                self.remove(arrow)
         self.wait(2)
 
 
@@ -90,13 +88,16 @@ class TheCausalFront(ThreeDScene):
     def construct(self):
         self.camera.background_color = BG
         d = np.load(RUN / "history" / "param_trail.npz")
-        W, epochs = np.nan_to_num(d["weights"], nan=0.0), d["epochs"]
-        n_t = W.shape[1]
+        W, epochs = d["weights"], d["epochs"]
+        caption = Text("Causal weights within the active window", font_size=24).to_corner(UL)
+        self.add_fixed_in_frame_mobjects(caption)
+        self.add(caption)
         self.set_camera_orientation(phi=60 * DEGREES, theta=-50 * DEGREES)
         self.add(ThreeDAxes(x_range=[0, 1], y_range=[0, 1], z_range=[0, 1]).set_opacity(0.15))
         picks = np.unique(np.linspace(0, len(epochs) - 1, 30).round().astype(int))
         for j, k in enumerate(picks):
-            pts = [np.array([i / n_t, j / max(len(picks) - 1, 1), W[k, i]])
-                   for i in range(0, n_t, max(1, n_t // 100))]
+            weight = W[k, np.isfinite(W[k])]
+            pts = [np.array([i / max(len(weight) - 1, 1), j / max(len(picks) - 1, 1), weight[i]])
+                   for i in range(0, len(weight), max(1, len(weight) // 100))]
             self.play(Create(VMobject(color=YELLOW).set_points_as_corners(pts)), run_time=0.3)
         self.wait(2)
