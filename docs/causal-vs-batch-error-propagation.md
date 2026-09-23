@@ -1,5 +1,12 @@
 # Error Propagation & Strategy: Batch Monolithic PINN vs. Causal Windowed PINN
 
+> **Historical interpretation, superseded.** The [two-branch source audit](results/2026-09-22-two-branch-code-audit.md)
+> rejects several causal and mathematical claims below, including the proposed
+> one-line causal normalization, “degenerate global minimizer,” attribution of
+> capped windows as the dominant error source, and cross-model NTK equivalence.
+> See the [repair note](results/2026-09-22-causal-window-repair.md). The saved
+> run data remain unchanged.
+
 **Date**: September 22, 2026
 **Branches analyzed**: `feat/batch-precision-run` (Run A) and `feat/causal-window-training` (Run B)
 **Problem**: Lorenz-1960 maximum-simplification oscillator, `dx/dt = -0.10 y z`, `dy/dt = 1.60 x z`, `dz/dt = -0.75 x y`, from `u(0) = (0.5, 0.75, 1.0)` over one closed orbit `t in [0, 13.26446]`.

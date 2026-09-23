@@ -146,11 +146,11 @@ def test_snapshot_rows_reconstruct_the_loss(tmp_path):
     frame = load_snapshots(tmp_path / "breakdown")
     assert list(frame.columns) == list(SNAPSHOT_COLUMNS)
     epochs = sorted(frame["epoch"].unique())
-    assert epochs == [0, 10, 20]
+    assert epochs == [0, 10, 20, 21]
     assert len(frame) == len(epochs) * cfg.n_collocation
 
     # loss_contribution = |r_i|^2 / (3 Nc), so it sums to mean(r^2) over all components.
-    for epoch, group in frame.groupby("epoch"):
+    for epoch, group in frame[frame.epoch < cfg.epochs].groupby("epoch"):
         expected = history.logged_loss[history.log_epoch.index(epoch)]
         assert group["loss_contribution"].sum() == pytest.approx(expected, rel=1e-5)
 
@@ -177,7 +177,9 @@ def test_point_summary_and_residual_grid(tmp_path):
     save_results(model, history, cfg)
 
     summary = pd.read_csv(tmp_path / "point_summary.csv")
+    report = pd.read_csv(tmp_path / "run_summary.csv").iloc[0]
     assert len(summary) == cfg.n_collocation
+    assert summary.loss_contribution_final.sum() == pytest.approx(report.final_residual_mse_full, rel=1e-5)
     assert (summary["r_max"] >= summary["r_final"]).all()
     assert summary["rank_by_final_residual"].nunique() == cfg.n_collocation
 
@@ -256,6 +258,7 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
     from pinn.train import save_results, train
 
     cfg = Config(depth=3, width=12, activation="gelu", epochs=10, n_collocation=16,
+                 k=1.3, l=0.8, initial_state=(0.25, 0.75, 1.0),
                  log_every=5, eval_every=5, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
     model, history = train(cfg)
@@ -264,6 +267,7 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
     rebuilt = config_for(tmp_path)
     assert (rebuilt.depth, rebuilt.width, rebuilt.activation) == (3, 12, "gelu")
     assert rebuilt.ckpt_path == tmp_path / "history"
+    assert (rebuilt.k, rebuilt.l, rebuilt.initial_state) == (1.3, 0.8, (0.25, 0.75, 1.0))
 
 
 def test_load_run_reproduces_the_saved_prediction(tmp_path):
@@ -385,9 +389,9 @@ def test_trails_follow_the_snapshots(tmp_path):
                  log_every=10, eval_every=10, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
     model, history = train(cfg)
-    assert history.param_epochs == [0, 10, 20]
+    assert history.param_epochs == [0, 10, 20, 21]
     n = sum(p.numel() for p in model.parameters())
-    assert np.stack(history.param_trail).shape == np.stack(history.grad_trail).shape == (3, n)
+    assert np.stack(history.param_trail).shape == np.stack(history.grad_trail).shape == (4, n)
     set_seed(cfg.seed)
     assert np.allclose(history.param_trail[0], flat_params(PINN(cfg)).cpu().numpy())
 
@@ -407,16 +411,29 @@ def test_run_extras_are_written(tmp_path):
         assert expected in names, expected
 
 
-def test_adam_checkpoint_resumes(tmp_path):
+def test_adam_checkpoint_resumes(tmp_path, monkeypatch):
     from dataclasses import replace
-    from pinn.train import train
+    import pinn.train as train_module
 
     cfg = Config(depth=1, width=8, epochs=6, n_collocation=16, checkpoint_every=3,
-                 log_every=3, eval_every=3, print_every=0, ckpt_dir=str(tmp_path))
-    train(replace(cfg, epochs=3))
-    assert (tmp_path / "adam_000003.pt").exists()
-    _, history = train(cfg)
-    assert history.resumed_from == 3 and len(history.loss) == 3
+                 log_every=3, eval_every=3, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    save = train_module._save_progress
+
+    def interrupt(*args, **kwargs):
+        save(*args, **kwargs)
+        if kwargs.get("next_epoch") == 3:
+            raise RuntimeError("interrupted after checkpoint")
+
+    monkeypatch.setattr(train_module, "_save_progress", interrupt)
+    with pytest.raises(RuntimeError, match="interrupted"):
+        train_module.train(cfg)
+    monkeypatch.setattr(train_module, "_save_progress", save)
+    _, history = train_module.train(cfg)
+    assert history.resumed_from == 3 and len(history.loss) == 6
+    assert (tmp_path / "history" / "progress.pt").exists()
+    with pytest.raises(ValueError, match="configuration differs"):
+        train_module.train(replace(cfg, lr_start=2e-3))
 
 
 def test_root_scripts_compile():
@@ -474,6 +491,10 @@ def test_eps_advances_only_when_all_weights_exceed_delta(tmp_path):
     assert cfg.arch == "1x8_win2_causal"
     assert len(history.eps_marks) == 4 and len(history.window_marks) == 2
     assert 0 < len(history.min_w) <= 4 * 15                   # every stage ends by delta or by the cap
+    assert len(history.stage_status) == 4
+    assert history.adam_iters == len(history.min_w)
+    assert all(s["threshold_met"] or s["adam_steps"] == cfg.causal_max_iters
+               for s in history.stage_status)
     assert all(m <= len(history.loss) for m, _ in history.eps_marks)
     assert (tmp_path / "window_00.pt").exists() and (tmp_path / "window_01.pt").exists()
 
@@ -487,6 +508,12 @@ def test_causal_extras_are_written(tmp_path):
                  log_every=6, eval_every=6, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
     main(cfg)
+    summary = pd.read_csv(tmp_path / "run_summary.csv").iloc[0]
+    assert summary.final_loss == pytest.approx(summary.residual_mse_collocation)
+    assert summary.adam_steps > 0 and summary.lbfgs_evals == 0
+    first = pd.read_csv(sorted((tmp_path / "breakdown").glob("epoch_*.csv"))[0])
+    assert first.loc[first.t > cfg.t_span[1] / 2, "r_sq"].isna().all()
+    assert first.loc[first.t < cfg.t_span[1] / 2, "r_sq"].notna().all()
     names = {p.name for p in viz.generate_run_extras(tmp_path)}
     for expected in ("causal_weights.png", "min_w.png", "window_grid.png", "joint_continuity.png"):
         assert expected in names, expected
@@ -499,8 +526,9 @@ def test_windowed_resume_skips_saved_windows(tmp_path):
                  depth=1, width=8, n_collocation=20, collocation="uniform",
                  log_every=5, eval_every=5, print_every=1, ckpt_dir=str(tmp_path))
     train(cfg)
-    _, history = train(cfg)          # every window restored; must not raise
-    assert history.loss == [] and len(history.window_marks) == 2
+    _, history = train(cfg)          # complete checkpoint restores its original history
+    assert history.loss and len(history.window_marks) == 2
+    assert len(history.loss_phase) == len(history.loss)
 
 
 def test_windowed_run_ends_with_final_snapshot(tmp_path):
@@ -510,7 +538,7 @@ def test_windowed_run_ends_with_final_snapshot(tmp_path):
                  lbfgs_iters=2, snapshot_every=1000, depth=1, width=8, n_collocation=20,
                  collocation="uniform", ckpt_dir=str(tmp_path), results_dir=str(tmp_path))
     _, history = train(cfg)
-    assert history.param_epochs[-1] == len(history.loss) - 1
+    assert history.param_epochs[-1] == len(history.loss)
 
 
 def test_warm_start_copies_previous_window_weights(tmp_path):

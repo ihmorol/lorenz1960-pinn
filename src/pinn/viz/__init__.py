@@ -33,25 +33,29 @@ def generate_run_extras(run_dir) -> list[Path]:
         written += trajectory3d.write_all(run)
     trail_path = run / "history" / "param_trail.npz"
     if trail_path.exists():
-        written += landscape.write_all(run)
+        # A full 27-network landscape/NTK is expensive and is not the causal
+        # training objective. run_landscape.py remains an explicit diagnostic.
+        if cfg.n_windows == 1:
+            written += landscape.write_all(run)
         trail = np.load(trail_path)
         written += save_figure(training.fig_gradient_stability(trail["epochs"], trail["grads"], history.window_marks),
                                out, "gradient_stability", ("png",))
         sizes = [(n, p.numel()) for n, p in model.named_parameters()]
         written += save_figure(training.fig_gradient_histograms(trail["epochs"], trail["grads"], sizes),
                                out, "gradient_histograms", ("png",))
-        grid = make_grid(cfg, next(model.parameters()).device)
-        spectra = {}
-        for k in np.unique(np.linspace(0, len(trail["epochs"]) - 1, 4).round().astype(int)):
-            torch.nn.utils.vector_to_parameters(
-                torch.as_tensor(trail["params"][k], dtype=p.dtype, device=p.device), model.parameters())
-            spectra[int(trail["epochs"][k])] = training.ntk_eigenvalues(model, grid)
-        written += save_figure(training.fig_ntk_spectrum(spectra), out, "ntk_spectrum", ("png",))
-        model, history, _ = load_run(cfg)
+        if cfg.n_windows == 1:
+            grid = make_grid(cfg, next(model.parameters()).device)
+            spectra = {}
+            for k in np.unique(np.linspace(0, len(trail["epochs"]) - 1, 4).round().astype(int)):
+                torch.nn.utils.vector_to_parameters(
+                    torch.as_tensor(trail["params"][k], dtype=p.dtype, device=p.device), model.parameters())
+                spectra[int(trail["epochs"][k])] = training.ntk_eigenvalues(model, grid)
+            written += save_figure(training.fig_ntk_spectrum(spectra), out, "ntk_spectrum", ("png",))
+            model, history, _ = load_run(cfg)
 
     loss = np.asarray(history.loss)
     written += save_figure(training.fig_loss_phases(loss, history.adam_iters, history.eps_marks,
-                                                    history.window_marks),
+                                                    history.window_marks, history.loss_phase),
                            out, "loss_phases", ("png",))
     if history.min_w:
         written += save_figure(training.fig_min_w(np.asarray(history.min_w), cfg.causal_delta,
@@ -79,6 +83,15 @@ def compare_runs(run_dirs, out=None) -> Path:
 
 
 def precision_floor(run32, run64, out) -> list[Path]:
+    from dataclasses import asdict
+    from ..sweep import config_for
+
+    a, b = asdict(config_for(run32)), asdict(config_for(run64))
+    for record in (a, b):
+        for key in ("dtype", "results_dir", "ckpt_dir", "runs_dir"):
+            record.pop(key)
+    if a != b:
+        raise ValueError("precision comparison requires matching run configurations except dtype")
     l32 = pd.read_csv(Path(run32) / "history" / "loss_history.csv").loss.to_numpy()
     l64 = pd.read_csv(Path(run64) / "history" / "loss_history.csv").loss.to_numpy()
     return save_figure(evaluation.fig_precision_floor(l32, l64), Path(out), "precision_floor", ("png",))
