@@ -75,6 +75,9 @@ class TrainHistory:
     param_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     grad_trail: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
     eps_marks: list[tuple[int, float]] = field(default_factory=list)
+    min_w: list[float] = field(default_factory=list)
+    window_marks: list[int] = field(default_factory=list)
+    weight_profiles: list[np.ndarray] = field(default_factory=list, repr=False, compare=False)
 
     log_epoch: list[int] = field(default_factory=list)
     logged_loss: list[float] = field(default_factory=list)
@@ -141,7 +144,17 @@ class TrainHistory:
         ref = pd.read_csv(out / "reference_error.csv")
         loss = pd.read_csv(out / "loss_history.csv")["loss"].tolist()
         layer_cols = [c for c in diag.columns if c.endswith("_grad_norm")]
+        causal = out / "causal.csv"
+        marks = out / "marks.csv"
+        extra = {}
+        if causal.exists():
+            extra["min_w"] = pd.read_csv(causal)["min_w"].tolist()
+        if marks.exists():
+            m = pd.read_csv(marks)
+            extra["eps_marks"] = [(int(i), float(e)) for i, e in zip(m["iteration"], m["eps"]) if e == e]
+            extra["window_marks"] = [int(i) for i, k in zip(m["iteration"], m["kind"]) if k == "window"]
         return cls(
+            **extra,
             loss=loss,
             adam_iters=int(diag["epoch"].max()) + 1,
             log_epoch=diag["epoch"].tolist(),
@@ -211,6 +224,10 @@ class SnapshotWriter:
         path = self.dir / ("epoch_%06d.csv" % epoch)
         frame.to_csv(path, index=False, float_format=FLOAT_FORMAT)
 
+        self._accumulate(epoch, r_norm, contrib, err_norm)
+        return path
+
+    def _accumulate(self, epoch: int, r_norm, contrib, err_norm) -> None:
         self.epochs.append(epoch)
         self._sum += r_norm
         self._sumsq += r_norm ** 2
@@ -221,7 +238,18 @@ class SnapshotWriter:
         self._last, self._last_contrib, self._last_err = r_norm.copy(), contrib, err_norm
         hit = np.isnan(self._converged_at) & (r_norm < CONVERGED_RESIDUAL)
         self._converged_at[hit] = epoch
-        return path
+
+    @classmethod
+    def replay(cls, breakdown_dir: Path | str) -> "SnapshotWriter":
+        """Rebuild the running statistics from every ``epoch_*.csv`` already on disk."""
+        files = sorted(Path(breakdown_dir).glob("epoch_*.csv"))
+        first = pd.read_csv(files[0])
+        writer = cls(breakdown_dir, first.t.to_numpy(), first[["ref_x", "ref_y", "ref_z"]].to_numpy())
+        for f in files:
+            frame = pd.read_csv(f)
+            writer._accumulate(int(frame.epoch.iloc[0]), np.sqrt(frame.r_sq.to_numpy()),
+                               frame.loss_contribution.to_numpy(), frame.err_norm.to_numpy())
+        return writer
 
     def summary_frame(self) -> pd.DataFrame:
         """One row per collocation point, aggregated over every snapshot taken."""

@@ -30,6 +30,14 @@ class Config:
     t_span: tuple[float, float] = (0.0, 1.0)
     problem: str = "lorenz1960"
     end_state: tuple[float, float, float] | None = None   # set for a two-point BVP
+    n_windows: int = 1        # >1: one network per time window, chained by end state
+    # Causal training (Wang, Sankaran & Perdikaris 2024, Algorithm 1): per window, run
+    # Adam under each eps in turn, advancing when min_i w_i > causal_delta or after
+    # causal_max_iters. Empty schedule = plain mean-squared residual.
+    causal_eps_schedule: tuple[float, ...] = ()
+    causal_delta: float = 0.99
+    causal_max_iters: int = 0
+    warm_start: bool = False
 
     depth: int = 4
     width: int = 60
@@ -120,6 +128,12 @@ class Config:
             tag += "_f64"
         if self.ic_scale == "unit":
             tag += "_unit"
+        if self.n_windows > 1:
+            tag += f"_win{self.n_windows}"
+        if self.causal_eps_schedule:
+            tag += "_causal"
+        if self.warm_start:
+            tag += "_warm"
         return tag
 
     @property
@@ -127,7 +141,9 @@ class Config:
         """Short run descriptor used in figure titles."""
         return (
             f"{self.depth}x{self.width} {self.activation}, {self.ic} IC, "
-            f"{self.n_collocation} LHS points"
+            f"{self.n_collocation} {self.collocation.upper() if self.collocation == 'lhs' else self.collocation} points"
+            + (f", {self.n_windows} windows" if self.n_windows > 1 else "")
+            + (", causal" if self.causal_eps_schedule else "")
         )
 
 
@@ -156,7 +172,7 @@ def reference_at(cfg: Config, t: np.ndarray) -> np.ndarray:
     uniform grid: linear interpolation of a 1001-point trajectory carries ~1e-6
     error, the same order as the PINN error it would be used to measure.
     """
-    t = np.asarray(t, dtype=float).reshape(-1)
+    t = np.clip(np.asarray(t, dtype=float).reshape(-1), *cfg.t_span)   # float32 grids overshoot tf
     order = np.argsort(t)
     _, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg), t_eval=t[order])
     out = np.empty_like(ys)

@@ -424,5 +424,135 @@ def test_root_scripts_compile():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py"):
+    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py", "run_causal.py",
+                 "run_index.py"):
         py_compile.compile(str(root / name), doraise=True)
+
+
+def test_causal_weights_gate_later_times():
+    import torch
+    from pinn.functions.losses import causal_loss, causal_weights
+
+    w = causal_weights(torch.tensor([1.0, 1.0, 0.0, 0.0]), eps=1.0)
+    assert w[0] == 1.0 and torch.all(w[1:] <= w[:-1]) and not w.requires_grad
+    assert torch.allclose(causal_weights(torch.zeros(4), eps=100.0), torch.ones(4))
+    t = torch.tensor([[0.3], [0.1], [0.2]])
+    loss, w_sorted = causal_loss(torch.ones(3, 3), t, eps=0.5)
+    assert w_sorted.shape == (3,) and loss <= 1.0
+
+
+def test_split_windows_tile_the_span():
+    from pinn.functions.windows import split_windows
+
+    assert split_windows((0.0, 2.0), 4) == [(0.0, 0.5), (0.5, 1.0), (1.0, 1.5), (1.5, 2.0)]
+    assert split_windows((0.0, 2.0), 1) == [(0.0, 2.0)]
+
+
+def test_windowed_pinn_routes_and_is_continuous():
+    import torch
+    from pinn.pinn import WindowedPINN, residual_parts
+
+    cfg = Config(t_span=(0.0, 2.0), n_windows=4, depth=1, width=8)
+    torch.manual_seed(0)
+    m = WindowedPINN(cfg)
+    assert len(m.windows) == 4 and cfg.arch == "1x8_win4"
+    t = torch.tensor([[0.1], [0.6], [1.2], [1.9]], requires_grad=True)
+    assert m.window_of(t).tolist() == [0, 1, 2, 3]
+    joint = torch.tensor([[0.5]])
+    m.set_window_start(1, m.windows[0](joint)[0])
+    assert torch.allclose(m.windows[0](joint), m.windows[1](joint), atol=1e-6)
+    assert residual_parts(m, t).r.shape == (4, 3)
+
+
+def test_eps_advances_only_when_all_weights_exceed_delta(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2, 1e-1), causal_delta=0.99,
+                 causal_max_iters=15, depth=1, width=8, n_collocation=20, collocation="uniform",
+                 lbfgs_iters=2, log_every=5, eval_every=5, print_every=0, ckpt_dir=str(tmp_path))
+    model, history = train(cfg)
+    assert cfg.arch == "1x8_win2_causal"
+    assert len(history.eps_marks) == 4 and len(history.window_marks) == 2
+    assert 0 < len(history.min_w) <= 4 * 15                   # every stage ends by delta or by the cap
+    assert all(m <= len(history.loss) for m, _ in history.eps_marks)
+    assert (tmp_path / "window_00.pt").exists() and (tmp_path / "window_01.pt").exists()
+
+
+def test_causal_extras_are_written(tmp_path):
+    from pinn import viz
+    from pinn.train import main
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=12,
+                 depth=1, width=8, n_collocation=20, collocation="uniform", snapshot_every=6,
+                 log_every=6, eval_every=6, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    main(cfg)
+    names = {p.name for p in viz.generate_run_extras(tmp_path)}
+    for expected in ("causal_weights.png", "min_w.png", "window_grid.png", "joint_continuity.png"):
+        assert expected in names, expected
+
+
+def test_windowed_resume_skips_saved_windows(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=5,
+                 depth=1, width=8, n_collocation=20, collocation="uniform",
+                 log_every=5, eval_every=5, print_every=1, ckpt_dir=str(tmp_path))
+    train(cfg)
+    _, history = train(cfg)          # every window restored; must not raise
+    assert history.loss == [] and len(history.window_marks) == 2
+
+
+def test_windowed_run_ends_with_final_snapshot(tmp_path):
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=3,
+                 lbfgs_iters=2, snapshot_every=1000, depth=1, width=8, n_collocation=20,
+                 collocation="uniform", ckpt_dir=str(tmp_path), results_dir=str(tmp_path))
+    _, history = train(cfg)
+    assert history.param_epochs[-1] == len(history.loss) - 1
+
+
+def test_warm_start_copies_previous_window_weights(tmp_path):
+    import torch
+    from pinn.train import train
+
+    cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=0,
+                 lbfgs_iters=0, warm_start=True, depth=1, width=8, n_collocation=20,
+                 collocation="uniform", ckpt_dir=str(tmp_path))
+    model, _ = train(cfg)            # zero iterations: window 1 must equal window 0 exactly
+    for p, q in zip(model.windows[1].net.parameters(), model.windows[0].net.parameters()):
+        assert torch.equal(p, q)
+    assert "_warm" in cfg.arch
+
+
+def test_index_page_links_every_run(tmp_path):
+    from pinn.viz.index import write_index
+
+    for name in ("a", "b"):
+        (tmp_path / name / "figures").mkdir(parents=True)
+        (tmp_path / name / "figures" / "trajectory.html").write_text("x")
+    page = write_index(tmp_path, ["a", "b"]).read_text()
+    assert "a/figures/trajectory.html" in page and "b/figures/trajectory.html" in page
+
+
+def test_causal_index_drops_lbfgs_evals():
+    from pinn.viz.training import causal_index
+
+    # window 0: Adam 0-10 (eps ends at 4, 10), L-BFGS 10-30; window 1: Adam 30-36, L-BFGS 36-50
+    marks = causal_index([(4, 0.1), (10, 1.0), (36, 0.1)], [30, 50])
+    assert marks == [(4, 0.1), (10, 1.0), (16, 0.1)]
+
+
+def test_snapshot_replay_matches_live_summary(tmp_path):
+    from pinn.history import SnapshotWriter
+    from pinn.train import main
+
+    cfg = Config(t_span=(0.0, 0.2), epochs=4, lbfgs_iters=0, snapshot_every=2, depth=1, width=8,
+                 n_collocation=10, collocation="uniform", log_every=2, eval_every=2, print_every=0,
+                 results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    main(cfg)
+    live = pd.read_csv(tmp_path / "point_summary.csv")
+    replayed = SnapshotWriter.replay(tmp_path / "breakdown").summary_frame()
+    assert list(live.epoch_of_max) == list(replayed.epoch_of_max)
+    assert np.allclose(live.r_final, replayed.r_final, rtol=1e-4)

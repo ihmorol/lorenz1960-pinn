@@ -84,3 +84,19 @@ class DescendingTheSurface(ThreeDScene):
             if np.linalg.norm(step) > 1e-6:
                 self.remove(arrow)
         self.wait(2)
+
+
+class TheCausalFront(ThreeDScene):
+    def construct(self):
+        self.camera.background_color = BG
+        d = np.load(RUN / "history" / "param_trail.npz")
+        W, epochs = np.nan_to_num(d["weights"], nan=0.0), d["epochs"]
+        n_t = W.shape[1]
+        self.set_camera_orientation(phi=60 * DEGREES, theta=-50 * DEGREES)
+        self.add(ThreeDAxes(x_range=[0, 1], y_range=[0, 1], z_range=[0, 1]).set_opacity(0.15))
+        picks = np.unique(np.linspace(0, len(epochs) - 1, 30).round().astype(int))
+        for j, k in enumerate(picks):
+            pts = [np.array([i / n_t, j / max(len(picks) - 1, 1), W[k, i]])
+                   for i in range(0, n_t, max(1, n_t // 100))]
+            self.play(Create(VMobject(color=YELLOW).set_points_as_corners(pts)), run_time=0.3)
+        self.wait(2)

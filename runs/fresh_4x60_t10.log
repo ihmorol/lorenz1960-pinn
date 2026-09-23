@@ -1,0 +1,98 @@
+[setup] device=cpu | seed=0 | 4x60 tanh, hard IC, 3000 LHS points
+[setup] 11283 params | 3000 collocation pts on t in [0.0, 10.0] | ref traj 1001 pts
+[setup] 20000 Adam epochs (lr 1.0e-03 -> 1.0e-04) + 0 L-BFGS iters
+[setup] per-point snapshots every 50 epochs (~401 files) -> E:\University\FYDP\lorenz1960-pinn\runs\4x60\breakdown
+[adam]  epoch      1/20000 | loss 8.8125e-02 | res 8.8125e-02 | ic 0.0000e+00 | |grad| 7.051e-01 | step 1.062e-01 | lr 1.00e-03 | ref_mse 1.1161e+00 |    2.5s elapsed, ~50742s left
+[adam]  epoch    251/20000 | loss 5.6472e-04 | res 5.6472e-04 | ic 0.0000e+00 | |grad| 1.454e-03 | step 3.797e-03 | lr 9.89e-04 | ref_mse 1.4426e+00 |    7.9s elapsed, ~  623s left
+[adam]  epoch    501/20000 | loss 3.9784e-04 | res 3.9784e-04 | ic 0.0000e+00 | |grad| 2.422e-04 | step 9.710e-04 | lr 9.78e-04 | ref_mse 1.4609e+00 |   13.0s elapsed, ~  506s left
+[adam]  epoch    751/20000 | loss 3.8198e-04 | res 3.8198e-04 | ic 0.0000e+00 | |grad| 6.636e-03 | step 1.072e-03 | lr 9.66e-04 | ref_mse 1.4719e+00 |   18.3s elapsed, ~  469s left
+[adam]  epoch   1001/20000 | loss 3.7505e-04 | res 3.7505e-04 | ic 0.0000e+00 | |grad| 2.479e-04 | step 4.548e-04 | lr 9.55e-04 | ref_mse 1.4635e+00 |   23.9s elapsed, ~  454s left
+[adam]  epoch   1251/20000 | loss 3.7250e-04 | res 3.7250e-04 | ic 0.0000e+00 | |grad| 2.050e-03 | step 4.110e-04 | lr 9.44e-04 | ref_mse 1.4636e+00 |   29.8s elapsed, ~  447s left
+[adam]  epoch   1501/20000 | loss 3.9422e-04 | res 3.9422e-04 | ic 0.0000e+00 | |grad| 3.124e-02 | step 5.340e-03 | lr 9.33e-04 | ref_mse 1.4555e+00 |   35.2s elapsed, ~  433s left
+[adam]  epoch   1751/20000 | loss 3.7505e-04 | res 3.7505e-04 | ic 0.0000e+00 | |grad| 1.199e-02 | step 1.619e-03 | lr 9.21e-04 | ref_mse 1.4625e+00 |   39.9s elapsed, ~  416s left
+[adam]  epoch   2001/20000 | loss 3.6963e-04 | res 3.6963e-04 | ic 0.0000e+00 | |grad| 2.523e-05 | step 1.936e-04 | lr 9.10e-04 | ref_mse 1.4615e+00 |   44.5s elapsed, ~  400s left
+[adam]  epoch   2251/20000 | loss 3.6921e-04 | res 3.6921e-04 | ic 0.0000e+00 | |grad| 2.262e-05 | step 1.759e-04 | lr 8.99e-04 | ref_mse 1.4609e+00 |   50.8s elapsed, ~  400s left
+[adam]  epoch   2501/20000 | loss 3.7931e-04 | res 3.7931e-04 | ic 0.0000e+00 | |grad| 2.222e-02 | step 4.081e-03 | lr 8.87e-04 | ref_mse 1.4734e+00 |   55.6s elapsed, ~  389s left
+[adam]  epoch   2751/20000 | loss 3.6852e-04 | res 3.6852e-04 | ic 0.0000e+00 | |grad| 2.041e-05 | step 1.628e-04 | lr 8.76e-04 | ref_mse 1.4592e+00 |   60.6s elapsed, ~  380s left
+[adam]  epoch   3001/20000 | loss 3.6819e-04 | res 3.6819e-04 | ic 0.0000e+00 | |grad| 1.625e-05 | step 1.699e-04 | lr 8.65e-04 | ref_mse 1.4582e+00 |   65.8s elapsed, ~  373s left
+[adam]  epoch   3251/20000 | loss 3.6785e-04 | res 3.6785e-04 | ic 0.0000e+00 | |grad| 1.578e-04 | step 1.929e-04 | lr 8.54e-04 | ref_mse 1.4579e+00 |   71.3s elapsed, ~  367s left
+[adam]  epoch   3501/20000 | loss 3.6748e-04 | res 3.6748e-04 | ic 0.0000e+00 | |grad| 1.549e-05 | step 1.998e-04 | lr 8.43e-04 | ref_mse 1.4563e+00 |   76.3s elapsed, ~  360s left
+[adam]  epoch   3751/20000 | loss 3.6704e-04 | res 3.6704e-04 | ic 0.0000e+00 | |grad| 1.966e-05 | step 2.253e-04 | lr 8.31e-04 | ref_mse 1.4552e+00 |   81.5s elapsed, ~  353s left
+[adam]  epoch   4001/20000 | loss 3.6654e-04 | res 3.6654e-04 | ic 0.0000e+00 | |grad| 7.065e-04 | step 2.763e-04 | lr 8.20e-04 | ref_mse 1.4537e+00 |   86.4s elapsed, ~  345s left
+[adam]  epoch   4251/20000 | loss 3.6591e-04 | res 3.6591e-04 | ic 0.0000e+00 | |grad| 1.470e-04 | step 3.081e-04 | lr 8.09e-04 | ref_mse 1.4524e+00 |   91.4s elapsed, ~  339s left
+[adam]  epoch   4501/20000 | loss 3.6510e-04 | res 3.6510e-04 | ic 0.0000e+00 | |grad| 1.338e-04 | step 3.717e-04 | lr 7.98e-04 | ref_mse 1.4491e+00 |   97.5s elapsed, ~  336s left
+[adam]  epoch   4751/20000 | loss 3.6402e-04 | res 3.6402e-04 | ic 0.0000e+00 | |grad| 1.833e-04 | step 4.674e-04 | lr 7.86e-04 | ref_mse 1.4463e+00 |  103.2s elapsed, ~  331s left
+[adam]  epoch   5001/20000 | loss 3.9291e-04 | res 3.9291e-04 | ic 0.0000e+00 | |grad| 3.549e-02 | step 6.871e-03 | lr 7.75e-04 | ref_mse 1.4402e+00 |  108.7s elapsed, ~  326s left
+[adam]  epoch   5251/20000 | loss 3.6360e-04 | res 3.6360e-04 | ic 0.0000e+00 | |grad| 1.152e-02 | step 2.575e-03 | lr 7.64e-04 | ref_mse 1.4335e+00 |  113.8s elapsed, ~  320s left
+[adam]  epoch   5501/20000 | loss 3.5684e-04 | res 3.5684e-04 | ic 0.0000e+00 | |grad| 2.969e-03 | step 1.064e-03 | lr 7.52e-04 | ref_mse 1.4191e+00 |  119.6s elapsed, ~  315s left
+[adam]  epoch   5751/20000 | loss 3.5132e-04 | res 3.5132e-04 | ic 0.0000e+00 | |grad| 2.584e-04 | step 1.408e-03 | lr 7.41e-04 | ref_mse 1.4060e+00 |  124.9s elapsed, ~  310s left
+[adam]  epoch   6001/20000 | loss 3.4319e-04 | res 3.4319e-04 | ic 0.0000e+00 | |grad| 1.414e-04 | step 2.005e-03 | lr 7.30e-04 | ref_mse 1.3652e+00 |  130.4s elapsed, ~  304s left
+[adam]  epoch   6251/20000 | loss 3.3107e-04 | res 3.3107e-04 | ic 0.0000e+00 | |grad| 4.437e-04 | step 2.094e-03 | lr 7.19e-04 | ref_mse 1.3250e+00 |  136.5s elapsed, ~  300s left
+[adam]  epoch   6501/20000 | loss 3.1726e-04 | res 3.1726e-04 | ic 0.0000e+00 | |grad| 2.447e-03 | step 1.575e-03 | lr 7.08e-04 | ref_mse 1.2309e+00 |  142.6s elapsed, ~  296s left
+[adam]  epoch   6751/20000 | loss 3.0892e-04 | res 3.0892e-04 | ic 0.0000e+00 | |grad| 3.765e-03 | step 2.184e-03 | lr 6.96e-04 | ref_mse 1.2445e+00 |  148.2s elapsed, ~  291s left
+[adam]  epoch   7001/20000 | loss 3.0688e-04 | res 3.0688e-04 | ic 0.0000e+00 | |grad| 2.037e-02 | step 4.602e-03 | lr 6.85e-04 | ref_mse 1.1144e+00 |  153.4s elapsed, ~  285s left
+[adam]  epoch   7251/20000 | loss 3.0039e-04 | res 3.0039e-04 | ic 0.0000e+00 | |grad| 2.491e-02 | step 4.875e-03 | lr 6.74e-04 | ref_mse 1.0669e+00 |  158.5s elapsed, ~  279s left
+[adam]  epoch   7501/20000 | loss 2.7417e-04 | res 2.7417e-04 | ic 0.0000e+00 | |grad| 7.121e-03 | step 1.791e-03 | lr 6.63e-04 | ref_mse 9.7680e-01 |  164.1s elapsed, ~  273s left
+[adam]  epoch   7751/20000 | loss 3.0144e-04 | res 3.0144e-04 | ic 0.0000e+00 | |grad| 5.021e-02 | step 5.324e-03 | lr 6.51e-04 | ref_mse 8.8520e-01 |  169.7s elapsed, ~  268s left
+[adam]  epoch   8001/20000 | loss 2.1790e-04 | res 2.1790e-04 | ic 0.0000e+00 | |grad| 1.033e-02 | step 3.426e-03 | lr 6.40e-04 | ref_mse 6.2657e-01 |  175.2s elapsed, ~  263s left
+[adam]  epoch   8251/20000 | loss 6.2714e-05 | res 6.2714e-05 | ic 0.0000e+00 | |grad| 3.673e-03 | step 2.500e-03 | lr 6.29e-04 | ref_mse 1.6095e-01 |  180.9s elapsed, ~  258s left
+[adam]  epoch   8501/20000 | loss 2.2673e-05 | res 2.2673e-05 | ic 0.0000e+00 | |grad| 1.765e-04 | step 1.418e-03 | lr 6.17e-04 | ref_mse 2.7117e-02 |  187.5s elapsed, ~  254s left
+[adam]  epoch   8751/20000 | loss 1.2092e-05 | res 1.2092e-05 | ic 0.0000e+00 | |grad| 6.915e-03 | step 1.666e-03 | lr 6.06e-04 | ref_mse 1.3248e-02 |  192.9s elapsed, ~  248s left
+[adam]  epoch   9001/20000 | loss 8.0190e-06 | res 8.0190e-06 | ic 0.0000e+00 | |grad| 9.204e-03 | step 1.231e-03 | lr 5.95e-04 | ref_mse 5.6281e-03 |  198.3s elapsed, ~  242s left
+[adam]  epoch   9251/20000 | loss 4.2840e-06 | res 4.2840e-06 | ic 0.0000e+00 | |grad| 5.900e-04 | step 4.929e-04 | lr 5.84e-04 | ref_mse 2.9350e-03 |  204.1s elapsed, ~  237s left
+[adam]  epoch   9501/20000 | loss 3.0356e-06 | res 3.0356e-06 | ic 0.0000e+00 | |grad| 5.920e-04 | step 4.147e-04 | lr 5.72e-04 | ref_mse 1.7813e-03 |  210.3s elapsed, ~  232s left
+[adam]  epoch   9751/20000 | loss 2.2444e-06 | res 2.2444e-06 | ic 0.0000e+00 | |grad| 6.539e-05 | step 3.781e-04 | lr 5.61e-04 | ref_mse 1.1614e-03 |  215.6s elapsed, ~  227s left
+[adam]  epoch  10001/20000 | loss 1.7305e-06 | res 1.7305e-06 | ic 0.0000e+00 | |grad| 4.070e-04 | step 3.521e-04 | lr 5.50e-04 | ref_mse 6.8149e-04 |  220.1s elapsed, ~  220s left
+[adam]  epoch  10251/20000 | loss 1.8364e-06 | res 1.8364e-06 | ic 0.0000e+00 | |grad| 5.490e-03 | step 8.403e-04 | lr 5.39e-04 | ref_mse 3.9896e-04 |  224.4s elapsed, ~  213s left
+[adam]  epoch  10501/20000 | loss 1.1067e-06 | res 1.1067e-06 | ic 0.0000e+00 | |grad| 1.818e-04 | step 3.033e-04 | lr 5.28e-04 | ref_mse 3.1054e-04 |  229.0s elapsed, ~  207s left
+[adam]  epoch  10751/20000 | loss 9.6100e-07 | res 9.6100e-07 | ic 0.0000e+00 | |grad| 1.468e-03 | step 3.154e-04 | lr 5.16e-04 | ref_mse 2.1117e-04 |  233.4s elapsed, ~  201s left
+[adam]  epoch  11001/20000 | loss 1.2465e-06 | res 1.2465e-06 | ic 0.0000e+00 | |grad| 2.884e-03 | step 8.671e-04 | lr 5.05e-04 | ref_mse 2.1963e-04 |  238.1s elapsed, ~  195s left
+[adam]  epoch  11251/20000 | loss 1.1636e-06 | res 1.1636e-06 | ic 0.0000e+00 | |grad| 5.104e-03 | step 5.961e-04 | lr 4.94e-04 | ref_mse 1.2455e-04 |  243.9s elapsed, ~  190s left
+[adam]  epoch  11501/20000 | loss 1.4407e-05 | res 1.4407e-05 | ic 0.0000e+00 | |grad| 3.002e-02 | step 3.503e-03 | lr 4.83e-04 | ref_mse 5.1744e-05 |  250.9s elapsed, ~  185s left
+[adam]  epoch  11751/20000 | loss 5.7055e-07 | res 5.7055e-07 | ic 0.0000e+00 | |grad| 1.619e-03 | step 3.001e-04 | lr 4.71e-04 | ref_mse 1.2428e-04 |  258.3s elapsed, ~  181s left
+[adam]  epoch  12001/20000 | loss 6.6558e-07 | res 6.6558e-07 | ic 0.0000e+00 | |grad| 3.605e-03 | step 5.225e-04 | lr 4.60e-04 | ref_mse 6.1264e-05 |  264.3s elapsed, ~  176s left
+[adam]  epoch  12251/20000 | loss 1.0800e-06 | res 1.0800e-06 | ic 0.0000e+00 | |grad| 5.466e-03 | step 9.763e-04 | lr 4.49e-04 | ref_mse 9.7877e-05 |  271.0s elapsed, ~  171s left
+[adam]  epoch  12501/20000 | loss 3.8531e-06 | res 3.8531e-06 | ic 0.0000e+00 | |grad| 1.468e-02 | step 2.632e-03 | lr 4.38e-04 | ref_mse 1.7627e-05 |  276.1s elapsed, ~  166s left
+[adam]  epoch  12751/20000 | loss 2.7493e-06 | res 2.7493e-06 | ic 0.0000e+00 | |grad| 1.238e-02 | step 1.506e-03 | lr 4.26e-04 | ref_mse 5.3439e-05 |  281.4s elapsed, ~  160s left
+[adam]  epoch  13001/20000 | loss 3.0776e-07 | res 3.0776e-07 | ic 0.0000e+00 | |grad| 1.112e-04 | step 1.387e-04 | lr 4.15e-04 | ref_mse 2.2511e-05 |  286.7s elapsed, ~  154s left
+[adam]  epoch  13251/20000 | loss 4.0971e-06 | res 4.0971e-06 | ic 0.0000e+00 | |grad| 1.562e-02 | step 1.477e-03 | lr 4.04e-04 | ref_mse 2.1148e-05 |  293.5s elapsed, ~  149s left
+[adam]  epoch  13501/20000 | loss 2.6843e-07 | res 2.6843e-07 | ic 0.0000e+00 | |grad| 5.171e-04 | step 2.192e-04 | lr 3.92e-04 | ref_mse 1.6213e-05 |  300.0s elapsed, ~  144s left
+[adam]  epoch  13751/20000 | loss 1.3534e-06 | res 1.3534e-06 | ic 0.0000e+00 | |grad| 8.463e-03 | step 1.150e-03 | lr 3.81e-04 | ref_mse 1.1268e-05 |  305.6s elapsed, ~  139s left
+[adam]  epoch  14001/20000 | loss 1.2371e-06 | res 1.2371e-06 | ic 0.0000e+00 | |grad| 4.278e-03 | step 1.768e-03 | lr 3.70e-04 | ref_mse 6.3280e-06 |  311.3s elapsed, ~  133s left
+[adam]  epoch  14251/20000 | loss 1.0732e-06 | res 1.0732e-06 | ic 0.0000e+00 | |grad| 7.434e-03 | step 1.066e-03 | lr 3.59e-04 | ref_mse 1.0711e-05 |  316.7s elapsed, ~  128s left
+[adam]  epoch  14501/20000 | loss 8.0013e-06 | res 8.0013e-06 | ic 0.0000e+00 | |grad| 2.242e-02 | step 3.210e-03 | lr 3.48e-04 | ref_mse 1.0491e-05 |  321.8s elapsed, ~  122s left
+[adam]  epoch  14751/20000 | loss 2.9004e-06 | res 2.9004e-06 | ic 0.0000e+00 | |grad| 1.300e-02 | step 9.710e-04 | lr 3.36e-04 | ref_mse 7.4648e-06 |  326.9s elapsed, ~  116s left
+[adam]  epoch  15001/20000 | loss 1.7190e-07 | res 1.7190e-07 | ic 0.0000e+00 | |grad| 3.308e-04 | step 1.491e-04 | lr 3.25e-04 | ref_mse 1.8528e-05 |  331.9s elapsed, ~  111s left
+[adam]  epoch  15251/20000 | loss 6.8185e-07 | res 6.8185e-07 | ic 0.0000e+00 | |grad| 5.688e-03 | step 1.120e-03 | lr 3.14e-04 | ref_mse 5.7213e-06 |  337.1s elapsed, ~  105s left
+[adam]  epoch  15501/20000 | loss 5.9149e-07 | res 5.9149e-07 | ic 0.0000e+00 | |grad| 2.861e-03 | step 7.292e-04 | lr 3.02e-04 | ref_mse 2.5611e-05 |  342.0s elapsed, ~   99s left
+[adam]  epoch  15751/20000 | loss 2.4614e-07 | res 2.4614e-07 | ic 0.0000e+00 | |grad| 2.566e-03 | step 3.618e-04 | lr 2.91e-04 | ref_mse 3.4141e-06 |  346.8s elapsed, ~   94s left
+[adam]  epoch  16001/20000 | loss 2.8154e-07 | res 2.8154e-07 | ic 0.0000e+00 | |grad| 2.975e-03 | step 3.024e-04 | lr 2.80e-04 | ref_mse 2.2896e-06 |  351.7s elapsed, ~   88s left
+[adam]  epoch  16251/20000 | loss 1.4063e-07 | res 1.4063e-07 | ic 0.0000e+00 | |grad| 4.935e-04 | step 2.143e-04 | lr 2.69e-04 | ref_mse 5.5279e-06 |  356.5s elapsed, ~   82s left
+[adam]  epoch  16501/20000 | loss 1.2202e-07 | res 1.2202e-07 | ic 0.0000e+00 | |grad| 1.040e-05 | step 4.444e-05 | lr 2.57e-04 | ref_mse 3.0598e-06 |  361.2s elapsed, ~   77s left
+[adam]  epoch  16751/20000 | loss 5.1610e-07 | res 5.1610e-07 | ic 0.0000e+00 | |grad| 5.025e-03 | step 6.033e-04 | lr 2.46e-04 | ref_mse 8.8291e-06 |  365.8s elapsed, ~   71s left
+[adam]  epoch  17001/20000 | loss 1.4074e-07 | res 1.4074e-07 | ic 0.0000e+00 | |grad| 1.373e-03 | step 2.016e-04 | lr 2.35e-04 | ref_mse 3.0469e-06 |  370.6s elapsed, ~   65s left
+[adam]  epoch  17251/20000 | loss 3.4931e-07 | res 3.4931e-07 | ic 0.0000e+00 | |grad| 2.137e-03 | step 7.829e-04 | lr 2.24e-04 | ref_mse 2.3863e-06 |  375.4s elapsed, ~   60s left
+[adam]  epoch  17501/20000 | loss 1.0332e-07 | res 1.0332e-07 | ic 0.0000e+00 | |grad| 6.061e-05 | step 2.710e-04 | lr 2.13e-04 | ref_mse 1.0547e-06 |  380.4s elapsed, ~   54s left
+[adam]  epoch  17751/20000 | loss 1.6028e-07 | res 1.6028e-07 | ic 0.0000e+00 | |grad| 1.126e-03 | step 4.248e-04 | lr 2.01e-04 | ref_mse 1.5072e-06 |  385.3s elapsed, ~   49s left
+[adam]  epoch  18001/20000 | loss 9.5086e-08 | res 9.5086e-08 | ic 0.0000e+00 | |grad| 2.378e-04 | step 4.297e-05 | lr 1.90e-04 | ref_mse 1.7325e-06 |  390.5s elapsed, ~   43s left
+[adam]  epoch  18251/20000 | loss 1.2372e-07 | res 1.2372e-07 | ic 0.0000e+00 | |grad| 1.135e-03 | step 6.641e-04 | lr 1.79e-04 | ref_mse 1.5962e-06 |  396.3s elapsed, ~   38s left
+[adam]  epoch  18501/20000 | loss 8.7195e-08 | res 8.7195e-08 | ic 0.0000e+00 | |grad| 3.713e-06 | step 3.011e-05 | lr 1.67e-04 | ref_mse 1.4086e-06 |  401.9s elapsed, ~   33s left
+[adam]  epoch  18751/20000 | loss 8.4142e-08 | res 8.4142e-08 | ic 0.0000e+00 | |grad| 2.251e-05 | step 3.017e-05 | lr 1.56e-04 | ref_mse 1.3181e-06 |  410.1s elapsed, ~   27s left
+[adam]  epoch  19001/20000 | loss 8.0959e-08 | res 8.0959e-08 | ic 0.0000e+00 | |grad| 3.119e-06 | step 3.029e-05 | lr 1.45e-04 | ref_mse 1.1552e-06 |  416.3s elapsed, ~   22s left
+[adam]  epoch  19251/20000 | loss 7.8075e-08 | res 7.8075e-08 | ic 0.0000e+00 | |grad| 2.147e-06 | step 2.956e-05 | lr 1.34e-04 | ref_mse 1.0779e-06 |  421.2s elapsed, ~   16s left
+[adam]  epoch  19501/20000 | loss 7.5320e-08 | res 7.5320e-08 | ic 0.0000e+00 | |grad| 5.479e-05 | step 2.964e-05 | lr 1.23e-04 | ref_mse 1.0182e-06 |  425.9s elapsed, ~   11s left
+[adam]  epoch  19751/20000 | loss 7.2662e-08 | res 7.2662e-08 | ic 0.0000e+00 | |grad| 1.636e-06 | step 2.806e-05 | lr 1.11e-04 | ref_mse 9.2406e-07 |  430.8s elapsed, ~    5s left
+[adam]  epoch  20000/20000 | loss 7.0130e-08 | res 7.0130e-08 | ic 0.0000e+00 | |grad| 5.823e-06 | step 2.764e-05 | lr 1.00e-04 | ref_mse 8.3388e-07 |  435.8s elapsed, ~    0s left
+[adam]  done in 435.8s | final loss 7.0130e-08 | best loss 7.0130e-08
+[save]  checkpoint + telemetry -> E:\University\FYDP\lorenz1960-pinn\runs\4x60\history
+[save]  rendering figures -> E:\University\FYDP\lorenz1960-pinn\runs\4x60 ...
+[save]  401 snapshots + point_summary.csv + 4 breakdown figures
+[save]  wrote metrics.csv, run_summary.csv + 25 figure files
+[done]  total 468.1s
+      state      mae     rmse  max_abs_error
+          x 0.000223 0.000282       0.000831
+          y 0.000831 0.001137       0.002360
+          z 0.000775 0.001062       0.002565
+combined_l2 0.001314 0.001582       0.002966
+arch  rmse_combined_l2  max_abs_error_combined_l2   final_loss  wall_clock_s
+4x60          0.001582                   0.002966 7.013012e-08    435.754816

@@ -1,6 +1,7 @@
 """From-scratch PyTorch PINN for the Lorenz-1960 ODE system."""
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import NamedTuple
 
 import torch
@@ -11,6 +12,7 @@ from .functions.derivative import time_derivative
 from .functions.losses import mean_squared_residual
 from .functions.physics import lorenz1960_rhs, residual
 from .functions.trial import hard_initial_condition
+from .functions.windows import split_windows
 
 _ACT = {"tanh": nn.Tanh, "relu": nn.ReLU, "sigmoid": nn.Sigmoid, "gelu": nn.GELU, "swish": nn.SiLU}
 
@@ -71,7 +73,57 @@ def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
     return dudt - lorenz1960_rhs(u, coeffs)
 
 
+class WindowedPINN(nn.Module):
+    """One PINN per time window; each starts from the previous window's end state."""
+
+    def __init__(self, cfg: Config) -> None:
+        super().__init__()
+        spans = split_windows(cfg.t_span, cfg.n_windows)
+        self.edges = [a for a, _ in spans] + [spans[-1][1]]
+        self.windows = nn.ModuleList(PINN(replace(cfg, t_span=s, n_windows=1)) for s in spans)
+        self.ic, self.gamma, self.end_state = cfg.ic, cfg.gamma, None
+        self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
+
+    @property
+    def u0(self) -> Tensor:
+        return self.windows[0].u0
+
+    def window_of(self, t: Tensor) -> Tensor:
+        inner = torch.as_tensor(self.edges[1:-1], dtype=t.dtype, device=t.device)
+        return torch.bucketize(t.reshape(-1), inner, right=True)
+
+    def set_window_start(self, k: int, state: Tensor) -> None:
+        self.windows[k].u0.copy_(state.detach().reshape(1, -1))
+
+    def forward(self, t: Tensor) -> Tensor:
+        idx = self.window_of(t)
+        out = torch.empty(t.shape[0], self.u0.shape[1], dtype=t.dtype, device=t.device)
+        for k, w in enumerate(self.windows):
+            m = idx == k
+            if m.any():
+                out[m] = w(t[m])
+        return out
+
+
+def build_model(cfg: Config) -> nn.Module:
+    return WindowedPINN(cfg) if cfg.n_windows > 1 else PINN(cfg)
+
+
+def _windowed_parts(model: WindowedPINN, t: Tensor) -> ResidualParts:
+    idx = model.window_of(t)
+    cols = [torch.empty(t.shape[0], 3, dtype=t.dtype, device=t.device) for _ in ResidualParts._fields]
+    for k, w in enumerate(model.windows):
+        m = idx == k
+        if m.any():
+            tk = t[m].detach().clone().requires_grad_(True)
+            for col, val in zip(cols, residual_parts(w, tk)):
+                col[m] = val
+    return ResidualParts(*cols)
+
+
 def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
+    if isinstance(model, WindowedPINN):
+        return _windowed_parts(model, t)
     n = model.net(t)
     u = model.trial(t, n)
     dudt = time_derivative(u, t)

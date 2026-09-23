@@ -239,3 +239,36 @@ window on B) and resume. `colab.ipynb` clones the branch, installs
 
 Multi-stage residual networks, Fourier features, modified MLP, KANs, seed sweeps,
 the BVP solver itself, and any change to the network shape. Each is a separate spec.
+
+## 9. Outcome (Colab T4, 2026-09-21)
+
+| | Run A `4x60_f64_unit` | Run B `4x60_f64_unit_win27_causal_warm` |
+|---|---|---|
+| RMSE (x, y, z) | 0.38, 2.08, 0.74 | 2.8e-5, 5.9e-5, 5.3e-5 |
+| RMSE combined | 2.24 | 8.4e-5 |
+| max abs error | 3.35 | 2.4e-4 |
+| final loss | 2.8e-4, flat over 6251 L-BFGS evals | 1e-8 to 7e-7 per window |
+| iterations | 40 000 Adam + 5000 L-BFGS | 78 677 total over 27 windows |
+| wall | 75 min | 15.5 min |
+
+Run A never left the fixed-point plateau: the prediction decays to a constant
+(x -> 0.01, y -> 1.7, z -> -0.05) while the reference oscillates. Run B follows
+the whole closed orbit with error 1e-5 to 2e-4 and closes it at 3e-5; the error
+does not grow window to window. Hand-off value jumps are ~1e-16 (hard IC), the
+initial-slope mismatch at each joint is ~1e-3 (learned, not enforced), which is
+the residual bump seen at every window start.
+
+Budget used for B, after a first 2.5 h run with the spec's schedule showed the
+eps=100 stage and 5000-eval L-BFGS adding time and no accuracy: eps
+(1e-2, 1e-1, 1, 10), 4000-iteration cap per stage, L-BFGS 1500, warm start from
+the previous window's weights. Stages 1-3 pass delta in 8-60 iterations; the
+eps=10 stage hits the cap in 6 of 27 windows (t in 4.4-5.9 and 11.3-12.8, the
+fastest parts of the orbit) and L-BFGS finishes those anyway.
+
+Target 1e-6 was not reached; 1e-4 was. The first knob to turn is
+`lbfgs_iters` (3000), since per-window loss keeps falling when L-BFGS is cut.
+
+Two figure bugs found from these runs and fixed on branch B: windowed runs now
+end with a snapshot of the finished model (the comparison page had drawn a
+mid-training window), and the joint figure evaluates both windows at the joint
+instead of at t +/- h.

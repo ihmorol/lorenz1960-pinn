@@ -130,7 +130,11 @@ def config_for(run_dir: str | Path) -> Config:
         collocation=str(row.get("collocation", "lhs")), n_eval=int(row.get("n_eval", 1001)),
         lr_decay=None if pd.isna(row.get("lr_decay", float("nan"))) else float(row["lr_decay"]),
         lr_decay_every=int(row.get("lr_decay_every", 5000)),
-        problem=str(row.get("problem", "lorenz1960")),
+        problem=str(row.get("problem", "lorenz1960")), n_windows=int(row.get("n_windows", 1)),
+        causal_eps_schedule=tuple(float(e) for e in str(row.get("causal_eps_schedule", "")).split()
+                                  if e not in ("", "nan")),
+        causal_delta=float(row.get("causal_delta", 0.99)), causal_max_iters=int(row.get("causal_max_iters", 0)),
+        warm_start=bool(row.get("warm_start", False)),
     )
 
 

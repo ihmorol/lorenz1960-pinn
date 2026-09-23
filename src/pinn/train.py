@@ -12,8 +12,9 @@ from . import viz as figures
 from .config import Config, compute_error_metrics, reference_at, reference_trajectory
 from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_grads, flat_params, residual_grid
 from .functions.collocation import latin_hypercube_points, uniform_points
+from .functions.losses import causal_loss
 from .functions.optimizers import adam_with_decay, run_lbfgs
-from .pinn import PINN, loss_terms, pinn_loss, residual_of as residual
+from .pinn import PINN, WindowedPINN, build_model, loss_terms, pinn_loss, residual_of as residual, residual_parts
 
 
 def get_device() -> torch.device:
@@ -36,7 +37,7 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     device = get_device()
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
-    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
+    model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
     grid = make_grid(cfg, device)
     history = TrainHistory()
     t_ref, ys_ref = reference_trajectory(cfg, n=cfg.n_eval)
@@ -59,6 +60,9 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
             print(f"[setup] per-point snapshots every {cfg.snapshot_every} epochs "
                   f"(~{n_snap} files) -> {history.snapshots.dir}", flush=True)
     t_start = time.perf_counter()
+    if cfg.n_windows > 1 or cfg.causal_eps_schedule:
+        train_windows(model, grid, cfg, history, t_start, t_ref, ys_ref)
+        return model, history
 
     adam, sched = adam_with_decay(model.parameters(), cfg)
     start = 0
@@ -139,6 +143,92 @@ def train(cfg: Config) -> tuple[PINN, TrainHistory]:
     return model, history
 
 
+def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_start: float,
+                  t_ref: np.ndarray, ys_ref: np.ndarray) -> None:
+    """Window by window: Adam under each eps until min_i w_i > delta, then L-BFGS, then hand
+    the end state to the next window. One window with an empty schedule is plain Adam."""
+    windows = list(model.windows) if isinstance(model, WindowedPINN) else [model]
+    stages = list(cfg.causal_eps_schedule) or [None]
+    cap = cfg.causal_max_iters if cfg.causal_eps_schedule else cfg.epochs
+    device = grid.device
+
+    def snapshot(epoch: int, w, final: bool = False) -> None:
+        if history.snapshots is None or (epoch % cfg.snapshot_every and not final):
+            return
+        history.snapshots.write(epoch, residual_parts(model, grid.clone().requires_grad_(True)))
+        history.param_epochs.append(epoch)
+        history.param_trail.append(flat_params(model).cpu().numpy())
+        history.grad_trail.append(flat_grads(model).cpu().numpy())
+        if w is not None:
+            history.weight_profiles.append(w.cpu().numpy())
+
+    for k, sub in enumerate(windows):
+        saved = cfg.ckpt_path / f"window_{k:02d}.pt"
+        pts = grid[model.window_of(grid) == k] if isinstance(model, WindowedPINN) else grid
+        if saved.exists():
+            sub.load_state_dict(torch.load(saved, map_location=device))
+            if cfg.print_every:
+                print(f"[window] {k:>2} restored from {saved.name}", flush=True)
+        else:
+            if k and cfg.warm_start:
+                with torch.no_grad():
+                    for p, q in zip(sub.net.parameters(), windows[k - 1].net.parameters()):
+                        p.copy_(q)
+            adam, sched = adam_with_decay(sub.parameters(), cfg)
+            for eps in stages:
+                for _ in range(cap):
+                    epoch = len(history.loss)
+                    adam.zero_grad()
+                    t = pts.clone().requires_grad_(True)
+                    res, ic, parts = loss_terms(sub, t)
+                    w = None
+                    if eps is not None:
+                        res, w = causal_loss(parts.r, t, eps)
+                        history.min_w.append(float(w.min()))
+                    loss = res + sub.gamma * ic if (cfg.ic == "soft" or sub.end_state is not None) else res
+                    loss.backward()
+                    snapshot(epoch, w)
+                    logging = epoch % cfg.log_every == 0
+                    before = flat_params(sub) if logging else None
+                    lr = adam.param_groups[0]["lr"]
+                    adam.step()
+                    sched.step()
+                    history.loss.append(loss.item())
+                    if logging:
+                        history.record_step(epoch, model=sub, loss=loss, residual=res, ic=ic,
+                                            lr=lr, params_before=before)
+                    if epoch % cfg.eval_every == 0:
+                        history.record_reference(epoch, float(np.mean((predict(model, t_ref) - ys_ref) ** 2)))
+                    if cfg.print_every and epoch % cfg.print_every == 0:
+                        min_w = history.min_w[-1] if w is not None else 1.0
+                        print(f"[adam]  window {k:>2} eps {eps} | epoch {epoch:>7} | loss {loss.item():.4e} "
+                              f"| min_w {min_w:.3f} | {time.perf_counter() - t_start:7.1f}s", flush=True)
+                    if w is not None and history.min_w[-1] > cfg.causal_delta:
+                        break
+                if eps is not None:
+                    history.eps_marks.append((len(history.loss), eps))
+            history.adam_iters = len(history.loss)
+            if cfg.lbfgs_iters > 0:
+                def closure() -> Tensor:
+                    loss = pinn_loss(sub, pts.clone().requires_grad_(True))
+                    history.loss.append(loss.item())
+                    return loss
+                run_lbfgs(sub.parameters(), closure, cfg.lbfgs_iters, cfg.torch_dtype)
+            cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
+            torch.save(sub.state_dict(), saved)
+            done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
+            snapshot(len(history.loss) - 1, done, final=True)
+        history.window_marks.append(len(history.loss))
+        if isinstance(model, WindowedPINN) and k + 1 < len(windows):
+            with torch.no_grad():
+                end = torch.tensor([[model.edges[k + 1]]], dtype=grid.dtype, device=device)
+                model.set_window_start(k + 1, sub(end)[0])
+        if cfg.print_every and history.loss:
+            print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
+                  f"{time.perf_counter() - t_start:7.1f}s", flush=True)
+    history.wall_clock_s = time.perf_counter() - t_start
+
+
 def predict(model: PINN, t: np.ndarray) -> np.ndarray:
     p = next(model.parameters())
     tt = torch.as_tensor(t, dtype=p.dtype, device=p.device).reshape(-1, 1)
@@ -204,6 +294,8 @@ def run_summary(
     row: dict[str, object] = {
         # --- configuration
         "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
+        "n_windows": cfg.n_windows, "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
+        "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters, "warm_start": cfg.warm_start,
         "n_params": int(sum(p.numel() for p in model.parameters())),
         "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
         "epochs": cfg.epochs, "lbfgs_iters": cfg.lbfgs_iters, "seed": cfg.seed,
@@ -301,8 +393,20 @@ def save_results(model: PINN, history: TrainHistory, cfg: Config) -> pd.DataFram
     cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), cfg.ckpt_path / "pinn.pt")
     if history.param_trail:
+        extra = {}
+        if history.weight_profiles:
+            width = max(len(w) for w in history.weight_profiles)
+            extra["weights"] = np.stack([np.pad(w, (0, width - len(w)), constant_values=np.nan)
+                                         for w in history.weight_profiles])
         np.savez_compressed(cfg.ckpt_path / "param_trail.npz", epochs=np.asarray(history.param_epochs),
-                            params=np.stack(history.param_trail), grads=np.stack(history.grad_trail))
+                            params=np.stack(history.param_trail), grads=np.stack(history.grad_trail), **extra)
+    if history.min_w:
+        pd.DataFrame({"iteration": range(len(history.min_w)), "min_w": history.min_w}).to_csv(
+            cfg.ckpt_path / "causal.csv", index=False)
+    if history.window_marks or history.eps_marks:
+        rows = [(i, e, "eps") for i, e in history.eps_marks] + \
+               [(i, float("nan"), "window") for i in history.window_marks]
+        pd.DataFrame(rows, columns=["iteration", "eps", "kind"]).to_csv(cfg.ckpt_path / "marks.csv", index=False)
     if cfg.print_every:
         print(f"[save]  checkpoint + telemetry -> {cfg.ckpt_path}", flush=True)
         print(f"[save]  rendering figures -> {cfg.results_path} ...", flush=True)
@@ -330,7 +434,7 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
     """Reload a finished run's trained weights and telemetry, with no retraining."""
     cfg = cfg or Config()
     device = get_device()
-    model = PINN(cfg).to(device=device, dtype=cfg.torch_dtype)
+    model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
     try:
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
     except TypeError:  # older torch
