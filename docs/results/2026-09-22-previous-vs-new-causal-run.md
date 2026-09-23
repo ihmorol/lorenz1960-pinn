@@ -3,10 +3,10 @@
 This report compares only these two completed causal-window runs:
 
 - **Previous causal:** `runs/4x60_f64_unit_win27_causal_warm/`
-- **New causal:** `run2/runs/causal-window/candidate-512pt/4x60_f64_unit_win27_causal_warm_6de06c38/`
+- **New causal:** `runs/causal-window/candidate-512pt/4x60_f64_unit_win27_causal_warm_6de06c38/`
 
-The copies of the previous causal CSVs under `run2/runs/` are byte-identical to
-the files under `runs/`, so they are not a third experiment. All values below
+The copies of the previous causal CSVs used for the original comparison were
+byte-identical to the files under `runs/`, so they are not a third experiment. All values below
 come from the two `run_summary.csv`, `point_summary.csv`, loss, causal-stage, and
 configuration files. No model was retrained for this comparison.
 
