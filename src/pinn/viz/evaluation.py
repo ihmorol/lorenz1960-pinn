@@ -49,7 +49,7 @@ def fig_joint_continuity(model, edges, h=1e-4):
     for k, e in enumerate(edges[1:-1]):
         with torch.no_grad():
             te = torch.tensor([[e - h], [e], [e + h]], dtype=p.dtype, device=p.device)
-            a, b = model.windows[k](te), model.windows[k + 1](te)
+            a, b = model.window_forward(k, te), model.window_forward(k + 1, te)
         jumps.append(float((b[1] - a[1]).norm()))
         slopes.append(float(((b[2] - b[1]) / h - (a[1] - a[0]) / h).norm()))
     fig, ax = plt.subplots(figsize=(8, 3.5))

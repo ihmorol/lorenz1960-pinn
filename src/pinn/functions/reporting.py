@@ -83,7 +83,8 @@ def run_summary(model, history, cfg: Config,
     row: dict[str, object] = {
         # --- configuration
         "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
-        "n_windows": cfg.n_windows, "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
+        "n_windows": cfg.n_windows, "share_network": cfg.share_network,
+        "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
         "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters, "warm_start": cfg.warm_start,
         "n_params": int(sum(p.numel() for p in model.parameters())),
         "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
@@ -179,4 +180,5 @@ def config_for(run_dir: str | Path) -> Config:
                                   if e not in ("", "nan")),
         causal_delta=float(row.get("causal_delta", 0.99)), causal_max_iters=int(row.get("causal_max_iters", 0)),
         warm_start=bool(row.get("warm_start", False)),
+        share_network=bool(row.get("share_network", False)),
     )

@@ -95,6 +95,10 @@ class WindowedPINN(nn.Module):
     def set_window_start(self, k: int, state: Tensor) -> None:
         self.windows[k].u0.copy_(state.detach().reshape(1, -1))
 
+    def window_forward(self, k: int, t: Tensor, n: Tensor | None = None) -> Tensor:
+        """Evaluate window ``k``'s own network at ``t`` (``n`` is unused: one net per window)."""
+        return self.windows[k](t)
+
     def forward(self, t: Tensor) -> Tensor:
         idx = self.window_of(t)
         out = torch.empty(t.shape[0], self.u0.shape[1], dtype=t.dtype, device=t.device)
@@ -105,8 +109,67 @@ class WindowedPINN(nn.Module):
         return out
 
 
+class SharedWindowPINN(nn.Module):
+    """One network shared by every time window, each starting from the previous end state.
+
+    :class:`WindowedPINN` trains one PINN per slice. This variant keeps a *single*
+    parameter set for all windows, so a 27-window trajectory is carried by
+    ``depth x width`` weights instead of 27 copies. Window ``k`` runs the shared
+    ``net`` with its trial shifted to window ``k``'s start state and scaled to
+    window ``k``'s own span -- which is exactly what chaining the windows means here.
+    """
+
+    def __init__(self, cfg: Config) -> None:
+        super().__init__()
+        spans = split_windows(cfg.t_span, cfg.n_windows)
+        self.edges = [a for a, _ in spans] + [spans[-1][1]]
+        base = PINN(replace(cfg, t_span=spans[0], n_windows=1))
+        self.net = base.net                        # one parameter set for every window
+        self.ic, self.ic_scale, self.gamma = base.ic, base.ic_scale, base.gamma
+        self.problem, self.end_state = base.problem, None
+        self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
+        self.register_buffer("coeffs", base.coeffs)
+        self.register_buffer(
+            "edge_starts",
+            torch.tensor([cfg.initial_state], dtype=torch.float32).repeat(cfg.n_windows, 1),
+        )
+
+    @property
+    def u0(self) -> Tensor:
+        return self.edge_starts[:1]
+
+    def rhs(self, u: Tensor) -> Tensor:
+        return self.problem.rhs(u)
+
+    def window_of(self, t: Tensor) -> Tensor:
+        inner = torch.as_tensor(self.edges[1:-1], dtype=t.dtype, device=t.device)
+        return torch.bucketize(t.reshape(-1), inner, right=True)
+
+    def set_window_start(self, k: int, state: Tensor) -> None:
+        self.edge_starts[k].copy_(state.detach().reshape(-1))
+
+    def window_forward(self, k: int, t: Tensor, n: Tensor | None = None) -> Tensor:
+        """Trial solution in window ``k``: the shared net at window ``k``'s start state and span."""
+        n = self.net(t) if n is None else n
+        if self.ic != "hard":
+            return n
+        return hard_initial_condition(t, n, self.edge_starts[k:k + 1],
+                                      self.edges[k], self.edges[k + 1], self.ic_scale)
+
+    def forward(self, t: Tensor) -> Tensor:
+        idx = self.window_of(t)
+        out = torch.empty(t.shape[0], self.edge_starts.shape[1], dtype=t.dtype, device=t.device)
+        for k in range(len(self.edges) - 1):
+            m = idx == k
+            if m.any():
+                out[m] = self.window_forward(k, t[m])
+        return out
+
+
 def build_model(cfg: Config) -> nn.Module:
-    return WindowedPINN(cfg) if cfg.n_windows > 1 else PINN(cfg)
+    if cfg.n_windows > 1:
+        return SharedWindowPINN(cfg) if cfg.share_network else WindowedPINN(cfg)
+    return PINN(cfg)
 
 
 def _windowed_parts(model: WindowedPINN, t: Tensor) -> ResidualParts:
@@ -121,9 +184,28 @@ def _windowed_parts(model: WindowedPINN, t: Tensor) -> ResidualParts:
     return ResidualParts(*cols)
 
 
+def _shared_parts(model: SharedWindowPINN, t: Tensor) -> ResidualParts:
+    """Like :func:`_windowed_parts`, but every slice runs through the one shared net."""
+    idx = model.window_of(t)
+    cols = [torch.empty(t.shape[0], 3, dtype=t.dtype, device=t.device) for _ in ResidualParts._fields]
+    for k in range(len(model.edges) - 1):
+        m = idx == k
+        if m.any():
+            tk = t[m].detach().clone().requires_grad_(True)
+            n = model.net(tk)
+            u = model.window_forward(k, tk, n)
+            dudt = time_derivative(u, tk)
+            vals = ResidualParts(n=n, u=u, dudt=dudt, f=model.rhs(u), r=residual(u, dudt, model.rhs))
+            for col, val in zip(cols, vals):
+                col[m] = val
+    return ResidualParts(*cols)
+
+
 def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
     if isinstance(model, WindowedPINN):
         return _windowed_parts(model, t)
+    if isinstance(model, SharedWindowPINN):
+        return _shared_parts(model, t)
     n = model.net(t)
     u = model.trial(t, n)
     dudt = time_derivative(u, t)
