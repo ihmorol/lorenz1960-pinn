@@ -1,4 +1,11 @@
-"""Train the Lorenz-1960 PINN, evaluate against the locked baseline, save results."""
+"""Train the Lorenz-1960 PINN, evaluate against the locked baseline, save results.
+
+This module is orchestration only: build a :class:`~pinn.functions.trainer.Trainer`,
+run it, then persist the checkpoint, telemetry and figures. The loops live in
+:mod:`pinn.functions.trainer`; the reporting metrics live in
+:mod:`pinn.functions.reporting`. Those names are re-exported below so existing
+``from pinn.train import ...`` call sites keep working unchanged.
+"""
 from __future__ import annotations
 
 import time
@@ -6,363 +13,32 @@ import time
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
 
 from . import viz as figures
-from .config import Config, compute_error_metrics, reference_at, reference_trajectory
-from .history import FLOAT_FORMAT, SnapshotWriter, TrainHistory, flat_grads, flat_params, residual_grid
-from .functions.collocation import latin_hypercube_points, uniform_points
-from .functions.losses import causal_loss
-from .functions.optimizers import adam_with_decay, run_lbfgs
-from .pinn import PINN, WindowedPINN, build_model, loss_terms, pinn_loss, residual_of as residual, residual_parts
+from .config import Config, reference_at, reference_trajectory  # noqa: F401  (re-exported)
+from .history import FLOAT_FORMAT, TrainHistory, residual_grid
+from .pinn import PINN
+from .functions.collocation import make_grid
+from .functions.reporting import (  # noqa: F401  (re-exported public surface)
+    LOSS_THRESHOLDS, collect_artifacts, config_for, evaluate, predict, residual_at, run_summary,
+)
+from .functions.trainer import Trainer, get_device, set_seed  # noqa: F401
 
-
-def get_device() -> torch.device:
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def set_seed(seed: int) -> None:
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
-
-def make_grid(cfg: Config, device: torch.device) -> Tensor:
-    t = (uniform_points(cfg.t_span, cfg.n_collocation) if cfg.collocation == "uniform"
-         else latin_hypercube_points(cfg.t_span, cfg.n_collocation, cfg.seed))
-    return torch.as_tensor(t, dtype=cfg.torch_dtype, device=device)
+__all__ = [
+    "train", "save_results", "write_breakdown_figures", "load_run", "rebuild_figures", "main",
+    "get_device", "set_seed", "make_grid", "predict", "residual_at", "evaluate",
+    "collect_artifacts", "run_summary", "config_for", "LOSS_THRESHOLDS",
+]
 
 
 def train(cfg: Config) -> tuple[PINN, TrainHistory]:
-    set_seed(cfg.seed)
-    device = get_device()
-    if device.type == "cuda":
-        torch.cuda.reset_peak_memory_stats(device)
-    model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
-    grid = make_grid(cfg, device)
-    history = TrainHistory()
-    t_ref, ys_ref = reference_trajectory(cfg, n=cfg.n_eval)
-
-    if cfg.snapshot_every > 0:
-        grid_t = grid.detach().cpu().numpy().reshape(-1)
-        history.snapshots = SnapshotWriter(
-            cfg.results_path / "breakdown", grid_t, reference_at(cfg, grid_t)
-        )
-
-    if cfg.print_every:
-        n_params = sum(p.numel() for p in model.parameters())
-        print(f"[setup] device={device.type} | seed={cfg.seed} | {cfg.label}", flush=True)
-        print(f"[setup] {n_params} params | {cfg.n_collocation} collocation pts on "
-              f"t in [{cfg.t_span[0]}, {cfg.t_span[1]}] | ref traj {len(t_ref)} pts", flush=True)
-        print(f"[setup] {cfg.epochs} Adam epochs (lr {cfg.lr_start:.1e} -> {cfg.lr_end:.1e}) "
-              f"+ {cfg.lbfgs_iters} L-BFGS iters", flush=True)
-        if history.snapshots is not None:
-            n_snap = cfg.epochs // cfg.snapshot_every + 1
-            print(f"[setup] per-point snapshots every {cfg.snapshot_every} epochs "
-                  f"(~{n_snap} files) -> {history.snapshots.dir}", flush=True)
-    t_start = time.perf_counter()
-    if cfg.n_windows > 1 or cfg.causal_eps_schedule:
-        train_windows(model, grid, cfg, history, t_start, t_ref, ys_ref)
-        return model, history
-
-    adam, sched = adam_with_decay(model.parameters(), cfg)
-    start = 0
-    if cfg.checkpoint_every:
-        cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
-        saved = sorted(cfg.ckpt_path.glob("adam_*.pt"))
-        if saved:
-            state = torch.load(saved[-1], map_location=device)
-            model.load_state_dict(state["model"]); adam.load_state_dict(state["adam"])
-            sched.load_state_dict(state["sched"]); start = state["epoch"]
-            history.resumed_from = start
-
-    for epoch in range(start, cfg.epochs):
-        last = epoch == cfg.epochs - 1
-        logging = epoch % cfg.log_every == 0 or last
-
-        adam.zero_grad()
-        res, ic, parts = loss_terms(model, grid.clone().requires_grad_(True))
-        loss = res + model.gamma * ic if (cfg.ic == "soft" or cfg.end_state is not None) else res
-        loss.backward()
-
-        # Snapshot before the step, so the recorded residuals are exactly the ones
-        # this epoch's loss and gradient were computed from. Costs one CSV write;
-        # the tensors are already in hand.
-        if history.snapshots is not None and (epoch % cfg.snapshot_every == 0 or last):
-            history.snapshots.write(epoch, parts)
-            history.param_epochs.append(epoch)
-            history.param_trail.append(flat_params(model).cpu().numpy())
-            history.grad_trail.append(flat_grads(model).cpu().numpy())
-
-        lr = adam.param_groups[0]["lr"]
-        before = flat_params(model) if logging else None
-        adam.step()
-        sched.step()
-        history.loss.append(loss.item())
-
-        if logging:
-            history.record_step(epoch, model=model, loss=loss, residual=res, ic=ic,
-                                lr=lr, params_before=before)
-        if epoch % cfg.eval_every == 0 or last:
-            history.record_reference(epoch, float(np.mean((predict(model, t_ref) - ys_ref) ** 2)))
-
-        if cfg.checkpoint_every and (epoch + 1) % cfg.checkpoint_every == 0:
-            torch.save({"model": model.state_dict(), "adam": adam.state_dict(),
-                        "sched": sched.state_dict(), "epoch": epoch + 1},
-                       cfg.ckpt_path / f"adam_{epoch + 1:06d}.pt")
-        if cfg.print_every and (epoch % cfg.print_every == 0 or last):
-            elapsed = time.perf_counter() - t_start
-            eta = elapsed / (epoch + 1) * (cfg.epochs - epoch - 1)
-            print(f"[adam]  epoch {epoch + 1:>6}/{cfg.epochs} | loss {history.loss[-1]:.4e} | "
-                  f"res {res.item():.4e} | ic {ic.item():.4e} | "
-                  f"|grad| {history.grad_norm[-1]:.3e} | step {history.update_norm[-1]:.3e} | "
-                  f"lr {lr:.2e} | ref_mse {history.ref_mse[-1]:.4e} | "
-                  f"{elapsed:6.1f}s elapsed, ~{eta:5.0f}s left", flush=True)
-
-    history.adam_iters = len(history.loss)
-    history.wall_clock_s = time.perf_counter() - t_start
-    if cfg.print_every:
-        print(f"[adam]  done in {time.perf_counter() - t_start:.1f}s | "
-              f"final loss {history.loss[-1]:.4e} | best loss {min(history.loss):.4e}", flush=True)
-
-    if cfg.lbfgs_iters > 0:
-        def closure() -> Tensor:
-            loss = pinn_loss(model, grid.clone().requires_grad_(True))
-            history.loss.append(loss.item())
-            n = len(history.loss) - history.adam_iters
-            if cfg.print_every and n % 10 == 1:
-                print(f"[lbfgs] eval {n:>5} | loss {history.loss[-1]:.4e} | "
-                      f"{time.perf_counter() - t_start:6.1f}s elapsed", flush=True)
-            return loss
-
-        run_lbfgs(model.parameters(), closure, cfg.lbfgs_iters, cfg.torch_dtype)
-        history.wall_clock_s = time.perf_counter() - t_start
-        if cfg.print_every:
-            print(f"[lbfgs] done after {len(history.loss) - history.adam_iters} evals | "
-                  f"final loss {history.loss[-1]:.4e}", flush=True)
-
-    return model, history
-
-
-def train_windows(model, grid: Tensor, cfg: Config, history: TrainHistory, t_start: float,
-                  t_ref: np.ndarray, ys_ref: np.ndarray) -> None:
-    """Window by window: Adam under each eps until min_i w_i > delta, then L-BFGS, then hand
-    the end state to the next window. One window with an empty schedule is plain Adam."""
-    windows = list(model.windows) if isinstance(model, WindowedPINN) else [model]
-    stages = list(cfg.causal_eps_schedule) or [None]
-    cap = cfg.causal_max_iters if cfg.causal_eps_schedule else cfg.epochs
-    device = grid.device
-
-    def snapshot(epoch: int, w, final: bool = False) -> None:
-        if history.snapshots is None or (epoch % cfg.snapshot_every and not final):
-            return
-        history.snapshots.write(epoch, residual_parts(model, grid.clone().requires_grad_(True)))
-        history.param_epochs.append(epoch)
-        history.param_trail.append(flat_params(model).cpu().numpy())
-        history.grad_trail.append(flat_grads(model).cpu().numpy())
-        if w is not None:
-            history.weight_profiles.append(w.cpu().numpy())
-
-    for k, sub in enumerate(windows):
-        saved = cfg.ckpt_path / f"window_{k:02d}.pt"
-        pts = grid[model.window_of(grid) == k] if isinstance(model, WindowedPINN) else grid
-        if saved.exists():
-            sub.load_state_dict(torch.load(saved, map_location=device))
-            if cfg.print_every:
-                print(f"[window] {k:>2} restored from {saved.name}", flush=True)
-        else:
-            if k and cfg.warm_start:
-                with torch.no_grad():
-                    for p, q in zip(sub.net.parameters(), windows[k - 1].net.parameters()):
-                        p.copy_(q)
-            adam, sched = adam_with_decay(sub.parameters(), cfg)
-            for eps in stages:
-                for _ in range(cap):
-                    epoch = len(history.loss)
-                    adam.zero_grad()
-                    t = pts.clone().requires_grad_(True)
-                    res, ic, parts = loss_terms(sub, t)
-                    w = None
-                    if eps is not None:
-                        res, w = causal_loss(parts.r, t, eps)
-                        history.min_w.append(float(w.min()))
-                    loss = res + sub.gamma * ic if (cfg.ic == "soft" or sub.end_state is not None) else res
-                    loss.backward()
-                    snapshot(epoch, w)
-                    logging = epoch % cfg.log_every == 0
-                    before = flat_params(sub) if logging else None
-                    lr = adam.param_groups[0]["lr"]
-                    adam.step()
-                    sched.step()
-                    history.loss.append(loss.item())
-                    if logging:
-                        history.record_step(epoch, model=sub, loss=loss, residual=res, ic=ic,
-                                            lr=lr, params_before=before)
-                    if epoch % cfg.eval_every == 0:
-                        history.record_reference(epoch, float(np.mean((predict(model, t_ref) - ys_ref) ** 2)))
-                    if cfg.print_every and epoch % cfg.print_every == 0:
-                        min_w = history.min_w[-1] if w is not None else 1.0
-                        print(f"[adam]  window {k:>2} eps {eps} | epoch {epoch:>7} | loss {loss.item():.4e} "
-                              f"| min_w {min_w:.3f} | {time.perf_counter() - t_start:7.1f}s", flush=True)
-                    if w is not None and history.min_w[-1] > cfg.causal_delta:
-                        break
-                if eps is not None:
-                    history.eps_marks.append((len(history.loss), eps))
-            history.adam_iters = len(history.loss)
-            if cfg.lbfgs_iters > 0:
-                def closure() -> Tensor:
-                    loss = pinn_loss(sub, pts.clone().requires_grad_(True))
-                    history.loss.append(loss.item())
-                    return loss
-                run_lbfgs(sub.parameters(), closure, cfg.lbfgs_iters, cfg.torch_dtype)
-            cfg.ckpt_path.mkdir(parents=True, exist_ok=True)
-            torch.save(sub.state_dict(), saved)
-            done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
-            snapshot(len(history.loss) - 1, done, final=True)
-        history.window_marks.append(len(history.loss))
-        if isinstance(model, WindowedPINN) and k + 1 < len(windows):
-            with torch.no_grad():
-                end = torch.tensor([[model.edges[k + 1]]], dtype=grid.dtype, device=device)
-                model.set_window_start(k + 1, sub(end)[0])
-        if cfg.print_every and history.loss:
-            print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
-                  f"{time.perf_counter() - t_start:7.1f}s", flush=True)
-    history.wall_clock_s = time.perf_counter() - t_start
-
-
-def predict(model: PINN, t: np.ndarray) -> np.ndarray:
-    p = next(model.parameters())
-    tt = torch.as_tensor(t, dtype=p.dtype, device=p.device).reshape(-1, 1)
-    with torch.no_grad():
-        return model(tt).cpu().numpy().astype(np.float64)
-
-
-def residual_at(model: PINN, t: np.ndarray) -> np.ndarray:
-    """ODE residual r(t) = du/dt - f(u) evaluated at arbitrary times."""
-    p = next(model.parameters())
-    tt = torch.as_tensor(t, dtype=p.dtype, device=p.device).reshape(-1, 1).requires_grad_(True)
-    return residual(model, tt).detach().cpu().numpy().astype(np.float64)
-
-
-def evaluate(model: PINN, cfg: Config) -> pd.DataFrame:
-    t, ys = reference_trajectory(cfg, n=cfg.n_eval)
-    return compute_error_metrics(ys, predict(model, t))
-
-
-def collect_artifacts(model: PINN, history: TrainHistory, cfg: Config) -> figures.RunArtifacts:
-    """Bundle a finished run into the plain-array record the figure suite reads."""
-    t, ref = reference_trajectory(cfg, n=cfg.n_eval)
-    grid = make_grid(cfg, next(model.parameters()).device).cpu().numpy().reshape(-1)
-    return figures.RunArtifacts(
-        t=t,
-        pred=predict(model, t),
-        ref=ref,
-        history=history,
-        coefficients=cfg.coefficients,
-        collocation_t=grid,
-        collocation_residual=residual_at(model, grid),
-        dense_residual=residual_at(model, t),
-        t_span=cfg.t_span,
-        label=cfg.label,
-    )
-
-
-LOSS_THRESHOLDS = (1e-4, 1e-6, 1e-8)
-
-
-def _epochs_to(loss: list[float], threshold: float) -> float:
-    """First iteration index at which the loss dropped below ``threshold``."""
-    for i, value in enumerate(loss):
-        if value < threshold:
-            return float(i)
-    return float("nan")
-
-
-def run_summary(
-    model: PINN, history: TrainHistory, cfg: Config, run: figures.RunArtifacts | None = None
-) -> pd.DataFrame:
-    """One wide row describing a finished run: config, accuracy, physics, cost.
-
-    This is the row the architecture sweep concatenates into ``comparison.csv``.
-    Every column is computed after training; nothing here feeds back into the loss.
-    """
-    run = run if run is not None else collect_artifacts(model, history, cfg)
-    pred, ref, t = run.pred, run.ref, run.t
-    err = pred - ref
-    err_norm = np.linalg.norm(err, axis=1)
-    metrics = run.metrics.set_index("state")
-
-    row: dict[str, object] = {
-        # --- configuration
-        "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
-        "n_windows": cfg.n_windows, "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
-        "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters, "warm_start": cfg.warm_start,
-        "n_params": int(sum(p.numel() for p in model.parameters())),
-        "activation": cfg.activation, "ic": cfg.ic, "gamma": cfg.gamma,
-        "epochs": cfg.epochs, "lbfgs_iters": cfg.lbfgs_iters, "seed": cfg.seed,
-        "n_collocation": cfg.n_collocation,
-        "lr_start": cfg.lr_start, "lr_end": cfg.lr_end,
-        "t_start": cfg.t_span[0], "t_end": cfg.t_span[1],
-        "dtype": cfg.dtype, "ic_scale": cfg.ic_scale, "collocation": cfg.collocation,
-        "n_eval": cfg.n_eval, "lr_decay": cfg.lr_decay if cfg.lr_decay is not None else float("nan"),
-        "lr_decay_every": cfg.lr_decay_every,
-    }
-
-    # --- accuracy, per state and combined
-    for state in ("x", "y", "z", "combined_l2"):
-        for metric in ("mae", "rmse", "max_abs_error"):
-            row[f"{metric}_{state}"] = float(metrics.loc[state, metric])
-
-    for j, name in enumerate("xyz"):
-        span = float(ref[:, j].max() - ref[:, j].min())
-        ss_tot = float(((ref[:, j] - ref[:, j].mean()) ** 2).sum())
-        row[f"rel_mae_{name}"] = float(np.abs(err[:, j]).mean() / span) if span else float("nan")
-        row[f"r2_{name}"] = 1.0 - float((err[:, j] ** 2).sum()) / ss_tot if ss_tot else float("nan")
-        # Endpoint state: where the trajectory actually landed versus the truth.
-        row[f"final_{name}"] = float(pred[-1, j])
-        row[f"final_ref_{name}"] = float(ref[-1, j])
-        row[f"final_err_{name}"] = float(err[-1, j])
-
-    for q in (50, 90, 99):
-        row[f"err_norm_p{q}"] = float(np.percentile(err_norm, q))
-    row["err_norm_max"] = float(err_norm.max())
-
-    # --- physics: does the ODE hold away from the points we trained on?
-    row["final_loss"] = float(history.loss[-1]) if history.loss else float("nan")
-    row["best_loss"] = float(min(history.loss)) if history.loss else float("nan")
-    coll = float(np.mean(np.asarray(run.collocation_residual) ** 2)) \
-        if run.collocation_residual is not None else float("nan")
-    dense = float(np.mean(np.asarray(run.dense_residual) ** 2)) \
-        if run.dense_residual is not None else float("nan")
-    row["residual_mse_collocation"] = coll
-    row["residual_mse_dense"] = dense
-    row["residual_generalisation_gap"] = dense / coll if coll else float("nan")
-
-    # --- conserved quantities
-    _, drift = figures.invariant_series(pred, run.coefficients)
-    _, ref_drift = figures.invariant_series(ref, run.coefficients)
-    for i in range(drift.shape[1]):
-        row[f"invariant_{i + 1}_max_drift"] = float(drift[:, i].max())
-        row[f"invariant_{i + 1}_max_drift_reference"] = float(ref_drift[:, i].max())
-
-    # --- cost
-    wall = float(history.wall_clock_s)
-    row["wall_clock_s"] = wall
-    row["ms_per_epoch"] = wall / cfg.epochs * 1e3 if cfg.epochs else float("nan")
-    for threshold in LOSS_THRESHOLDS:
-        row[f"epochs_to_{threshold:.0e}"] = _epochs_to(history.loss, threshold)
-    row["device"] = next(model.parameters()).device.type
-    # CUDA-only; NaN on CPU, where torch exposes no equivalent counter.
-    row["peak_mem_mb"] = (
-        torch.cuda.max_memory_allocated() / 2**20 if torch.cuda.is_available() else float("nan")
-    )
-    row["n_snapshots"] = len(history.snapshots.epochs) if history.snapshots else 0
-    return pd.DataFrame([row])
+    return Trainer(cfg).run()
 
 
 def write_breakdown_figures(cfg: Config, formats=figures.FORMATS) -> dict[str, list]:
     """Render the per-epoch collocation figures from a run's ``breakdown/`` CSVs.
 
-    Lives here rather than in :mod:`pinn.figures` because it reads the breakdown
+    Lives here rather than in :mod:`pinn.viz` because it reads the breakdown
     through :mod:`pinn.history`, and that module imports torch; ``figures`` stays
     a pure array-in, figure-out module.
     """
@@ -434,6 +110,8 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
     """Reload a finished run's trained weights and telemetry, with no retraining."""
     cfg = cfg or Config()
     device = get_device()
+    from .pinn import build_model
+
     model = build_model(cfg).to(device=device, dtype=cfg.torch_dtype)
     try:
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
