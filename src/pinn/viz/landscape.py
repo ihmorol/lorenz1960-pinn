@@ -30,7 +30,7 @@ def fig_landscape(a, b, logZ, proj, log_path, epochs, var2, label):
     fig = plt.figure(figsize=(14, 5.5))
     ax = fig.add_subplot(1, 2, 1, projection="3d")
     ax.plot_surface(A, B, logZ, cmap="viridis", alpha=0.75, linewidth=0)
-    ax.plot(proj[:, 0], proj[:, 1], log_path, "r.-", lw=1.5, ms=3, label="Adam path")
+    ax.plot(proj[:, 0], proj[:, 1], log_path, "r.-", lw=1.5, ms=3, label="parameter snapshots")
     ax.scatter(proj[0, 0], proj[0, 1], log_path[0], c="w", edgecolors="k", s=60, label="start")
     ax.scatter(0, 0, log_path[-1], c="k", s=60, label="end")
     ax.set_xlabel("PC1"); ax.set_ylabel("PC2"); ax.set_zlabel("log10 loss"); ax.legend(fontsize=8)
@@ -42,8 +42,8 @@ def fig_landscape(a, b, logZ, proj, log_path, epochs, var2, label):
     for k in np.linspace(0, len(epochs) - 1, 6).astype(int):
         ax.annotate(str(epochs[k]), proj[k, :2], fontsize=7, color="w")
     ax.set_xlabel("PC1"); ax.set_ylabel("PC2")
-    fig.suptitle(f"{label}  |  plane explains {100 * var2:.0f}% of the path's variance; "
-                 "a dense cluster is a plateau, a sparse sweep is the escape", fontsize=9)
+    fig.suptitle(f"{label} | plane explains {100 * var2:.0f}% of snapshot variance; "
+                 "heights use the final-anchor global residual", fontsize=9)
     fig.tight_layout()
     return fig
 
@@ -56,8 +56,7 @@ def fig_layer_grad_norms(diag: pd.DataFrame):
     ax.semilogy(diag.epoch, diag.grad_norm, color="0.8", lw=0.5, label="total (raw)")
     ax.semilogy(diag.epoch, smooth(diag.grad_norm), "k-", lw=1.4, label="total (rolling median)")
     ax.set_xlabel("epoch"); ax.set_ylabel("gradient norm"); ax.legend(ncol=3, fontsize=8)
-    ax.set_title("gradient norm per layer: flat = plateau, rising = escape, falling = convergence",
-                 fontsize=9)
+    ax.set_title("Sampled gradient norms by layer", fontsize=9)
     return fig
 
 
@@ -100,8 +99,8 @@ def write_all(run: Path) -> list[Path]:
         go.Surface(x=a, y=b, z=logZ, colorscale="Viridis", opacity=0.85, colorbar={"title": "log10 loss"}),
         go.Scatter3d(x=proj[:, 0], y=proj[:, 1], z=log_path, mode="lines+markers",
                      line={"color": "red", "width": 4}, marker={"size": 3, "color": epochs, "colorscale": "Hot"},
-                     text=hover, hoverinfo="text", name="Adam path")])
-    fig.update_layout(title=f"Loss surface in the plane of the optimiser's path ({100 * var[:2].sum():.0f}% of variance)",
+                     text=hover, hoverinfo="text", name="parameter snapshots")])
+    fig.update_layout(title=f"Final-anchor global residual plane ({100 * var[:2].sum():.0f}% of snapshot variance)",
                       scene={"xaxis_title": "PC1", "yaxis_title": "PC2", "zaxis_title": "log10 loss"},
                       margin={"l": 0, "r": 0, "t": 40, "b": 0})
     fig.write_html(str(out / "loss_landscape.html"), include_plotlyjs="cdn")

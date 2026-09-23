@@ -19,7 +19,7 @@ PHASES = {
                    "figures/joint_continuity.png", "figures/invariant_drift.png",
                    "figures/metrics_summary.png", "figures/collocation_points.png", "results.png"],
     "Tables": ["run_summary.csv", "metrics.csv", "point_summary.csv", "history/loss_history.csv",
-               "history/marks.csv", "history/causal.csv"],
+               "history/marks.csv", "history/causal.csv", "history/stages.csv", "history/config.json"],
 }
 
 

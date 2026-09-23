@@ -1,5 +1,12 @@
 # Run A (batch) vs Run B (causal windows) on one closed Lorenz-1960 orbit
 
+> **Historical interpretation, superseded.** The later [code and artifact audit](2026-09-22-two-branch-code-audit.md)
+> identifies incompatible loss definitions, pre-L-BFGS Run A point figures,
+> untrained future windows in Run B progress figures, and unsupported precision,
+> landscape, NTK, and error-growth conclusions below. Use the audited metric
+> table and [repair note](2026-09-22-causal-window-repair.md) for current claims.
+> Neither run has been retrained.
+
 Both runs: 4x60 tanh, float64, hard IC `u = u0 + (t - t0) N(t)`, t in [0, 13.26446]
 (one closed orbit), 39 793 collocation points, 13 265 evaluation points, Colab T4.
 

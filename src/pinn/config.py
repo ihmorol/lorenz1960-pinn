@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
@@ -87,11 +88,69 @@ class Config:
             raise ValueError("dtype must be 'float32' or 'float64'")
         if self.collocation not in ("lhs", "uniform"):
             raise ValueError("collocation must be 'lhs' or 'uniform'")
+        if self.problem != "lorenz1960":
+            raise ValueError("only the lorenz1960 problem is implemented")
         span = self.t_span[1] - self.t_span[0]
+        if not np.isfinite(span) or span <= 0 or self.n_windows < 1 or self.depth < 1 or self.width < 1:
+            raise ValueError("time span, window count, depth, and width must be positive")
+        if len(self.initial_state) != 3 or not np.isfinite((self.k, self.l, *self.initial_state)).all():
+            raise ValueError("Lorenz coefficients and three initial-state values must be finite")
+        if self.end_state is not None and (len(self.end_state) != 3 or
+                                           not np.isfinite(self.end_state).all()):
+            raise ValueError("end_state must have three finite values")
+        if not np.isfinite(self.gamma) or (self.ic == "soft" and self.gamma <= 0):
+            raise ValueError("soft initial conditions require a positive finite gamma")
+        if not np.isfinite((self.lr_start, self.lr_end)).all() or self.lr_start <= 0 or self.lr_end <= 0 \
+                or self.lr_decay_every < 1:
+            raise ValueError("learning rates and decay interval must be positive")
+        if self.lr_decay is not None and (not np.isfinite(self.lr_decay) or not 0 < self.lr_decay <= 1):
+            raise ValueError("lr_decay must be in (0, 1]")
+        if not np.isfinite(self.causal_delta) or not 0 < self.causal_delta < 1 or \
+                any(not np.isfinite(e) or e <= 0 for e in self.causal_eps_schedule):
+            raise ValueError("causal_delta must be in (0, 1) and eps values must be positive")
+        if self.epochs < 1 or min(self.lbfgs_iters, self.causal_max_iters, self.checkpoint_every,
+               self.snapshot_every, self.print_every) < 0 or min(self.log_every, self.eval_every) < 1:
+            raise ValueError("epochs and log intervals must be positive; other counts nonnegative")
+        if self.n_windows > 1 and self.end_state is not None:
+            raise ValueError("global end_state is not implemented for windowed training")
         if self.points_per_unit is not None:
+            if not np.isfinite(self.points_per_unit) or self.points_per_unit <= 0:
+                raise ValueError("points_per_unit must be finite and positive")
             object.__setattr__(self, "n_collocation", int(round(self.points_per_unit * span)))
         if self.eval_per_unit is not None:
+            if not np.isfinite(self.eval_per_unit) or self.eval_per_unit <= 0:
+                raise ValueError("eval_per_unit must be finite and positive")
             object.__setattr__(self, "n_eval", int(round(self.eval_per_unit * span)) + 1)
+        if self.n_collocation < self.n_windows or self.n_eval < 2:
+            raise ValueError("need at least one collocation point per window and two evaluation points")
+
+    def record(self) -> dict:
+        """Exact run settings; the JSON file is the authority for reuse and reload."""
+        record = asdict(self)
+        record.update(results_dir=str(self.results_path), ckpt_dir=str(self.ckpt_path),
+                      runs_dir=str(self.runs_path))
+        return record
+
+    @classmethod
+    def from_record(cls, record: dict) -> "Config":
+        for name in ("initial_state", "t_span", "causal_eps_schedule"):
+            record[name] = tuple(record[name])
+        if record["end_state"] is not None:
+            record["end_state"] = tuple(record["end_state"])
+        return cls(**record)
+
+    def ensure_record(self) -> None:
+        path = self.ckpt_path / "config.json"
+        if path.exists():
+            if json.loads(path.read_text()) != json.loads(json.dumps(self.record())):
+                raise ValueError(f"run configuration differs from {path}; choose a new run directory")
+            return
+        if (self.ckpt_path / "pinn.pt").exists() or (self.ckpt_path / "progress.pt").exists():
+            raise ValueError(f"existing run lacks {path}; choose a new run directory")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        pending = path.with_suffix(".tmp")
+        pending.write_text(json.dumps(self.record(), indent=2) + "\n")
+        pending.replace(path)
 
     @property
     def coefficients(self) -> np.ndarray:
@@ -168,15 +227,17 @@ def reference_trajectory(cfg: Config, n: int = 1001) -> tuple[np.ndarray, np.nda
 def reference_at(cfg: Config, t: np.ndarray) -> np.ndarray:
     """Ground-truth states at arbitrary, possibly unsorted times.
 
-    Integrated directly at the requested times rather than interpolated from the
-    uniform grid: linear interpolation of a 1001-point trajectory carries ~1e-6
-    error, the same order as the PINN error it would be used to measure.
+    Integrated directly at the requested times rather than interpolated from
+    the uniform evaluation grid.
     """
     t = np.clip(np.asarray(t, dtype=float).reshape(-1), *cfg.t_span)   # float32 grids overshoot tf
-    order = np.argsort(t)
-    _, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg), t_eval=t[order])
-    out = np.empty_like(ys)
-    out[order] = ys
+    if not len(t):
+        return np.empty((0, 3))
+    unique, inverse = np.unique(t, return_inverse=True)
+    if len(unique) == 1 and unique[0] == cfg.t_span[0]:
+        return np.tile(np.asarray(cfg.initial_state, float), (len(t), 1))
+    _, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg), t_eval=unique)
+    out = ys[inverse]
     return out
 
 

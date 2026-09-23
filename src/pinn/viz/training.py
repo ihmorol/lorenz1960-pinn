@@ -5,24 +5,28 @@ import pandas as pd
 import torch
 
 
-def lbfgs_spans(n: int, adam_iters: int, eps_marks=(), window_marks=()):
+def lbfgs_spans(n: int, adam_iters: int, eps_marks=(), window_marks=(), phases=()):
     """(start, adam_end, end) per window; one window with adam_iters when the run is not windowed."""
     ends = list(window_marks) or [n]
     out, start = [], 0
     for end in ends:
         inside = [it for it, _ in eps_marks if start < it <= end]
-        adam_end = max(inside) if inside else (adam_iters if len(ends) == 1 else end)
+        if phases:
+            adam_end = next((i for i in range(start, end) if phases[i] == "lbfgs"), end)
+        else:
+            adam_end = max(inside) if inside else (adam_iters if len(ends) == 1 else end)
         out.append((start, adam_end, end))
         start = end
     return out
 
 
-def fig_loss_phases(loss: np.ndarray, adam_iters: int, eps_marks=(), window_marks=()):
+def fig_loss_phases(loss: np.ndarray, adam_iters: int, eps_marks=(), window_marks=(), phases=()):
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.semilogy(loss, lw=0.6, color="0.6", label="per iteration")
     ax.semilogy(pd.Series(loss).rolling(101, center=True, min_periods=1).median(), "k", lw=1.2,
                 label="rolling median")
-    for i, (a, adam_end, b) in enumerate(lbfgs_spans(len(loss), adam_iters, eps_marks, window_marks)):
+    for i, (a, adam_end, b) in enumerate(lbfgs_spans(len(loss), adam_iters, eps_marks,
+                                                     window_marks, phases)):
         ax.axvspan(a, adam_end, color="tab:blue", alpha=0.06, label="Adam" if i == 0 else None)
         if adam_end < b:
             ax.axvspan(adam_end, b, color="tab:orange", alpha=0.15, label="L-BFGS" if i == 0 else None)
@@ -32,9 +36,10 @@ def fig_loss_phases(loss: np.ndarray, adam_iters: int, eps_marks=(), window_mark
         for it, eps in eps_marks:
             ax.axvline(it, color="tab:red", lw=0.8, ls="--")
             ax.annotate(f"eps={eps:g}", (it, loss.max()), fontsize=7, rotation=90, va="top")
-    ax.set_xlabel("iteration"); ax.set_ylabel("loss"); ax.legend(fontsize=8)
-    ax.set_title("loss by phase: blue = Adam, orange = L-BFGS, thin lines = window starts; a flat "
-                 "stretch is a plateau, a step down in orange means Adam had stalled", fontsize=9)
+    ax.set_xlabel("Adam steps and L-BFGS evaluations"); ax.set_ylabel("logged objective")
+    ax.legend(fontsize=8)
+    ax.set_title("Adam uses causal weights; L-BFGS uses raw residual. Compare within a phase only."
+                 if eps_marks else "Logged optimization objective by optimizer phase", fontsize=9)
     return fig
 
 
@@ -50,8 +55,7 @@ def fig_gradient_stability(epochs: np.ndarray, grads: np.ndarray, window_marks=(
     ax2 = ax.twinx()
     ax2.semilogy(epochs, np.maximum(np.linalg.norm(grads, axis=1), 1e-30), "0.4", lw=0.8, label="|g|")
     ax2.set_ylabel("gradient norm")
-    ax.set_title("gradient direction stability (snapshot to snapshot, same window only): near-zero cosine = "
-                 "wandering on a plateau; steady positive = descending a valley", fontsize=9)
+    ax.set_title("Snapshot gradient direction and norm within each window", fontsize=9)
     fig.legend(loc="lower left", fontsize=8)
     return fig
 
@@ -64,11 +68,12 @@ def fig_gradient_histograms(epochs: np.ndarray, grads: np.ndarray, layer_sizes: 
         for name, size in layer_sizes:
             block = grads[k, start:start + size]
             start += size
-            ax.hist(np.log10(np.abs(block) + 1e-20), bins=40, histtype="step", label=name)
+            active = np.abs(block[np.isfinite(block) & (block != 0)])
+            if active.size:
+                ax.hist(np.log10(active), bins=40, histtype="step", label=name)
         ax.set_title(f"epoch {epochs[k]}"); ax.set_xlabel("log10 |grad|")
     axes[0][0].legend(fontsize=6)
-    fig.suptitle("per-layer gradient magnitude: a layer whose histogram sits far left is not learning",
-                 fontsize=9)
+    fig.suptitle("Nonzero gradient magnitudes in the active window", fontsize=9)
     return fig
 
 
@@ -94,8 +99,7 @@ def fig_ntk_spectrum(spectra: dict[int, np.ndarray]):
     for epoch, ev in spectra.items():
         ax.semilogy(np.maximum(ev, 1e-20), lw=1, label=f"epoch {epoch}")
     ax.set_xlabel("eigenvalue index"); ax.set_ylabel("NTK eigenvalue"); ax.legend(fontsize=8)
-    ax.set_title("NTK spectrum: a fast-decaying tail means high-frequency residual modes learn slowly",
-                 fontsize=9)
+    ax.set_title("Residual NTK eigenvalues at sampled model states", fontsize=9)
     return fig
 
 
@@ -106,8 +110,7 @@ def fig_causal_weights(epochs, W):
         ax.plot(np.linspace(0, 1, len(w)), w, lw=1, label=f"epoch {epochs[k]}")
     ax.set_xlabel("position in window (0 = start, 1 = end)"); ax.set_ylabel("temporal weight w")
     ax.legend(fontsize=7)
-    ax.set_title("causal weights: the front where w drops to 0 is where training currently stops; "
-                 "it must reach the right edge before eps advances", fontsize=9)
+    ax.set_title("Causal weights within the active window at sampled states", fontsize=9)
     return fig
 
 
@@ -131,8 +134,7 @@ def fig_min_w(min_w, delta, eps_marks, window_marks=()):
     for it, _ in causal_index(eps_marks, window_marks):
         ax.axvline(it, color="tab:red", lw=0.6)
     ax.set_xlabel("causal iteration (Adam steps only)"); ax.set_ylabel("min w"); ax.legend(fontsize=8)
-    ax.set_title("min temporal weight: each crossing of delta ends an eps stage (red line); a stage that "
-                 "never crosses hit the iteration cap", fontsize=9)
+    ax.set_title("Minimum temporal weight by Adam step; red lines mark stage ends", fontsize=9)
     return fig
 
 
@@ -148,7 +150,6 @@ def fig_window_grid(loss, window_marks):
         ax.set_title(f"window {k}", fontsize=8)
     for k in range(n, rows * cols):
         axes[k // cols][k % cols].axis("off")
-    fig.suptitle("loss per window: a window that ends high inherits error into every later window",
-                 fontsize=9)
+    fig.suptitle("Logged optimization objective within each window", fontsize=9)
     fig.tight_layout()
     return fig

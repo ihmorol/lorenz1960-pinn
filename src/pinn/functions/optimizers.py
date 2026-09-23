@@ -3,12 +3,13 @@ from typing import Callable
 import torch
 
 
-def adam_with_decay(params, cfg):
+def adam_with_decay(params, cfg, total_steps=None):
     adam = torch.optim.Adam(params, lr=cfg.lr_start)
     if cfg.lr_decay is None:
         decay = cfg.lr_end / cfg.lr_start
+        steps = total_steps or cfg.epochs
         sched = torch.optim.lr_scheduler.LambdaLR(
-            adam, lambda e: 1.0 + (decay - 1.0) * min(e, cfg.epochs) / cfg.epochs)
+            adam, lambda e: 1.0 + (decay - 1.0) * min(e, steps) / steps)
     else:
         sched = torch.optim.lr_scheduler.StepLR(adam, cfg.lr_decay_every, cfg.lr_decay)
     return adam, sched

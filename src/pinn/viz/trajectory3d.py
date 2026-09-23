@@ -16,15 +16,16 @@ def load_frames(run: Path) -> list[pd.DataFrame]:
     pick = np.unique(np.linspace(0, len(files) - 1, N_FRAMES).round().astype(int))
     out = []
     for i in pick:
-        f = pd.read_csv(files[i]).sort_values("t")
+        f = pd.read_csv(files[i]).sort_values("t").dropna(subset=["x", "y", "z"])
         out.append(f.iloc[:: max(1, len(f) // N_POINTS)])
     return out
 
 
-def trajectory_html(frames: list[pd.DataFrame], path: Path, name: str) -> Path:
+def trajectory_html(frames: list[pd.DataFrame], path: Path, name: str,
+                    ref: pd.DataFrame | None = None) -> Path:
     import plotly.graph_objects as go
 
-    ref = frames[0]
+    ref = frames[0] if ref is None else ref
     epochs = [int(f.epoch.iloc[0]) for f in frames]
 
     def traces(k: int) -> list:
@@ -67,7 +68,11 @@ def write_all(run: Path, name: str = "") -> list[Path]:
     run = Path(run)
     out = run / "figures"
     out.mkdir(parents=True, exist_ok=True)
-    written = [trajectory_html(load_frames(run), out / "trajectory.html", name or run.name)]
+    frames = load_frames(run)
+    first = sorted((run / "breakdown").glob("epoch_*.csv"))[0]
+    ref = pd.read_csv(first).sort_values("t")
+    ref = ref.iloc[:: max(1, len(ref) // N_POINTS)]
+    written = [trajectory_html(frames, out / "trajectory.html", name or run.name, ref)]
     for column, sqrt, tag, zlabel in (("err_norm", False, "error", "log10 |u - ref|"),
                                       ("r_sq", True, "residual", "log10 |r|")):
         e, t, v = residual_grid(run / "breakdown", column=column, sqrt=sqrt)

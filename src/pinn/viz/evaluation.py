@@ -12,8 +12,7 @@ def fig_error_vs_t(t, pred, ref, residual, joints=()):
     for j in joints:
         ax.axvline(j, color="0.7", lw=0.5)
     ax.set_xlabel("t"); ax.legend(fontsize=8)
-    ax.set_title("error vs residual along t: error growing while residual stays flat is the ODE "
-                 "amplifying small residuals, not the network failing", fontsize=9)
+    ax.set_title("State error and ODE residual along time", fontsize=9)
     return fig
 
 
@@ -26,8 +25,7 @@ def fig_error_growth(t, pred, ref):
         ax.loglog(t[m], err[m], ".", ms=2, label="|error|")
         ax.loglog(t[m], np.exp(np.polyval(p, np.log(t[m]))), "k--", label=f"fit: t^{p[0]:.2f}")
     ax.set_xlabel("t"); ax.set_ylabel("|u - ref|"); ax.legend(fontsize=8)
-    ax.set_title("error growth: exponent near 1-2 is polynomial (periodic system); a curve bending up "
-                 "on log-log is exponential (chaos or a broken window)", fontsize=9)
+    ax.set_title("Descriptive log-log fit over the displayed interval", fontsize=9)
     return fig
 
 
@@ -36,26 +34,29 @@ def fig_precision_floor(loss32, loss64):
     ax.semilogy(loss32, lw=0.7, label="float32")
     ax.semilogy(loss64, lw=0.7, label="float64")
     ax.set_xlabel("iteration"); ax.set_ylabel("loss"); ax.legend(fontsize=8)
-    ax.set_title("loss floor by precision: if float32 flattens where float64 keeps falling, "
-                 "precision was the ceiling", fontsize=9)
+    ax.set_title("Logged losses for matched float32 and float64 configurations", fontsize=9)
     return fig
 
 
 def fig_joint_continuity(model, edges, h=1e-4):
     import torch
+    from ..pinn import residual_parts
 
     p = next(model.parameters())
-    jumps, slopes = [], []
+    jumps, slopes, left_res, right_res = [], [], [], []
     for k, e in enumerate(edges[1:-1]):
         with torch.no_grad():
             te = torch.tensor([[e - h], [e], [e + h]], dtype=p.dtype, device=p.device)
             a, b = model.windows[k](te), model.windows[k + 1](te)
         jumps.append(float((b[1] - a[1]).norm()))
         slopes.append(float(((b[2] - b[1]) / h - (a[1] - a[0]) / h).norm()))
+        left_res.append(float(residual_parts(model.windows[k], te[1:2].clone().requires_grad_(True)).r.norm()))
+        right_res.append(float(residual_parts(model.windows[k + 1], te[1:2].clone().requires_grad_(True)).r.norm()))
     fig, ax = plt.subplots(figsize=(8, 3.5))
     ax.semilogy(edges[1:-1], np.maximum(jumps, 1e-16), "o-", ms=3, label="|u(t+) - u(t-)|")
     ax.semilogy(edges[1:-1], np.maximum(slopes, 1e-16), "s-", ms=3, label="slope mismatch")
+    ax.semilogy(edges[1:-1], np.maximum(left_res, 1e-16), ".-", ms=3, label="left ODE residual")
+    ax.semilogy(edges[1:-1], np.maximum(right_res, 1e-16), ".-", ms=3, label="right ODE residual")
     ax.set_xlabel("window joint t"); ax.legend(fontsize=8)
-    ax.set_title("hand-off error at each joint: value jumps are the IC copy error; slope jumps show "
-                 "the next window disagreeing with the physics at its start", fontsize=9)
+    ax.set_title("Value and finite-difference slope mismatch at window joints", fontsize=9)
     return fig
