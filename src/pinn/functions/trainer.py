@@ -186,22 +186,24 @@ class Trainer:
         """Window by window: Adam under each eps until min_i w_i > delta, then L-BFGS, then hand
         the end state to the next window. One window with an empty schedule is plain Adam."""
         cfg, model, grid, history = self.cfg, self.model, self.grid, self.history
-        windows = list(model.windows) if isinstance(model, WindowedPINN) else [model]
+        windowed = isinstance(model, WindowedPINN)     # False for a shared net: one sub, n_win rounds
+        n_win = len(model.windows) if windowed else cfg.n_windows
         stages = list(cfg.causal_eps_schedule) or [None]
         cap = cfg.causal_max_iters if cfg.causal_eps_schedule else cfg.epochs
         device = grid.device
 
-        for k, sub in enumerate(windows):
+        for k in range(n_win):
+            sub = model.windows[k] if windowed else model
             saved = cfg.ckpt_path / f"window_{k:02d}.pt"
-            pts = grid[model.window_of(grid) == k] if isinstance(model, WindowedPINN) else grid
+            pts = grid[model.window_of(grid) == k] if hasattr(model, "window_of") else grid
             if saved.exists():
                 sub.load_state_dict(torch.load(saved, map_location=device))
                 if cfg.print_every:
                     print(f"[window] {k:>2} restored from {saved.name}", flush=True)
             else:
-                if k and cfg.warm_start:
+                if k and cfg.warm_start and windowed:
                     with torch.no_grad():
-                        for p, q in zip(sub.net.parameters(), windows[k - 1].net.parameters()):
+                        for p, q in zip(sub.net.parameters(), model.windows[k - 1].net.parameters()):
                             p.copy_(q)
                 adam, sched = adam_with_decay(sub.parameters(), cfg)
                 for eps in stages:
@@ -249,10 +251,10 @@ class Trainer:
                 done = torch.ones(len(pts), dtype=grid.dtype) if stages[0] is not None else None
                 self._snapshot(len(history.loss) - 1, w=done, final=True)
             history.window_marks.append(len(history.loss))
-            if isinstance(model, WindowedPINN) and k + 1 < len(windows):
+            if k + 1 < n_win:
                 with torch.no_grad():
-                    end = torch.tensor([[model.edges[k + 1]]], dtype=grid.dtype, device=device)
-                    model.set_window_start(k + 1, sub(end)[0])
+                    edge = torch.tensor([[model.edges[k + 1]]], dtype=grid.dtype, device=device)
+                    model.set_window_start(k + 1, model.window_forward(k, edge)[0])
             if cfg.print_every and history.loss:
                 print(f"[window] {k:>2} done | loss {history.loss[-1]:.4e} | "
                       f"{time.perf_counter() - t0:7.1f}s", flush=True)

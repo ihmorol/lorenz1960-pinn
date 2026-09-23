@@ -1,0 +1,86 @@
+[setup] device=cpu | seed=0 | 4x60 tanh, hard IC, 1500 uniform points, 27 windows, shared net, causal
+[setup] 11283 params | 1500 collocation pts on t in [0.0, 13.26446] | ref traj 13265 pts
+[setup] 20000 Adam epochs (lr 1.0e-03 -> 1.0e-04) + 500 L-BFGS iters
+[setup] per-point snapshots every 2000 epochs (~11 files) -> E:\12th Trimester\Final Year Project Design - II\lorenz1960-pinn\runs\4x60_f64_unit_win27_shared_causal_warm\breakdown
+[adam]  window  0 eps 0.01 | epoch       0 | loss 2.2225e-01 | min_w 0.878 |     2.0s
+[window]  0 done | loss 1.5204e-08 |    11.3s
+[adam]  window  1 eps 1.0 | epoch     750 | loss 7.5394e-04 | min_w 0.959 |    11.4s
+[window]  1 done | loss 2.3403e-09 |    19.2s
+[window]  2 done | loss 1.3454e-09 |    26.8s
+[window]  3 done | loss 1.0067e-08 |    35.7s
+[window]  4 done | loss 6.7523e-09 |    43.4s
+[adam]  window  5 eps 0.1 | epoch    3500 | loss 3.6477e-03 | min_w 0.980 |    43.5s
+[window]  5 done | loss 1.6349e-08 |    51.9s
+[adam]  window  6 eps 100.0 | epoch    4250 | loss 5.1554e-06 | min_w 0.974 |    52.6s
+[window]  6 done | loss 1.0614e-08 |    61.2s
+[window]  7 done | loss 4.3093e-09 |    71.4s
+[window]  8 done | loss 2.9785e-08 |    89.5s
+[window]  9 done | loss 1.2948e-07 |    98.0s
+[window] 10 done | loss 8.7298e-08 |   106.9s
+[window] 11 done | loss 5.3246e-08 |   115.3s
+[adam]  window 12 eps 1.0 | epoch    8500 | loss 1.2082e-03 | min_w 0.936 |   115.6s
+[window] 12 done | loss 5.2896e-08 |   122.8s
+[window] 13 done | loss 1.5808e-07 |   130.8s
+[window] 14 done | loss 3.1695e-08 |   138.9s
+[window] 15 done | loss 7.3594e-08 |   145.9s
+[window] 16 done | loss 9.2140e-08 |   153.1s
+[window] 17 done | loss 6.0560e-08 |   161.1s
+[adam]  window 18 eps 100.0 | epoch   13000 | loss 3.2420e-06 | min_w 0.984 |   162.8s
+[window] 18 done | loss 2.8336e-07 |   168.6s
+[adam]  window 19 eps 10.0 | epoch   13750 | loss 2.9270e-05 | min_w 0.985 |   169.5s
+[window] 19 done | loss 8.4296e-07 |   176.6s
+[adam]  window 20 eps 1.0 | epoch   14500 | loss 4.1439e-04 | min_w 0.978 |   177.0s
+[window] 20 done | loss 4.3423e-07 |   188.9s
+[adam]  window 21 eps 100.0 | epoch   15500 | loss 1.4159e-05 | min_w 0.927 |   190.6s
+[window] 21 done | loss 1.0297e-07 |   200.9s
+[adam]  window 22 eps 10.0 | epoch   16250 | loss 1.8223e-04 | min_w 0.901 |   201.5s
+[window] 22 done | loss 4.9475e-07 |   210.7s
+[adam]  window 23 eps 1.0 | epoch   17000 | loss 7.4029e-04 | min_w 0.961 |   210.8s
+[adam]  window 23 eps 100.0 | epoch   17250 | loss 2.6843e-06 | min_w 0.986 |   213.0s
+[adam]  window 23 eps 100.0 | epoch   17500 | loss 2.6721e-06 | min_w 0.986 |   215.1s
+[adam]  window 23 eps 100.0 | epoch   17750 | loss 6.6770e-06 | min_w 0.965 |   217.1s
+[adam]  window 23 eps 100.0 | epoch   18000 | loss 6.3355e-06 | min_w 0.967 |   219.4s
+[adam]  window 23 eps 100.0 | epoch   18250 | loss 6.8251e-06 | min_w 0.964 |   221.7s
+[adam]  window 23 eps 100.0 | epoch   18500 | loss 1.4619e-05 | min_w 0.921 |   223.9s
+[adam]  window 23 eps 100.0 | epoch   18750 | loss 2.2662e-05 | min_w 0.878 |   225.9s
+[adam]  window 23 eps 100.0 | epoch   19000 | loss 2.4760e-05 | min_w 0.866 |   228.0s
+[adam]  window 23 eps 100.0 | epoch   19250 | loss 2.5392e-05 | min_w 0.861 |   230.0s
+[adam]  window 23 eps 100.0 | epoch   19500 | loss 2.3408e-05 | min_w 0.873 |   232.1s
+[adam]  window 23 eps 100.0 | epoch   19750 | loss 2.3984e-05 | min_w 0.869 |   234.1s
+[adam]  window 23 eps 100.0 | epoch   20000 | loss 2.2807e-05 | min_w 0.877 |   236.3s
+[adam]  window 23 eps 100.0 | epoch   20250 | loss 2.1950e-05 | min_w 0.880 |   238.4s
+[adam]  window 23 eps 100.0 | epoch   20500 | loss 2.0867e-05 | min_w 0.886 |   240.5s
+[adam]  window 23 eps 100.0 | epoch   20750 | loss 1.8449e-05 | min_w 0.899 |   242.5s
+[adam]  window 23 eps 100.0 | epoch   21000 | loss 1.8344e-05 | min_w 0.900 |   244.6s
+[window] 23 done | loss 1.4098e-06 |   252.9s
+[adam]  window 24 eps 10.0 | epoch   21750 | loss 1.9885e-04 | min_w 0.898 |   253.4s
+[adam]  window 24 eps 100.0 | epoch   22000 | loss 3.8636e-06 | min_w 0.981 |   255.6s
+[adam]  window 24 eps 100.0 | epoch   22250 | loss 3.8065e-06 | min_w 0.981 |   257.7s
+[adam]  window 24 eps 100.0 | epoch   22500 | loss 3.7293e-06 | min_w 0.981 |   259.8s
+[adam]  window 24 eps 100.0 | epoch   22750 | loss 5.4075e-06 | min_w 0.972 |   261.9s
+[adam]  window 24 eps 100.0 | epoch   23000 | loss 1.0208e-05 | min_w 0.947 |   264.1s
+[adam]  window 24 eps 100.0 | epoch   23250 | loss 1.8963e-05 | min_w 0.898 |   266.3s
+[adam]  window 24 eps 100.0 | epoch   23500 | loss 1.9969e-05 | min_w 0.893 |   268.5s
+[adam]  window 24 eps 100.0 | epoch   23750 | loss 1.6056e-05 | min_w 0.913 |   270.5s
+[adam]  window 24 eps 100.0 | epoch   24000 | loss 1.6572e-05 | min_w 0.911 |   272.8s
+[adam]  window 24 eps 100.0 | epoch   24250 | loss 1.3917e-05 | min_w 0.926 |   274.9s
+[adam]  window 24 eps 100.0 | epoch   24500 | loss 1.6582e-05 | min_w 0.910 |   277.0s
+[adam]  window 24 eps 100.0 | epoch   24750 | loss 1.6722e-05 | min_w 0.911 |   279.0s
+[adam]  window 24 eps 100.0 | epoch   25000 | loss 1.7300e-05 | min_w 0.907 |   281.1s
+[adam]  window 24 eps 100.0 | epoch   25250 | loss 1.4400e-05 | min_w 0.923 |   283.1s
+[adam]  window 24 eps 100.0 | epoch   25500 | loss 1.5224e-05 | min_w 0.918 |   285.2s
+[window] 24 done | loss 5.7264e-07 |   293.5s
+[window] 25 done | loss 3.0926e-08 |   301.1s
+[window] 26 done | loss 2.2892e-07 |   309.0s
+[save]  checkpoint + telemetry -> E:\12th Trimester\Final Year Project Design - II\lorenz1960-pinn\runs\4x60_f64_unit_win27_shared_causal_warm\history
+[save]  rendering figures -> E:\12th Trimester\Final Year Project Design - II\lorenz1960-pinn\runs\4x60_f64_unit_win27_shared_causal_warm ...
+[save]  32 snapshots + point_summary.csv + 4 breakdown figures
+[save]  wrote metrics.csv, run_summary.csv + 42 figure files
+[done]  total 761.3s
+      state      mae     rmse  max_abs_error
+          x 0.026226 0.036277       0.120952
+          y 0.242853 0.335079       0.973886
+          z 0.141120 0.211919       0.598501
+combined_l2 0.298132 0.398125       1.057261
+                                  arch  n_params  rmse_combined_l2  max_abs_error_combined_l2   final_loss  wall_clock_s
+4x60_f64_unit_win27_shared_causal_warm     11283          0.398125                   1.057261 2.289157e-07     309.04669

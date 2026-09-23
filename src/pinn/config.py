@@ -38,6 +38,10 @@ class Config:
     causal_delta: float = 0.99
     causal_max_iters: int = 0
     warm_start: bool = False
+    # With n_windows > 1: reuse ONE network for every window and carry the window start
+    # state instead of copying weights between per-window nets. One 4x60 net (11,283
+    # params) then covers all 27 windows, where WindowedPINN would hold 27 of them.
+    share_network: bool = False
 
     depth: int = 4
     width: int = 60
@@ -130,6 +134,8 @@ class Config:
             tag += "_unit"
         if self.n_windows > 1:
             tag += f"_win{self.n_windows}"
+            if self.share_network:
+                tag += "_shared"
         if self.causal_eps_schedule:
             tag += "_causal"
         if self.warm_start:
@@ -143,6 +149,7 @@ class Config:
             f"{self.depth}x{self.width} {self.activation}, {self.ic} IC, "
             f"{self.n_collocation} {self.collocation.upper() if self.collocation == 'lhs' else self.collocation} points"
             + (f", {self.n_windows} windows" if self.n_windows > 1 else "")
+            + (", shared net" if self.share_network else "")
             + (", causal" if self.causal_eps_schedule else "")
         )
 
