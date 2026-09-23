@@ -66,7 +66,7 @@ def set_seed(seed: int) -> None:
 
 
 def make_grid(cfg: Config, device: torch.device) -> Tensor:
-    t = (uniform_points(cfg.t_span, cfg.n_collocation) if cfg.collocation == "uniform"
+    t = (uniform_points(cfg.t_span, cfg.n_collocation, cfg.n_windows) if cfg.collocation == "uniform"
          else latin_hypercube_points(cfg.t_span, cfg.n_collocation, cfg.seed))
     return torch.as_tensor(t, dtype=cfg.torch_dtype, device=device)
 

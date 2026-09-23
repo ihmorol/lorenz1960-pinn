@@ -25,8 +25,10 @@ reproducible. The fixes in this branch do **not** change those saved numbers.
 ## New outputs
 
 - `causal-window/candidate-1500pt/<architecture>_<settings-hash>/`: the saved
-  1500-point causal-window run configured by `run_causal.py`. The 512-point
-  results are on `codex/causal-512pt`.
+  1500-point causal-window run. The 512-point results are on `codex/causal-512pt`.
+- `causal-window/candidate-1536pt/<architecture>_<settings-hash>/`: the next
+  causal-window run configured by `run_causal.py` (1536 points per window,
+  up to 1000 L-BFGS iterations per window).
 - `batch-precision/<architecture>/`: future batch baseline runs, if needed.
 
 The settings hash prevents two causal configurations from sharing a directory;

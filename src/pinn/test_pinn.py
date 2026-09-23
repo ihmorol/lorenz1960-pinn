@@ -327,6 +327,19 @@ def test_collocation_samplers_cover_the_span():
     assert uni[0, 0] == 0.0 and uni[-1, 0] == 2.0
 
 
+def test_uniform_window_grid_has_1536_training_points_per_window():
+    import torch
+    from pinn.pinn import WindowedPINN
+    from pinn.train import make_grid
+
+    cfg = Config(t_span=(0.0, 13.26446), n_windows=27, n_collocation=27 * 1535 + 1,
+                 collocation="uniform", dtype="float64", depth=1, width=8)
+    grid = make_grid(cfg, torch.device("cpu"))
+    counts = torch.bincount(WindowedPINN(cfg).window_of(grid), minlength=cfg.n_windows)
+    assert counts.tolist() == [1535] * 26 + [1536]
+    assert (counts[:-1] + 1 == 1536).all()  # training adds each outgoing endpoint
+
+
 def test_density_knobs_scale_with_the_window():
     cfg = Config(t_span=(0.0, 4.0), points_per_unit=100, eval_per_unit=10)
     assert cfg.n_collocation == 400 and cfg.n_eval == 41
