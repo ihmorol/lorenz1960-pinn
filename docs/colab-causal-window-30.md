@@ -10,7 +10,9 @@ checkout. Do not run training, numerical tests, evaluation, or figures locally.
 2. Select **Runtime → Change runtime type → T4 GPU** (or another available GPU).
 3. Run the cells in order. Authorize the Drive mount to store the repository and
    checkpoints in `MyDrive/lorenz1960-window30/repo`.
-4. The tests and `--verify-only` cell must pass before the long training cell.
+4. The `--verify-only` check and experiment-relevant numerical tests must pass
+   before the long training cell. The full repository test suite is separate;
+   it includes sweep and plotting checks outside this experiment.
    The preflight checks all 30 counts against 1,536 effective training points, including
    each nonfinal outgoing endpoint. It also verifies 128 fixed independent
    Gauss diagnostic times per window.
