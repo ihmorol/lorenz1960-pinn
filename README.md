@@ -6,11 +6,16 @@
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)](src/pinn/test_pinn.py)
+[![Tests](https://img.shields.io/badge/tests-41%20defined-blue)](src/pinn/test_pinn.py)
 
 <img src="src/pinn/results/results.png" alt="Solution, error, and training curves for the run of record" width="100%">
 
 </div>
+
+For the long-horizon causal-window implementation and preserved September 2026
+runs, see the [run catalog](runs/README.md), [source audit](docs/results/2026-09-22-two-branch-code-audit.md),
+and [repair and configuration note](docs/results/2026-09-22-causal-window-repair.md).
+The historical figures have not been regenerated after the repairs.
 
 Edward Lorenz's 1960 paper strips atmospheric flow down to three numbers that push
 each other around. There is no formula for the answer, so people integrate it step
@@ -54,7 +59,7 @@ would quietly invalidate the result are tested rather than assumed.
 - **Runs reproduce to the last digit.** The same configuration trained through two
   different code paths, the run of record and the sweep, reports the same final
   loss of `6.817201914e-09`.
-- **18 tests, including the boring ones.** They check the initial condition is
+- **Tests include the boring cases.** They check the initial condition is
   exact, the residual matches the reference trajectory, the loss reconstructs from
   the snapshot files, checkpoints reload to the same predictions, and the sweep
   never writes into the run of record.

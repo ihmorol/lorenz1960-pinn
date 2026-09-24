@@ -4,7 +4,7 @@
     python run_eval.py runs/5x70      # any sweep run
 
 Reloads the checkpoint, re-derives the network shape from the run's own summary,
-and reports the error table plus the full 63-column summary. The reference
+and reports the error table plus the full run summary. The reference
 solution is used here and only here -- never during training.
 """
 from __future__ import annotations
