@@ -12,6 +12,7 @@ runs/epoch_probe/
 *.pt
 !src/pinn/history/pinn.pt
 !runs/*/history/pinn.pt
+!runs/causal-window/*/*/history/pinn.pt
 *.npz
 *.npy
 
