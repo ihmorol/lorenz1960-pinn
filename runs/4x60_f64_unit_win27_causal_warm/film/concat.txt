@@ -1,0 +1,3 @@
+file 'E:/University/FYDP/lorenz1960-pinn/runs/4x60_f64_unit_win27_causal_warm/film/videos/script/480p15/LearningTheLoop.mp4'
+file 'E:/University/FYDP/lorenz1960-pinn/runs/4x60_f64_unit_win27_causal_warm/film/videos/script/480p15/DescendingTheSurface.mp4'
+file 'E:/University/FYDP/lorenz1960-pinn/runs/4x60_f64_unit_win27_causal_warm/film/videos/script/480p15/TheCausalFront.mp4'
