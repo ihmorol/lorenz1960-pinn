@@ -48,3 +48,23 @@ result reproduces its recorded combined RMSE `0.398124876` within `5.26e-11`.
 All archived checkpoints were reloaded, notebook JSON parsed, Python modules
 compiled, and the staged diff passed whitespace checks. Full Colab GPU
 retraining was not performed.
+
+## Follow-up standards and specification review
+
+The original PR also carried an uncalled Manim renderer without a declared
+dependency. Its film arrow was a projected path direction, not a measured
+negative gradient. The cleanup removes that renderer and unused cross-run
+comparison APIs while preserving the rendered films and comparison images in
+the archive. The single-domain and windowed training loops still repeat some
+telemetry logic; merging their numerical update paths is deferred because it
+would be a behavioral refactor, not a necessary cleanup of the selected run.
+
+The September 21 design spec's root runners and `main`-targeted Colab notebook
+describe the former project layout. The later user decisions explicitly select
+one active causal entry point, separate archived runs, and a review branch
+before any `main` merge. The missing intermediate checkpoint and final-run
+parameter trail cannot be reconstructed from the committed final checkpoint.
+The older historical causal run's saved gradient plots used stale gradients
+from completed windows; they are marked as historical in that run's README.
+The selected 1,536-point run was trained after the model-wide gradient-clear
+repair and must not be conflated with that older figure defect.

@@ -29,15 +29,6 @@ def fig_error_growth(t, pred, ref):
     return fig
 
 
-def fig_precision_floor(loss32, loss64):
-    fig, ax = plt.subplots(figsize=(7, 4))
-    ax.semilogy(loss32, lw=0.7, label="float32")
-    ax.semilogy(loss64, lw=0.7, label="float64")
-    ax.set_xlabel("iteration"); ax.set_ylabel("loss"); ax.legend(fontsize=8)
-    ax.set_title("Logged losses for matched float32 and float64 configurations", fontsize=9)
-    return fig
-
-
 def fig_joint_continuity(model, edges, h=1e-4):
     import torch
     from ..pinn import residual_parts
@@ -50,8 +41,8 @@ def fig_joint_continuity(model, edges, h=1e-4):
             a, b = model.windows[k](te), model.windows[k + 1](te)
         jumps.append(float((b[1] - a[1]).norm()))
         slopes.append(float(((b[2] - b[1]) / h - (a[1] - a[0]) / h).norm()))
-        left_res.append(float(residual_parts(model.windows[k], te[1:2].clone().requires_grad_(True)).r.norm()))
-        right_res.append(float(residual_parts(model.windows[k + 1], te[1:2].clone().requires_grad_(True)).r.norm()))
+        left_res.append(residual_parts(model.windows[k], te[1:2].clone().requires_grad_(True)).r.norm().detach().item())
+        right_res.append(residual_parts(model.windows[k + 1], te[1:2].clone().requires_grad_(True)).r.norm().detach().item())
     fig, ax = plt.subplots(figsize=(8, 3.5))
     ax.semilogy(edges[1:-1], np.maximum(jumps, 1e-16), "o-", ms=3, label="|u(t+) - u(t-)|")
     ax.semilogy(edges[1:-1], np.maximum(slopes, 1e-16), "s-", ms=3, label="slope mismatch")

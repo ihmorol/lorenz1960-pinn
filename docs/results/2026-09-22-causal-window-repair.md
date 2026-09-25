@@ -1,5 +1,9 @@
 # Causal-window repair and next configuration
 
+> Historical repair note. Its run paths and claims about standalone runners
+> describe the September 22 layout; current entry points and run locations are
+> in the repository README and `runs/README.md`.
+
 This follows the [source and artifact audit](2026-09-22-two-branch-code-audit.md).
 The historical Run A and Run B files are unchanged. No training was run for
 this repair. Code syntax was checked, but the project dependencies are absent
