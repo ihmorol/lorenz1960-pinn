@@ -1,11 +1,11 @@
 """Entry point: evaluate a trained model against the reference. No retraining.
 
-    python run_eval.py                # the run of record in src/pinn/
-    python run_eval.py runs/5x70      # any sweep run
+    python run_eval.py runs/active/windowed-causal-1536pt
+    python run_eval.py runs/archive/windowed-causal/1500pt
 
-Reloads the checkpoint, re-derives the network shape from the run's own summary,
+Reloads a WindowedPINN checkpoint and derives its shape from the run summary,
 and reports the error table plus the full run summary. The reference
-solution is used here and only here -- never during training.
+solution is used for evaluation and telemetry, never in the training loss.
 """
 from __future__ import annotations
 

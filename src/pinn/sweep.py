@@ -121,7 +121,8 @@ def config_for(run_dir: str | Path) -> Config:
     run_dir = Path(run_dir)
     default = Config()
     ckpt = default.ckpt_path if run_dir.resolve() == default.results_path.resolve() else run_dir / "history"
-    paths = {"results_dir": str(run_dir), "ckpt_dir": str(ckpt)}
+    paths = {"results_dir": str(run_dir), "ckpt_dir": str(ckpt),
+             "runs_dir": str(run_dir.parent)}
     manifest = ckpt / "config.json"
     if manifest.exists():
         return Config.from_record({**json.loads(manifest.read_text()), **paths})

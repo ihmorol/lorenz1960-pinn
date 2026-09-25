@@ -33,8 +33,6 @@ def generate_run_extras(run_dir) -> list[Path]:
         written += trajectory3d.write_all(run)
     trail_path = run / "history" / "param_trail.npz"
     if trail_path.exists():
-        # A full 27-network landscape/NTK is expensive and is not the causal
-        # training objective. run_landscape.py remains an explicit diagnostic.
         if cfg.n_windows == 1:
             written += landscape.write_all(run)
         trail = np.load(trail_path)

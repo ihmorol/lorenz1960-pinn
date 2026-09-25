@@ -38,7 +38,7 @@ def _load_progress(cfg: Config, model, device):
         state = torch.load(path, map_location=device, weights_only=False)
     except TypeError:  # torch < 2.6
         state = torch.load(path, map_location=device)
-    if json.loads(json.dumps(state["config"])) != json.loads(json.dumps(cfg.record())):
+    if not cfg.matches_record(state["config"]):
         raise ValueError(f"checkpoint configuration differs from {path}")
     model.load_state_dict(state["model"])
     torch.set_rng_state(state["torch_rng"].cpu())
@@ -47,8 +47,9 @@ def _load_progress(cfg: Config, model, device):
         torch.cuda.set_rng_state_all([rng.cpu() for rng in state["cuda_rng"]])
     history = state["history"]
     if history.snapshots is not None:
-        if history.snapshots.dir.resolve() != (cfg.results_path / "breakdown").resolve():
-            raise ValueError("checkpoint snapshot directory differs from run directory")
+        history.snapshots.dir = cfg.results_path / "breakdown"
+        if not history.snapshots.dir.is_dir():
+            raise ValueError("checkpoint snapshot directory is missing from run directory")
         kept = {f"epoch_{epoch:06d}.csv" for epoch in history.snapshots.epochs}
         for file in history.snapshots.dir.glob("epoch_*.csv"):
             if file.name not in kept:

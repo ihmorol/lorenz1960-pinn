@@ -230,7 +230,12 @@ def test_sweep_writes_runs_and_comparison(tmp_path):
         assert (run / "run_summary.csv").exists()
         assert (run / "point_summary.csv").exists()
         assert (run / "history" / "pinn.pt").exists()
-        assert len(list((run / "breakdown").glob("epoch_*.csv"))) == 3
+        assert [p.name for p in sorted((run / "breakdown").glob("epoch_*.csv"))] == [
+            "epoch_000000.csv",
+            "epoch_000006.csv",
+            "epoch_000011.csv",
+            "epoch_000012.csv",
+        ]
     # A single-activation, single-seed sweep has nothing to say about either.
     written = {p.stem for p in (tmp_path / "figures").glob("*.png")}
     assert "architecture_heatmap" in written and "architecture_scatter" in written
@@ -268,6 +273,31 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
     assert (rebuilt.depth, rebuilt.width, rebuilt.activation) == (3, 12, "gelu")
     assert rebuilt.ckpt_path == tmp_path / "history"
     assert (rebuilt.k, rebuilt.l, rebuilt.initial_state) == (1.3, 0.8, (0.25, 0.75, 1.0))
+
+
+def test_finished_run_manifest_is_portable(tmp_path):
+    import shutil
+
+    from pinn.sweep import config_for
+
+    source = tmp_path / "source" / "run"
+    cfg = Config(
+        depth=2,
+        width=8,
+        epochs=1,
+        n_collocation=8,
+        results_dir=str(source),
+        ckpt_dir=str(source / "history"),
+        runs_dir=str(tmp_path / "source"),
+    )
+    cfg.ensure_record()
+    (source / "run_summary.csv").write_text("arch\n2x8\n")
+
+    relocated = tmp_path / "relocated" / "run"
+    shutil.copytree(source, relocated)
+    rebuilt = config_for(relocated)
+    assert rebuilt.runs_path == relocated.parent
+    rebuilt.ensure_record()
 
 
 def test_load_run_reproduces_the_saved_prediction(tmp_path):
@@ -449,13 +479,46 @@ def test_adam_checkpoint_resumes(tmp_path, monkeypatch):
         train_module.train(replace(cfg, lr_start=2e-3))
 
 
+def test_adam_checkpoint_resumes_after_relocation(tmp_path, monkeypatch):
+    import shutil
+    from dataclasses import replace
+    import pinn.train as train_module
+
+    source = tmp_path / "source"
+    cfg = Config(depth=1, width=8, epochs=6, n_collocation=16,
+                 checkpoint_every=3, snapshot_every=1,
+                 log_every=3, eval_every=3, print_every=0,
+                 results_dir=str(source), ckpt_dir=str(source / "history"))
+    save = train_module._save_progress
+
+    def interrupt(*args, **kwargs):
+        save(*args, **kwargs)
+        if kwargs.get("next_epoch") == 3:
+            raise RuntimeError("interrupted after checkpoint")
+
+    monkeypatch.setattr(train_module, "_save_progress", interrupt)
+    with pytest.raises(RuntimeError, match="interrupted"):
+        train_module.train(cfg)
+    monkeypatch.setattr(train_module, "_save_progress", save)
+
+    relocated = tmp_path / "relocated"
+    shutil.copytree(source, relocated)
+    moved_cfg = replace(cfg, results_dir=str(relocated),
+                        ckpt_dir=str(relocated / "history"))
+    _, history = train_module.train(moved_cfg)
+    assert history.resumed_from == 3
+    assert history.snapshots.dir == relocated / "breakdown"
+    assert sorted(p.name for p in (relocated / "breakdown").glob("epoch_*.csv")) == [
+        f"epoch_{epoch:06d}.csv" for epoch in range(7)
+    ]
+
+
 def test_root_scripts_compile():
     import py_compile
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    for name in ("run_batch.py", "run_viz3d.py", "run_landscape.py", "run_compare.py", "run_film.py", "run_causal.py",
-                 "run_index.py"):
+    for name in ("run_causal.py", "run_eval.py"):
         py_compile.compile(str(root / name), doraise=True)
 
 

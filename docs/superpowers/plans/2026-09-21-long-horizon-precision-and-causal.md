@@ -1,5 +1,8 @@
 # Long-horizon precision batch run and causal windowed run: Implementation Plan
 
+> Historical implementation plan. Commands and paths below record earlier
+> branches; use the repository README for the current selected run.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Train the existing 4x60 Lorenz-1960 PINN over one closed orbit (t in [0, 13.26446]) in float64 under two schemes, plain batch (Run A) and the causal windowed recipe of Wang, Sankaran and Perdikaris 2024 (Run B), with every training and evaluation phase visible in figures and a Manim film.

@@ -299,7 +299,7 @@ regularise, while we keep one fixed LHS set of 3000 points for the whole
 run, following PinnDE. On our problem the fixed set reaches RMSE 1.7e-5
 against the reference, and the error against the reference falls together
 with the training loss for the whole run (rank correlation 0.92 over the 201
-checkpoints in `runs/4x60/history/reference_error.csv`, final value within
+checkpoints in `runs/archive/architecture-sweep/4x60/history/reference_error.csv`, final value within
 4% of the minimum), so we see no sign of the over-fitting they warn about;
 on a larger problem their advice would apply.
 

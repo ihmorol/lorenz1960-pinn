@@ -26,7 +26,7 @@ configuration have not been executed here.
 
 The saved run layout is catalogued in [runs/README.md](../../runs/README.md).
 Existing result paths stay intact for the reports and checkpoints. New causal
-runs use `runs/causal-window/candidate-512pt/<architecture>_<settings-hash>/`;
+runs use `runs/archive/windowed-causal/512pt/<architecture>_<settings-hash>/`;
 future batch runs use `runs/batch-precision/`. `run_index.py` discovers both
 flat historical and nested new runs. I removed misleading gradient-arrow code;
 the standalone runners and RK4 validation

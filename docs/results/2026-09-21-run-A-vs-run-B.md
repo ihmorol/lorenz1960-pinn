@@ -10,7 +10,7 @@
 Both runs: 4x60 tanh, float64, hard IC `u = u0 + (t - t0) N(t)`, t in [0, 13.26446]
 (one closed orbit), 39 793 collocation points, 13 265 evaluation points, Colab T4.
 
-| | Run A `runs/4x60_f64_unit` | Run B `runs/4x60_f64_unit_win27_causal_warm` |
+| | Run A `runs/archive/full-orbit/batch-f64-negative` | Run B `runs/archive/full-orbit/windowed-causal-historical` |
 |---|---|---|
 | scheme | one network, mean-squared residual, 40 000 Adam + 5000 L-BFGS | 27 windows of 0.49, causal weights, eps (1e-2, 1e-1, 1, 10), <= 4000 Adam per stage, 1500 L-BFGS per window, warm start |
 | RMSE (x, y, z) | 0.38, 2.08, 0.74 | 2.8e-5, 5.9e-5, 5.3e-5 |
@@ -19,8 +19,9 @@ Both runs: 4x60 tanh, float64, hard IC `u = u0 + (t - t0) N(t)`, t in [0, 13.264
 | iterations | 45 000 | 78 677 (about 100 Adam + 1 500 L-BFGS per window; 6 windows hit the 4000 cap) |
 | wall | 75 min | 15.5 min |
 
-Where everything is: open `runs/index.html` in a browser. It lists every figure, page, film and
-table of both runs in one table. Each run also has `figures/` (png + interactive html), `film/final.mp4`,
+The original cross-run page is preserved at `runs/archive/cross-run/index.html`;
+its links use the former layout and may not resolve. Each run has its own
+`figures/` (png + interactive html), `film/final.mp4`,
 `history/` (loss, marks, weights) and `run_summary.csv`.
 
 The two results in one sentence: the batch network settled on a smooth wrong curve and could not leave it;
@@ -32,7 +33,7 @@ the windowed causal network followed the whole orbit with error 1e-5 to 2e-4 and
 
 ### Side-by-side page
 
-![compare](../../runs/compare_4x60_f64_unit_vs_4x60_f64_unit_win27_causal_warm.png)
+![compare](../../runs/archive/cross-run/compare_4x60_f64_unit_vs_4x60_f64_unit_win27_causal_warm.png)
 
 **How to read.** Top row: x(t), y(t), z(t). Black is the reference solution (DOP853, tolerance 1e-10),
 blue is Run A, red is Run B. Bottom left: distance from the reference at every t, log scale. Bottom middle:
@@ -47,7 +48,7 @@ there for 37 000 more, including all of L-BFGS.
 
 ### Precision floor
 
-![precision](../../runs/figures/precision_floor.png)
+![precision](../../runs/archive/cross-run/figures/precision_floor.png)
 
 **How to read.** Loss per iteration for the earlier float32 run on [0, 10] and Run A in float64, same
 network and scheme. If float32 flattens where float64 keeps falling, precision was the ceiling.
@@ -60,7 +61,7 @@ losses reach 4e-9, below what float32 L-BFGS can resolve (tolerance 1e-14 vs 1e-
 
 ## 2. Films (`film/final.mp4` in each run)
 
-Run A: `runs/4x60_f64_unit/film/final.mp4`. Run B: `runs/4x60_f64_unit_win27_causal_warm/film/final.mp4`.
+Run A: `runs/archive/full-orbit/batch-f64-negative/film/final.mp4`. Run B: `runs/archive/full-orbit/windowed-causal-historical/film/final.mp4`.
 
 **How to read.** Act 1 (*Learning the loop*): the grey loop is the reference orbit in 3-D; the coloured
 curve is the network's prediction at successive snapshots, blue where it matches, red where the error is
@@ -90,7 +91,7 @@ position is the finished model.
 
 ### Phase portraits
 
-![B phase](../../runs/4x60_f64_unit_win27_causal_warm/figures/phase_portraits.png)
+![B phase](../../runs/archive/full-orbit/windowed-causal-historical/figures/phase_portraits.png)
 
 **How to read.** The same orbit projected on the x-y, x-z, y-z planes and in 3-D; grey is the reference,
 blue the prediction, red dot the initial state. A closed orbit must come back to the red dot.
@@ -110,8 +111,8 @@ version of this figure is a curve spiralling into the centre of the y-z ellipse.
 
 ### Loss by phase
 
-![A phases](../../runs/4x60_f64_unit/figures/loss_phases.png)
-![B phases](../../runs/4x60_f64_unit_win27_causal_warm/figures/loss_phases.png)
+![A phases](../../runs/archive/full-orbit/batch-f64-negative/figures/loss_phases.png)
+![B phases](../../runs/archive/full-orbit/windowed-causal-historical/figures/loss_phases.png)
 
 **How to read.** Grey is the loss at every optimiser step, black a rolling median. Blue shading = Adam,
 orange = L-BFGS; thin vertical lines are window starts. A step down inside orange means Adam had stalled and
@@ -127,7 +128,7 @@ all of Run B's iterations are L-BFGS.
 
 ### Loss per window (Run B)
 
-![B windows](../../runs/4x60_f64_unit_win27_causal_warm/figures/window_grid.png)
+![B windows](../../runs/archive/full-orbit/windowed-causal-historical/figures/window_grid.png)
 
 **How to read.** One panel per window, loss against iterations inside that window. Compare panels by the
 level they end at: a window that ends high hands a worse initial state to the next.
@@ -140,7 +141,7 @@ from random weights while every later window warm-starts.
 
 ### Minimum temporal weight (Run B)
 
-![B minw](../../runs/4x60_f64_unit_win27_causal_warm/figures/min_w.png)
+![B minw](../../runs/archive/full-orbit/windowed-causal-historical/figures/min_w.png)
 
 **How to read.** min w = the weight of the last point in the current window, against Adam steps only
 (L-BFGS steps are not counted here). Dashed line = delta 0.99. Each red line is the end of an eps stage. A
@@ -154,7 +155,7 @@ that eps=10 with lr 1e-3 is too strict for a window that is already at 1e-6.
 
 ### Causal weight profiles (Run B)
 
-![B weights](../../runs/4x60_f64_unit_win27_causal_warm/figures/causal_weights.png)
+![B weights](../../runs/archive/full-orbit/windowed-causal-historical/figures/causal_weights.png)
 
 **How to read.** w against position in the window (0 = start, 1 = end) at six snapshots. w is 1 at the
 start of every window by construction and falls with the accumulated residual of earlier points. Training
@@ -166,8 +167,8 @@ profile only falls to 0.8-0.9: the front has almost reached the right edge but n
 
 ### Residual field over training (both runs)
 
-![A evolution](../../runs/4x60_f64_unit/figures/residual_evolution.png)
-![B evolution](../../runs/4x60_f64_unit_win27_causal_warm/figures/residual_evolution.png)
+![A evolution](../../runs/archive/full-orbit/batch-f64-negative/figures/residual_evolution.png)
+![B evolution](../../runs/archive/full-orbit/windowed-causal-historical/figures/residual_evolution.png)
 
 **How to read.** Left: residual size at every collocation point (x axis = t) at every snapshot (y axis =
 iteration), log colour scale, light = small. Right: median and worst residual over t at each snapshot.
@@ -179,7 +180,7 @@ gets worse again. The worst point drops from 3 to 2.7e-3 only at the very end be
 trained last. (Snapshots were every 2 000 iterations; the fast windows 0-8 fell between snapshots, so the
 first step of the staircase looks like one jump. Future runs snapshot at every window end.)
 
-![B profiles](../../runs/4x60_f64_unit_win27_causal_warm/figures/residual_profiles.png)
+![B profiles](../../runs/archive/full-orbit/windowed-causal-historical/figures/residual_profiles.png)
 
 **How to read.** Six horizontal cuts through the field above: residual against t at chosen snapshots.
 
@@ -187,7 +188,7 @@ first step of the staircase looks like one jump. Future runs snapshot at every w
 starts; the mid-training profiles show the wall at the front, three orders of magnitude between trained and
 untrained t.
 
-![B points](../../runs/4x60_f64_unit_win27_causal_warm/figures/point_convergence.png)
+![B points](../../runs/archive/full-orbit/windowed-causal-historical/figures/point_convergence.png)
 
 **How to read.** (a) histogram of the first snapshot at which each point's residual norm was below 1e-4; (b)
 that iteration against t; (c) each point's final residual (orange) and worst residual during training (grey).
@@ -199,7 +200,7 @@ Panel (c) is the useful one: every point starts near 1 and ends between 1e-5 and
 
 ### Training dynamics page
 
-![B dyn](../../runs/4x60_f64_unit_win27_causal_warm/figures/training_dynamics.png)
+![B dyn](../../runs/archive/full-orbit/windowed-causal-historical/figures/training_dynamics.png)
 
 **How to read.** (a) loss per iteration with L-BFGS shaded; (b) the residual term alone (the only term, hard
 IC); (c) learning-rate schedule; (d) training loss (orange) against the true mean-squared error on the
@@ -216,8 +217,8 @@ panel (d) shows loss and MSE decoupled, loss 2.8e-4 with MSE about 5, which is t
 
 ### Loss landscape
 
-![A landscape](../../runs/4x60_f64_unit/figures/loss_landscape.png)
-![B landscape](../../runs/4x60_f64_unit_win27_causal_warm/figures/loss_landscape.png)
+![A landscape](../../runs/archive/full-orbit/batch-f64-negative/figures/loss_landscape.png)
+![B landscape](../../runs/archive/full-orbit/windowed-causal-historical/figures/loss_landscape.png)
 
 **How to read.** PCA of the weight snapshots gives the two directions the weights moved most along; the
 surface is the loss evaluated on that plane (Li et al. 2018), centred on the final weights. The orange path is
@@ -234,8 +235,8 @@ training; read it as one network moving through time.
 
 ### Gradient direction stability
 
-![A stab](../../runs/4x60_f64_unit/figures/gradient_stability.png)
-![B stab](../../runs/4x60_f64_unit_win27_causal_warm/figures/gradient_stability.png)
+![A stab](../../runs/archive/full-orbit/batch-f64-negative/figures/gradient_stability.png)
+![B stab](../../runs/archive/full-orbit/windowed-causal-historical/figures/gradient_stability.png)
 
 **How to read.** Blue: cosine between the gradient at one snapshot and the previous one (1 = same direction,
 0 = unrelated, -1 = reversed). Grey: gradient norm. In Run B the cosine is blank where two snapshots fall in
@@ -250,7 +251,7 @@ any window, so this figure is nearly empty; use the layer norms below instead.
 
 ### Gradient norm per layer, per-layer histograms, gradient diagnostics
 
-![B layers](../../runs/4x60_f64_unit_win27_causal_warm/figures/layer_grad_norms.png)
+![B layers](../../runs/archive/full-orbit/windowed-causal-historical/figures/layer_grad_norms.png)
 
 **How to read.** Gradient norm of each layer at every logged step, plus the total; log
 scale. Flat = plateau, rising = leaving one, falling = converging. `gradient_histograms.png` shows
@@ -266,7 +267,7 @@ layers decay together to 1e-4 then jump at each blow-up, the same story as the c
 
 ### NTK spectrum
 
-![B ntk](../../runs/4x60_f64_unit_win27_causal_warm/figures/ntk_spectrum.png)
+![B ntk](../../runs/archive/full-orbit/windowed-causal-historical/figures/ntk_spectrum.png)
 
 **How to read.** Eigenvalues of J J^T (J = derivative of the residual at 256 sample points with respect to
 every weight), sorted, log scale, at four snapshots. Large eigenvalues are residual patterns the network can
@@ -283,8 +284,8 @@ block-diagonal (each point only depends on its own window), so the spectrum is t
 
 ### Error and residual along t
 
-![B err](../../runs/4x60_f64_unit_win27_causal_warm/figures/error_vs_t.png)
-![A err](../../runs/4x60_f64_unit/figures/error_vs_t.png)
+![B err](../../runs/archive/full-orbit/windowed-causal-historical/figures/error_vs_t.png)
+![A err](../../runs/archive/full-orbit/batch-f64-negative/figures/error_vs_t.png)
 
 **How to read.** Blue: distance from the reference at every t. Red: size of the ODE residual at the same t
 (computed on the evaluation grid, not the training points). Thin vertical lines: window joints. The
@@ -298,7 +299,7 @@ with a large residual in the only place the hard IC forces it away from that cur
 
 ### Error growth
 
-![B growth](../../runs/4x60_f64_unit_win27_causal_warm/figures/error_growth.png)
+![B growth](../../runs/archive/full-orbit/windowed-causal-historical/figures/error_growth.png)
 
 **How to read.** Error against t on log-log axes with a power-law fit. Exponent 1-2 = polynomial growth
 (what a periodic system with small residuals should give); a curve bending upward = exponential growth.
@@ -308,7 +309,7 @@ the state returns to where the early, better-trained windows were. No sign of a 
 
 ### Joint continuity (Run B)
 
-![B joints](../../runs/4x60_f64_unit_win27_causal_warm/figures/joint_continuity.png)
+![B joints](../../runs/archive/full-orbit/windowed-causal-historical/figures/joint_continuity.png)
 
 **How to read.** At every window joint: the jump in value between window k and window k+1 evaluated at the
 same t (blue), and the mismatch in slope (orange).
@@ -321,7 +322,7 @@ f(u0) by construction would remove it).
 
 ### Error analysis page
 
-![B ea](../../runs/4x60_f64_unit_win27_causal_warm/figures/error_analysis.png)
+![B ea](../../runs/archive/full-orbit/windowed-causal-historical/figures/error_analysis.png)
 
 **How to read.** (a) absolute error per component against t; (b) distribution of signed error per component;
 (c) prediction against reference (a perfect model is the diagonal); (d) relative error in percent.
@@ -332,7 +333,7 @@ page shows a parity plot far off the diagonal for x and z.
 
 ### Physics residual page
 
-![B pr](../../runs/4x60_f64_unit_win27_causal_warm/figures/physics_residual.png)
+![B pr](../../runs/archive/full-orbit/windowed-causal-historical/figures/physics_residual.png)
 
 **How to read.** (a) each residual component against t; (b) box plot of log10 |r| per component.
 
@@ -341,7 +342,7 @@ others. The maximum (3e-3) is at the joints.
 
 ### Quadratic-invariant drift
 
-![B inv](../../runs/4x60_f64_unit_win27_causal_warm/figures/invariant_drift.png)
+![B inv](../../runs/archive/full-orbit/windowed-causal-historical/figures/invariant_drift.png)
 
 **How to read.** The Lorenz-1960 system conserves two quadratic forms I1, I2 (weights in the panel titles).
 The plot is the relative change of each along t for the prediction (blue) and for the reference solver

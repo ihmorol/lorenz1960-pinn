@@ -21,6 +21,7 @@ from lorenz1960_baseline import (  # noqa: E402
 
 ACTIVATIONS = ("tanh", "relu", "sigmoid", "gelu", "swish")
 IC_MODES = ("hard", "soft")
+_STORAGE_FIELDS = {"results_dir", "ckpt_dir", "runs_dir"}
 
 
 @dataclass(frozen=True)
@@ -131,6 +132,11 @@ class Config:
                       runs_dir=str(self.runs_path))
         return record
 
+    def matches_record(self, record: dict) -> bool:
+        expected = {k: v for k, v in self.record().items() if k not in _STORAGE_FIELDS}
+        stored = {k: v for k, v in record.items() if k not in _STORAGE_FIELDS}
+        return json.loads(json.dumps(expected)) == json.loads(json.dumps(stored))
+
     @classmethod
     def from_record(cls, record: dict) -> "Config":
         for name in ("initial_state", "t_span", "causal_eps_schedule"):
@@ -142,7 +148,7 @@ class Config:
     def ensure_record(self) -> None:
         path = self.ckpt_path / "config.json"
         if path.exists():
-            if json.loads(path.read_text()) != json.loads(json.dumps(self.record())):
+            if not self.matches_record(json.loads(path.read_text())):
                 raise ValueError(f"run configuration differs from {path}; choose a new run directory")
             return
         if (self.ckpt_path / "pinn.pt").exists() or (self.ckpt_path / "progress.pt").exists():

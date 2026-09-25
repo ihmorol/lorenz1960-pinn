@@ -1,5 +1,8 @@
 # The whole project, in plain words
 
+> Historical short-horizon account. For the selected full-orbit method and
+> current commands, see the repository README and `runs/active/`.
+
 This file explains what we built and what we found. Short sentences. No jargon
 where we can avoid it. For the full line-by-line story, see `CODE_EXPLAINED.md`.
 

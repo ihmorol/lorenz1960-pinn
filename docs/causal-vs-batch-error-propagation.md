@@ -60,7 +60,7 @@ A batch PINN has **no mechanism that couples early and late times** except the s
 
 **The ODE has a line of equilibria.** For Lorenz-1960, `x = z = 0` (any `y`) gives `f = (0, 0, 0)` identically. A trajectory that sits on that line has *exactly zero physics residual*. The hard IC pins `u(0) = u0` exactly, but the trial form lets the solution relax away from `u0` over a thin transition layer; the loss only pays for the layer, not for being on the wrong trajectory. Averaged over 39,793 points, the wrong-but-trivial solution beats the right-but-hard one. The network is not "wrong somewhere and propagating the error forward" — it has found a **degenerate global minimizer** of the residual functional.
 
-**The data proves residual and solution error are anti-correlated.** Per-window means from `runs/4x60_f64_unit/point_summary.csv` (27 equal bins of `t`, bin width 0.491, for direct comparability with Run B):
+**The data proves residual and solution error are anti-correlated.** Per-window means from `runs/archive/full-orbit/batch-f64-negative/point_summary.csv` (27 equal bins of `t`, bin width 0.491, for direct comparability with Run B):
 
 | t-bin | mean solution error | mean residual |
 | :--- | :--- | :--- |
@@ -88,7 +88,7 @@ window k's endpoint error  --(detached hand-off)-->  window k+1's initial-condit
 
 - **Forward only.** Once window `k` is frozen, nothing later can contaminate it. The `residual_evolution` figure shows the causal staircase: convergence sweeps left to right and never returns.
 - **One number crosses each joint.** Only the *endpoint* state error propagates (same structural property Mattey & Ghosh prove for bc-PINN: interior errors of a window die with it). Derivative error does **not** cross, because the trial form only enforces `C^0` value continuity (see Bug B2).
-- **Accumulation is sub-linear, not exponential.** This system is conservative; a small IC error produces a nearby orbit, not a Lyapunov divergence. Per-window means from `runs/4x60_f64_unit_win27_causal_warm/point_summary.csv`:
+- **Accumulation is sub-linear, not exponential.** This system is conservative; a small IC error produces a nearby orbit, not a Lyapunov divergence. Per-window means from `runs/archive/full-orbit/windowed-causal-historical/point_summary.csv`:
 
 | window | mean err | max err | mean residual | note |
 | :--- | :--- | :--- | :--- | :--- |
@@ -164,7 +164,7 @@ Run B's row reports `epochs = 20000` (an unused config default — the actual bu
 After `res, w = causal_loss(...)`, the weighted scalar is passed as `residual=res`; in the single-domain path the same column is the raw mean squared residual. Cross-scheme comparisons of `training_diagnostics.csv` read a weighted quantity as if raw.
 *Fix*: log both (`residual_raw`, `residual_weighted`).
 
-**B12 — Stale docstring in `run_causal.py`.** Says it writes `runs/4x60_f64_unit_win27_causal/`; the arch tag appends `_warm`, so the actual directory is `runs/4x60_f64_unit_win27_causal_warm/`.
+**B12 — Stale docstring in `run_causal.py`.** Says it writes `runs/archive/full-orbit/batch-f64-negative_win27_causal/`; the arch tag appends `_warm`, so the actual directory is `runs/archive/full-orbit/windowed-causal-historical/`.
 
 **B13 — `torch.empty` in `WindowedPINN.forward` / `_windowed_parts`** (`pinn.py:100, 114`).
 If any window owned zero collocation points, its slice would stay uninitialized memory. Not triggerable with the current uniform grid (>=1,473 points/window), but a guard (`out.zero_()` or an assertion on `window_of`) is one line.

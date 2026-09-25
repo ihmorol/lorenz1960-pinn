@@ -1,6 +1,11 @@
 # Three causal-window runs: result and code audit
 
-This compares the completed historical `runs/4x60_f64_unit_win27_causal_warm/` run
+> Historical audit from 2026-09-23. Its branch inventory and environment notes
+> below describe that day's checkout, not the current cleaned repository. Both
+> candidate runs now live under `runs/archive/windowed-causal/`, and their
+> checkpoint evaluation is available in the current Python environment.
+
+This compares the completed historical `runs/archive/full-orbit/windowed-causal-historical/` run
 with the 512-point and 1500-point candidates under `runs/causal-window/`.
 It uses the saved CSVs and the checked-in training code; no model was retrained.
 The 512-point artifacts are on `codex/causal-512pt`; this branch contains only

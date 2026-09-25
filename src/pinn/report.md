@@ -1,5 +1,8 @@
 # Implementation report: a PINN for the Lorenz-1960 system
 
+> Historical [0, 1] report. Its original runner commands refer to earlier
+> branches; the current full-orbit entry points are in the repository README.
+
 FYDP-2 phase. This note records what was built, how it was trained, and what it
 achieved. Plain-language background is in `docs/the-short-version.md`; the full
 code walkthrough is in `docs/CODE_EXPLAINED.md`; the schema of every table and
@@ -164,9 +167,9 @@ reconstruction of the loss, the point summary and residual grid, the run-summary
 columns, the sweep's output layout and resume behaviour, checkpoint reloading,
 and generation of every figure and table. All pass.
 
-Entry points: `run_pinn.py` (the run of record), `run_sweep.py` (all nine,
-resumable), `run_single.py` (one architecture), `run_epoch.py` (one epoch, every
-collocation point), `run_eval.py` (score a finished checkpoint, no retraining).
+Current entry points: `run_causal.py` trains or reloads the selected windowed
+causal configuration, and `run_eval.py` reloads and scores a finished run. The
+architecture-sweep results discussed above are preserved under `runs/archive/`.
 
 ## Limitations
 

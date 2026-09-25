@@ -252,7 +252,7 @@ The current network architecture is a Multi-Layer Perceptron (MLP):
 - **Output layer**: 3 neurons ($x, y, z$).
 - **Total parameters**: $1\times 60 + 60 + 3 \times (60 \times 60 + 60) + 60 \times 3 + 3 = 11,283$ weights and biases.
 
-In the architecture grid sweep on $[0, 1]$ (`runs/comparison.csv`), depth $\in \{3, 4, 5\}$ and width $\in \{50, 60, 70\}$ were evaluated:
+In the architecture grid sweep on $[0, 1]$ (`runs/archive/cross-run/comparison.csv`), depth $\in \{3, 4, 5\}$ and width $\in \{50, 60, 70\}$ were evaluated:
 - Depth 4, Width 50: RMSE $9.62 \times 10^{-6}$ (7,903 params)
 - Depth 4, Width 60: RMSE $1.73 \times 10^{-5}$ (11,283 params)
 - Depth 5, Width 70: RMSE $1.45 \times 10^{-5}$ (20,233 params)

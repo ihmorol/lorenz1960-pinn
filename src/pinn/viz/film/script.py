@@ -8,7 +8,7 @@ from manim import (BLUE, BLUE_D, BLUE_E, DEGREES, GREY, RED, UL, YELLOW, Create,
                    FadeIn, Surface, Text, ThreeDAxes, ThreeDScene, Transform, VGroup, VMobject,
                    interpolate_color)
 
-RUN = Path(os.environ.get("RUN", "runs/4x60_f64_unit"))
+RUN = Path(os.environ.get("RUN", "runs/archive/full-orbit/batch-f64-negative"))
 BG = "#1C1C1C"
 
 

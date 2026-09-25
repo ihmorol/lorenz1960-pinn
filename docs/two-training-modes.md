@@ -1,5 +1,8 @@
 # Two training modes, explained: the single-domain PINN and the sequential rollout
 
+> Historical comparison from `feat/sequential-rollout`. Runner commands and
+> line numbers below refer to that branch, not the current entry points.
+
 This document explains the two training schemes in this repository in plain
 language, then backs every statement with code, tests, and measured run data.
 It sits between `the-short-version.md` (the plainest account) and
@@ -454,7 +457,7 @@ turbulent behavior" [9]. Penwarden: the failures appear "when solving forward
 time-dependent PDEs with no data" that fall into "poor local minima" [8].
 Lorenz-1960 on `[0, 1]` is none of these: it is a bounded, non-chaotic
 system with two conserved quantities, and Mode 1 reaches RMSE 1.7e-5 with
-the invariants drifting by only ~3e-5 (`runs/4x60/run_summary.csv`). The
+the invariants drifting by only ~3e-5 (`runs/archive/architecture-sweep/4x60/run_summary.csv`). The
 failure the sequential papers cure does not occur here, so their cure has
 nothing to buy. Wang et al. themselves position causal/sequential training
 as "not ... a replacement" for ordinary training but "a crucial enhancement"
@@ -513,8 +516,8 @@ literature-consistent statement is:
 | 19 | old walk was read-out-limited; trapezoid removes the ceiling | `runs/4x60_seq_euler*/run_summary.csv`: RMSE 1.2e-4 at 3000/6000/12000 pts (backward Euler); trapezoid floor 1.7e-7 far below training error |
 | 20 | Mode 2 ~2.1× faster, reaches 1e-4 sooner | 17.56 vs 8.31 ms/epoch; epochs-to-1e-4: 71 vs 55 (`run_summary.csv`) |
 | 21 | gradient flows through the 3000-step chain | cumsum is differentiable; walk ≠ independent evaluation: `test_pinn.py:335-336`; design note `pinn.py:74-77` |
-| 22 | Mode 1 RMSE 1.7e-5; Mode 2 8.2e-5 trapezoid / 1.2e-4 backward Euler | `runs/4x60/run_summary.csv`, `runs/4x60_seq/run_summary.csv`, `runs/4x60_seq_euler/run_summary.csv` |
-| 23 | losses fall 0.217 → 6.8e-9 and 0.225 → 4.4e-9 | `runs/4x60/history/loss_history.csv`, `runs/4x60_seq/history/loss_history.csv` |
+| 22 | Mode 1 RMSE 1.7e-5; Mode 2 8.2e-5 trapezoid / 1.2e-4 backward Euler | `runs/archive/architecture-sweep/4x60/run_summary.csv`, `runs/4x60_seq/run_summary.csv`, `runs/4x60_seq_euler/run_summary.csv` |
+| 23 | losses fall 0.217 → 6.8e-9 and 0.225 → 4.4e-9 | `runs/archive/architecture-sweep/4x60/history/loss_history.csv`, `runs/4x60_seq/history/loss_history.csv` |
 
 Checks 1-3, 5, 9 were re-run numerically while writing this document; the rest
 come from the committed run artifacts and the test suite (`python -m pytest`).

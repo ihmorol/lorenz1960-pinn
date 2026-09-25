@@ -1,6 +1,7 @@
 # Long-horizon Lorenz-1960 PINN: precision-first batch run and causal windowed run
 
-Date: 2026-09-21. Status: approved design, awaiting implementation plan.
+Date: 2026-09-21. Status: historical design; the selected implementation and
+measured results are documented in the repository README.
 
 ## 1. Goal
 
@@ -22,26 +23,26 @@ initial condition stay; knobs are added with today's behaviour as default).
 
 ## 2. The two runs
 
-Shared by both: 4x60 tanh, raw t input, float64, collocation and evaluation densities fixed per time unit rather than as
-counts (`points_per_unit = 3000`, `eval_per_unit = 1000`, the run-of-record density; on one
-loop that is 39 793 collocation and 13 265 evaluation points; speed along the orbit varies
-only 2.3x so uniform-in-time sampling wastes nothing), hard initial condition in Lagaris form u = u0 + (t - t0) N(t),
-Adam then L-BFGS.
+Shared by both: 4x60 tanh, raw t input, float64, hard initial condition in
+Lagaris form u = u0 + (t - t0) N(t), and Adam followed by L-BFGS. Run A uses
+39,793 full-domain collocation points. The selected Run B uses 41,446 global
+grid points, which gives 1,536 effective training points in every window after
+adding each nonfinal outgoing endpoint.
 
 Run A, batch (branch `feat/batch-precision-run`): one network on the full loop; 39 793
 Latin-hypercube points; loss = mean squared residual; Adam 40 000 epochs at lr 1e-3
 with exponential decay 0.9 every 5000 epochs; then L-BFGS up to 5000 iterations,
 strong-Wolfe line search, in float64.
 
-Run B, causal windows (branch `feat/causal-window-training`, stacked on A): the
+Run B, causal windows (finalized on `feat/batch-training-0-1`): the
 Lorenz recipe of Wang, Sankaran and Perdikaris (CMAME 2024, Algorithm 1 and
 Appendix E), adapted to our network. the loop is split into 27 windows of 0.491, the closest
 to the paper's 0.5; each
 window trains a fresh 4x60 whose initial state is the previous window's prediction at
-the joint; per window 1474 uniform points (39 793 / 27); per-point causal weights
+the joint; each window receives 1,536 effective uniform points; per-point causal weights
 w_i = exp(-eps * sum_{k<i} L(t_k)) with stop-gradient; eps runs through
-[1e-2, 1e-1, 1, 10, 100], advancing when min_i w_i > 0.99, capped at 20 000 Adam
-iterations per eps; then L-BFGS per window (our one addition to the paper, for the
+[1e-2, 1e-1, 1, 10], advancing when min_i w_i > 0.99, capped at 4,000 Adam
+iterations per eps; then up to 1,000 L-BFGS iterations per window (our one addition to the paper, for the
 float64 floor). The chain is one `WindowedPINN` that predicts at any t.
 
 Everything else (architecture width and depth, activation, seed, reference solver)
@@ -101,18 +102,18 @@ and viz, so figures can be regenerated from a saved run.
 |---|---|---|---|
 | `dtype` | "float32" | "float64" | "float64" |
 | `ic_scale` | "span" (g = (t-t0)/(tf-t0)) | "unit" (g = t-t0) | "unit" |
-| `points_per_unit` | 3000 (n_collocation = 3000 on [0, 1]) | 3000 | 3000 |
+| `n_collocation` | 3000 | 39,793 | 41,446 (1,536 effective/window) |
 | `collocation` | "lhs" | "lhs" | "uniform" |
 | `eval_per_unit` | 1000 (n_eval = 1001 on [0, 1]) | 1000 | 1000 |
-| `epochs` | 20000 | 40000 | (per eps cap 20000) |
-| `lr_decay`, `lr_decay_every` | none (linear 1e-3 to 1e-4 today) | 0.9, 5000 | 0.9, 5000 |
-| `lbfgs_iters` | 0 | 5000 | 5000 per window |
+| `epochs` | 20000 | 40000 | (per eps cap 4,000) |
+| `lr_decay`, `lr_decay_every` | none (linear 1e-3 to 1e-4 today) | 0.9, 5000 | 0.9, 1000 |
+| `lbfgs_iters` | 0 | 5000 | 1,000 per window |
 | `t_span` | (0, 1) | (0, 13.26446) | (0, 13.26446) |
 | `problem` | "lorenz1960" | same | same |
 | `n_windows` (B) | 1 | 1 | 27 |
-| `causal_eps_schedule` (B) | () | () | (1e-2, 1e-1, 1, 10, 100) |
+| `causal_eps_schedule` (B) | () | () | (1e-2, 1e-1, 1, 10) |
 | `causal_delta` (B) | 0.99 | - | 0.99 |
-| `causal_max_iters` (B) | 0 | - | 20000 |
+| `causal_max_iters` (B) | 0 | - | 4000 |
 
 `lr_decay=None` keeps today's linear schedule so `Config()` reproduces the run of
 record. The run tag gains suffixes for non-default knobs (`_f64`, `_unit`, `_win27`,
@@ -230,9 +231,9 @@ functions they cover):
 ## 7. Compute plan
 
 Run A on a Colab T4: 40 000 points x 40 000 epochs float64 about 30-45 min plus
-L-BFGS about 10 min. Run B: 27 windows x up to 5 eps stages; with the min-w stop most
-stages end early; budget 1.5-3 h. Both scripts checkpoint (per 5000 epochs on A, per
-window on B) and resume. `colab.ipynb` clones the branch, installs
+L-BFGS about 10 min. Run B uses 27 windows and up to four epsilon stages; most
+stages stop early. The selected saved run took 881 seconds on CUDA. Local
+training can checkpoint per window and resume. `colab.ipynb` clones `main`, installs
 `requirements.txt`, runs one script, zips `runs/`.
 
 ## 8. Out of scope
@@ -240,33 +241,29 @@ window on B) and resume. `colab.ipynb` clones the branch, installs
 Multi-stage residual networks, Fourier features, modified MLP, KANs, seed sweeps,
 the BVP solver itself, and any change to the network shape. Each is a separate spec.
 
-## 9. Outcome (Colab T4, 2026-09-21)
+## 9. Outcome (selected final run, 2026-09-24)
 
 | | Run A `4x60_f64_unit` | Run B `4x60_f64_unit_win27_causal_warm` |
 |---|---|---|
-| RMSE (x, y, z) | 0.38, 2.08, 0.74 | 2.8e-5, 5.9e-5, 5.3e-5 |
-| RMSE combined | 2.24 | 8.4e-5 |
-| max abs error | 3.35 | 2.4e-4 |
-| final loss | 2.8e-4, flat over 6251 L-BFGS evals | 1e-8 to 7e-7 per window |
-| iterations | 40 000 Adam + 5000 L-BFGS | 78 677 total over 27 windows |
-| wall | 75 min | 15.5 min |
+| RMSE (x, y, z) | 0.38, 2.08, 0.74 | 2.74e-5, 4.96e-5, 4.05e-5 |
+| RMSE combined | 2.24 | 6.97e-5 |
+| max abs error | 3.35 | 3.09e-4 |
+| final loss | 2.8e-4, flat over 6251 L-BFGS evals | 1.87e-7 full-domain residual MSE |
+| iterations | 40 000 Adam + 5000 L-BFGS | 34,765 Adam + 33,143 L-BFGS evaluations |
+| wall | 75 min | 881 s |
 
 Run A never left the fixed-point plateau: the prediction decays to a constant
 (x -> 0.01, y -> 1.7, z -> -0.05) while the reference oscillates. Run B follows
-the whole closed orbit with error 1e-5 to 2e-4 and closes it at 3e-5; the error
+the whole closed orbit with error around 1e-5 to 3e-4; the error
 does not grow window to window. Hand-off value jumps are ~1e-16 (hard IC), the
 initial-slope mismatch at each joint is ~1e-3 (learned, not enforced), which is
 the residual bump seen at every window start.
 
-Budget used for B, after a first 2.5 h run with the spec's schedule showed the
-eps=100 stage and 5000-eval L-BFGS adding time and no accuracy: eps
-(1e-2, 1e-1, 1, 10), 4000-iteration cap per stage, L-BFGS 1500, warm start from
-the previous window's weights. Stages 1-3 pass delta in 8-60 iterations; the
-eps=10 stage hits the cap in 6 of 27 windows (t in 4.4-5.9 and 11.3-12.8, the
-fastest parts of the orbit) and L-BFGS finishes those anyway.
-
-Target 1e-6 was not reached; 1e-4 was. The first knob to turn is
-`lbfgs_iters` (3000), since per-window loss keeps falling when L-BFGS is cut.
+The selected budget is eps `(1e-2, 1e-1, 1, 10)`, a 4,000-iteration cap per
+stage, 1,000 L-BFGS iterations per window, and warm-started weights. Windows 10
+and 11 reached the epsilon-10 cap with minimum weights `0.9718467` and
+`0.9031337`. L-BFGS completed afterward, so the run is complete but those two
+causal stages did not satisfy the `0.99` gate.
 
 Two figure bugs found from these runs and fixed on branch B: windowed runs now
 end with a snapshot of the finished model (the comparison page had drawn a
