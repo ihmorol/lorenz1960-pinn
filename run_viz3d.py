@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
-from pinn import viz  # noqa: E402
+from pinn.functions.reporting import generate_run_extras  # noqa: E402
 
 if __name__ == "__main__":
     for run in sys.argv[1:]:
-        for path in viz.generate_run_extras(run):
+        for path in generate_run_extras(run):
             print(path)
