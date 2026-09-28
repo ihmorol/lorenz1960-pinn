@@ -1,0 +1,29 @@
+graph TD
+    A["Start window k<br/>k = 0...26"] --> B["Select window points<br/>append outgoing endpoint"]
+    B --> C{"Past first window?"}
+    C -->|"yes"| D["Warm-start weights<br/>from window k-1"]
+    C -->|"no"| E["Use initialized weights"]
+    D --> F["Use transferred start state<br/>as hard IC anchor"]
+    E --> F
+    F --> G["Set epsilon stage<br/>0.01, 0.1, 1, 10"]
+    G --> H["Forward + autograd<br/>compute residual per time"]
+    H --> I["Causal weights<br/>w_i = exp(-eps sum earlier L)"]
+    I --> J["Backprop + Adam<br/>scheduler step"]
+    J --> K{"Post-update<br/>min weight exceeds 0.99?"}
+    K -->|"no, under 4000"| H
+    K -->|"yes or capped"| L{"More epsilon stages?"}
+    L -->|"yes"| G
+    L -->|"no"| M["L-BFGS polish<br/>raw residual objective"]
+    M --> N["Save window checkpoint<br/>and final snapshot"]
+    N --> O["Predict outgoing endpoint<br/>detach state"]
+    O --> P{"Final window?"}
+    P -->|"no"| Q["Copy endpoint into<br/>next window u0"]
+    Q --> A
+    P -->|"yes"| R["Save complete model<br/>begin final evaluation"]
+
+    classDef data fill:#E8F1FF,stroke:#2563EB,color:#0F172A,stroke-width:2px;
+    classDef causal fill:#FFF7ED,stroke:#EA580C,color:#0F172A,stroke-width:2px;
+    classDef save fill:#ECFDF5,stroke:#059669,color:#0F172A,stroke-width:2px;
+    class A,B,C,D,E,F data;
+    class G,H,I,J,K,L,M causal;
+    class N,O,P,Q,R save;

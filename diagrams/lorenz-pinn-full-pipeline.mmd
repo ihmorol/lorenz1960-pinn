@@ -1,0 +1,45 @@
+graph TD
+    subgraph S1["1. Setup"]
+        direction LR
+        A["Entry script<br/>default | batch | causal"] --> B["Create Config<br/>validate settings"]
+        B --> C["Lock config manifest<br/>seed NumPy and PyTorch"]
+        C --> D["Select device and dtype<br/>CPU/CUDA | float32/float64"]
+    end
+
+    subgraph S2["2. Physics construction"]
+        direction LR
+        E["Define Lorenz-1960 IVP<br/>coefficients + initial state"] --> F["Build collocation grid<br/>LHS or uniform"]
+        F --> G["Build model<br/>one PINN or 27 window PINNs"]
+        G --> H["Forward physics batch<br/>t to N(t) to trial u(t)"]
+        H --> I["Autograd and ODE<br/>du/dt and f(u)"]
+        I --> J["Residual<br/>r = du/dt - f(u)"]
+    end
+
+    subgraph S3["3. Optimization"]
+        direction LR
+        K{"Training mode"}
+        K -->|"single domain"| L["Adam schedule<br/>optional L-BFGS"]
+        K -->|"causal windows"| M["Train window k<br/>causal eps stages + L-BFGS"]
+        M -->|"endpoint starts next window"| M
+        L --> N["Final checkpoint<br/>weights + telemetry"]
+        M -->|"after window 26"| N
+    end
+
+    subgraph S4["4. Independent evaluation"]
+        direction LR
+        O["DOP853 reference<br/>and dense residual"] --> P["Metrics<br/>errors + invariants + cost"]
+        P --> Q["Artifacts<br/>CSV + figures + HTML + comparisons"]
+    end
+
+    D --> E
+    J --> K
+    N --> O
+
+    classDef setup fill:#E8F1FF,stroke:#2563EB,color:#0F172A,stroke-width:2px;
+    classDef physics fill:#ECFDF5,stroke:#059669,color:#0F172A,stroke-width:2px;
+    classDef train fill:#FFF7ED,stroke:#EA580C,color:#0F172A,stroke-width:2px;
+    classDef eval fill:#F5F3FF,stroke:#7C3AED,color:#0F172A,stroke-width:2px;
+    class A,B,C,D setup;
+    class E,F,G,H,I,J physics;
+    class K,L,M,N train;
+    class O,P,Q eval;
