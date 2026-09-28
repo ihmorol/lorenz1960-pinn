@@ -24,6 +24,7 @@ import pandas as pd
 
 from . import viz as figures
 from .config import Config
+from .functions.reporting import config_for  # noqa: F401  (re-exported public surface)
 from .history import FLOAT_FORMAT
 from .train import main as train_and_save
 
@@ -109,49 +110,6 @@ def sweep(
 
 def load_comparison(runs_dir: str | Path = "runs") -> pd.DataFrame:
     return pd.read_csv(Path(runs_dir) / "comparison.csv")
-
-
-def config_for(run_dir: str | Path) -> Config:
-    """Rebuild the Config a finished run was trained with, from its own summary.
-
-    Needed to reload a checkpoint: the weights only fit a network of the same
-    shape. Falls back to the defaults for runs predating ``run_summary.csv``,
-    which is correct for the 4x60 run of record.
-    """
-    run_dir = Path(run_dir)
-    default = Config()
-    ckpt = default.ckpt_path if run_dir.resolve() == default.results_path.resolve() else run_dir / "history"
-    paths = {"results_dir": str(run_dir), "ckpt_dir": str(ckpt)}
-    manifest = ckpt / "config.json"
-    if manifest.exists():
-        return Config.from_record({**json.loads(manifest.read_text()), **paths})
-    summary = run_dir / "run_summary.csv"
-    if not summary.exists():
-        return replace(Config(), **paths) if run_dir != Config().results_path else Config()
-
-    row = pd.read_csv(summary).iloc[0]
-    return replace(
-        Config(), **paths,
-        depth=int(row["depth"]), width=int(row["width"]), activation=str(row["activation"]),
-        ic=str(row["ic"]), seed=int(row["seed"]), epochs=int(row["epochs"]),
-        n_collocation=int(row["n_collocation"]),
-        t_span=(float(row["t_start"]), float(row["t_end"])),
-        lbfgs_iters=int(row["lbfgs_iters"]), gamma=float(row["gamma"]),
-        lr_start=float(row["lr_start"]), lr_end=float(row["lr_end"]),
-        dtype=str(row.get("dtype", "float32")), ic_scale=str(row.get("ic_scale", "span")),
-        collocation=str(row.get("collocation", "lhs")), n_eval=int(row.get("n_eval", 1001)),
-        lr_decay=None if pd.isna(row.get("lr_decay", float("nan"))) else float(row["lr_decay"]),
-        lr_decay_every=int(row.get("lr_decay_every", 5000)),
-        problem=str(row.get("problem", "lorenz1960")), n_windows=int(row.get("n_windows", 1)),
-        causal_eps_schedule=tuple(float(e) for e in str(row.get("causal_eps_schedule", "")).split()
-                                  if e not in ("", "nan")),
-        causal_delta=float(row.get("causal_delta", 0.99)), causal_max_iters=int(row.get("causal_max_iters", 0)),
-        warm_start=bool(row.get("warm_start", False)),
-        k=float(row.get("k", 2.0)), l=float(row.get("l", 1.0)),
-        initial_state=tuple(json.loads(row["initial_state"])) if "initial_state" in row else (0.5, 0.75, 1.0),
-        end_state=tuple(json.loads(row["end_state"])) if "end_state" in row and pd.notna(row["end_state"])
-                  and row["end_state"] != "null" else None,
-    )
 
 
 if __name__ == "__main__":

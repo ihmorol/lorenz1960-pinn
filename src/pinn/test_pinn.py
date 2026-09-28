@@ -410,14 +410,14 @@ def test_trails_follow_the_snapshots(tmp_path):
 
 
 def test_run_extras_are_written(tmp_path):
-    from pinn import viz
+    from pinn.functions.reporting import generate_run_extras
     from pinn.train import main
 
     cfg = Config(depth=1, width=8, epochs=21, n_collocation=32, snapshot_every=10,
                  log_every=10, eval_every=10, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
     main(cfg)
-    names = {p.name for p in viz.generate_run_extras(tmp_path)}
+    names = {p.name for p in generate_run_extras(tmp_path)}
     for expected in ("trajectory.html", "loss_landscape.png", "loss_phases.png",
                      "gradient_stability.png", "gradient_histograms.png", "ntk_spectrum.png",
                      "error_vs_t.png", "error_growth.png"):
@@ -426,27 +426,27 @@ def test_run_extras_are_written(tmp_path):
 
 def test_adam_checkpoint_resumes(tmp_path, monkeypatch):
     from dataclasses import replace
-    import pinn.train as train_module
+    import pinn.functions.trainer as trainer_module
 
     cfg = Config(depth=1, width=8, epochs=6, n_collocation=16, checkpoint_every=3,
                  log_every=3, eval_every=3, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
-    save = train_module._save_progress
+    save = trainer_module._save_progress
 
     def interrupt(*args, **kwargs):
         save(*args, **kwargs)
         if kwargs.get("next_epoch") == 3:
             raise RuntimeError("interrupted after checkpoint")
 
-    monkeypatch.setattr(train_module, "_save_progress", interrupt)
+    monkeypatch.setattr(trainer_module, "_save_progress", interrupt)
     with pytest.raises(RuntimeError, match="interrupted"):
-        train_module.train(cfg)
-    monkeypatch.setattr(train_module, "_save_progress", save)
-    _, history = train_module.train(cfg)
+        trainer_module.train(cfg)
+    monkeypatch.setattr(trainer_module, "_save_progress", save)
+    _, history = trainer_module.train(cfg)
     assert history.resumed_from == 3 and len(history.loss) == 6
     assert (tmp_path / "history" / "progress.pt").exists()
     with pytest.raises(ValueError, match="configuration differs"):
-        train_module.train(replace(cfg, lr_start=2e-3))
+        trainer_module.train(replace(cfg, lr_start=2e-3))
 
 
 def test_root_scripts_compile():
@@ -513,7 +513,7 @@ def test_eps_advances_only_when_all_weights_exceed_delta(tmp_path):
 
 
 def test_causal_extras_are_written(tmp_path):
-    from pinn import viz
+    from pinn.functions.reporting import generate_run_extras
     from pinn.train import main
 
     cfg = Config(t_span=(0.0, 0.2), n_windows=2, causal_eps_schedule=(1e-2,), causal_max_iters=12,
@@ -527,7 +527,7 @@ def test_causal_extras_are_written(tmp_path):
     first = pd.read_csv(sorted((tmp_path / "breakdown").glob("epoch_*.csv"))[0])
     assert first.loc[first.t > cfg.t_span[1] / 2, "r_sq"].isna().all()
     assert first.loc[first.t < cfg.t_span[1] / 2, "r_sq"].notna().all()
-    names = {p.name for p in viz.generate_run_extras(tmp_path)}
+    names = {p.name for p in generate_run_extras(tmp_path)}
     for expected in ("causal_weights.png", "min_w.png", "window_grid.png", "joint_continuity.png"):
         assert expected in names, expected
 
