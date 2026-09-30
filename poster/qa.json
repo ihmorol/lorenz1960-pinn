@@ -1,0 +1,33 @@
+{
+  "width": 3179,
+  "height": 4494,
+  "posterBottom": 4494,
+  "bottom": [
+    4422,
+    4422,
+    4422
+  ],
+  "overflow": [],
+  "images": [
+    {
+      "src": "assets/full_interval_plateau.png",
+      "ok": true,
+      "effectiveDpi": 286
+    },
+    {
+      "src": "assets/candidate_results.png",
+      "ok": true,
+      "effectiveDpi": 211
+    },
+    {
+      "src": "assets/causal_weights.png",
+      "ok": true,
+      "effectiveDpi": 214
+    },
+    {
+      "src": "assets/joint_continuity.png",
+      "ok": true,
+      "effectiveDpi": 212
+    }
+  ]
+}
