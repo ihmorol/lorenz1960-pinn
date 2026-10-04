@@ -1,4 +1,4 @@
-"""Central configuration and locked-baseline access for the FYDP-2 PINN."""
+"""Central configuration and reference-solver access for the FYDP-2 PINN."""
 from __future__ import annotations
 
 import sys
@@ -12,12 +12,8 @@ _SRC_ROOT = Path(__file__).resolve().parents[1]   # .../src
 _REPO_ROOT = _SRC_ROOT.parent                     # repository root (anchors results/ and data/)
 sys.path.insert(0, str(_SRC_ROOT / "baseline"))
 
-from lorenz1960_baseline import (  # noqa: E402
-    Lorenz1960Config,
-    compute_error_metrics,
-    lorenz1960_coefficients,
-    solve_lorenz1960_scipy,
-)
+from lorenz1960_baseline import compute_error_metrics  # noqa: E402
+from systems import SYSTEMS, solve_scipy  # noqa: E402
 
 ACTIVATIONS = ("tanh", "relu", "sigmoid", "gelu", "swish")
 IC_MODES = ("hard", "soft")
@@ -25,11 +21,10 @@ IC_MODES = ("hard", "soft")
 
 @dataclass(frozen=True)
 class Config:
-    k: float = 2.0
-    l: float = 1.0
+    problem: str = "lorenz1960"
+    params: tuple[float, ...] = (2.0, 1.0)   # named by SYSTEMS[problem].params
     initial_state: tuple[float, float, float] = (0.5, 0.75, 1.0)
     t_span: tuple[float, float] = (0.0, 1.0)
-    problem: str = "lorenz1960"
     end_state: tuple[float, float, float] | None = None   # set for a two-point BVP
     n_windows: int = 1        # >1: one network per time window, chained by end state
     # Causal training (Wang, Sankaran & Perdikaris 2024, Algorithm 1): per window, run
@@ -67,10 +62,7 @@ class Config:
     eval_every: int = 100     # epochs between reference-solution error evaluations
     print_every: int = 250    # epochs between console progress lines (0 = silent)
 
-    # Epochs between full per-collocation-point snapshots. 0 disables snapshotting
-    # entirely, which is the default so the run-of-record pipeline is unchanged;
-    # the architecture sweep sets it to 50.
-    snapshot_every: int = 0
+    snapshot_every: int = 0   # epochs between per-point snapshots (0 = off; the sweep uses 50)
     checkpoint_every: int = 0   # Adam epochs between resumable checkpoints (0 = off)
 
     results_dir: str = "src/pinn/results"
@@ -88,13 +80,15 @@ class Config:
             raise ValueError("dtype must be 'float32' or 'float64'")
         if self.collocation not in ("lhs", "uniform"):
             raise ValueError("collocation must be 'lhs' or 'uniform'")
-        if self.problem != "lorenz1960":
-            raise ValueError("only the lorenz1960 problem is implemented")
+        if self.problem not in SYSTEMS:
+            raise ValueError(f"problem must be one of {tuple(SYSTEMS)}")
+        if len(self.params) != len(self.system.params):
+            raise ValueError(f"{self.problem} takes params {self.system.params}")
         span = self.t_span[1] - self.t_span[0]
         if not np.isfinite(span) or span <= 0 or self.n_windows < 1 or self.depth < 1 or self.width < 1:
             raise ValueError("time span, window count, depth, and width must be positive")
-        if len(self.initial_state) != 3 or not np.isfinite((self.k, self.l, *self.initial_state)).all():
-            raise ValueError("Lorenz coefficients and three initial-state values must be finite")
+        if len(self.initial_state) != 3 or not np.isfinite((*self.params, *self.initial_state)).all():
+            raise ValueError("params and three initial-state values must be finite")
         if self.end_state is not None and (len(self.end_state) != 3 or
                                            not np.isfinite(self.end_state).all()):
             raise ValueError("end_state must have three finite values")
@@ -127,12 +121,14 @@ class Config:
     def record(self) -> dict:
         """Exact run settings; the JSON file is the authority for reuse and reload."""
         record = asdict(self)
+        record.update(zip(self.system.params, record.pop("params")))
         record.update(results_dir=str(self.results_path), ckpt_dir=str(self.ckpt_path),
                       runs_dir=str(self.runs_path))
         return record
 
     @classmethod
     def from_record(cls, record: dict) -> "Config":
+        record["params"] = tuple(record.pop(name) for name in SYSTEMS[record["problem"]].params)
         for name in ("initial_state", "t_span", "causal_eps_schedule"):
             record[name] = tuple(record[name])
         if record["end_state"] is not None:
@@ -153,8 +149,13 @@ class Config:
         pending.replace(path)
 
     @property
-    def coefficients(self) -> np.ndarray:
-        return lorenz1960_coefficients(self.k, self.l)
+    def system(self):
+        return SYSTEMS[self.problem]
+
+    @property
+    def invariant_normal(self) -> np.ndarray | None:
+        normal = self.system.invariant_normal
+        return None if normal is None else normal(*self.params)
 
     @property
     def results_path(self) -> Path:
@@ -167,12 +168,6 @@ class Config:
     @property
     def runs_path(self) -> Path:
         return _resolve(self.runs_dir)
-
-    @property
-    def spec(self):
-        from .problems import PROBLEMS
-        return PROBLEMS[self.problem](self.coefficients, self.initial_state, self.t_span,
-                                      self.end_state, lambda t: reference_at(self, t))
 
     @property
     def torch_dtype(self):
@@ -212,16 +207,10 @@ def _resolve(path: str) -> Path:
     return p if p.is_absolute() else _REPO_ROOT / p
 
 
-def _baseline(cfg: Config, n: int = 1001) -> Lorenz1960Config:
-    return Lorenz1960Config(
-        k=cfg.k, l=cfg.l, initial_state=cfg.initial_state, t_span=cfg.t_span, n_eval=n
-    )
-
-
 def reference_trajectory(cfg: Config, n: int = 1001) -> tuple[np.ndarray, np.ndarray]:
-    """Ground-truth (t, [x,y,z]) from the locked SciPy baseline solver."""
-    t, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg, n))
-    return t, ys
+    """Ground-truth (t, [x,y,z]) from the SciPy DOP853 reference solver."""
+    t = np.linspace(*cfg.t_span, n)
+    return t, solve_scipy(cfg.problem, cfg.params, cfg.initial_state, cfg.t_span, t)
 
 
 def reference_at(cfg: Config, t: np.ndarray) -> np.ndarray:
@@ -236,9 +225,7 @@ def reference_at(cfg: Config, t: np.ndarray) -> np.ndarray:
     unique, inverse = np.unique(t, return_inverse=True)
     if len(unique) == 1 and unique[0] == cfg.t_span[0]:
         return np.tile(np.asarray(cfg.initial_state, float), (len(t), 1))
-    _, ys, _ = solve_lorenz1960_scipy(config=_baseline(cfg), t_eval=unique)
-    out = ys[inverse]
-    return out
+    return solve_scipy(cfg.problem, cfg.params, cfg.initial_state, cfg.t_span, unique)[inverse]
 
 
 __all__ = ["Config", "reference_trajectory", "reference_at", "compute_error_metrics",

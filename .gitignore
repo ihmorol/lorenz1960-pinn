@@ -6,6 +6,8 @@ data/
 # point_summary.csv and figures carry the analysis that comes out of it.
 runs/*/breakdown/
 runs/causal-window/*/*/breakdown/
+runs/lorenz1963/*/breakdown/
+runs/lorenz1963/causal-window/*/breakdown/
 
 # Scratch output of `python run_epoch.py`, a throwaway probe.
 runs/epoch_probe/
@@ -13,6 +15,8 @@ runs/epoch_probe/
 !src/pinn/history/pinn.pt
 !runs/*/history/pinn.pt
 !runs/causal-window/*/*/history/pinn.pt
+!runs/lorenz1963/*/history/pinn.pt
+!runs/lorenz1963/causal-window/*/history/pinn.pt
 *.npz
 *.npy
 

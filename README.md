@@ -465,6 +465,8 @@ Config(depth=3, width=70, activation="gelu", ic="soft", gamma=10.0,
 
 | Field | Default | Effect |
 |---|---|---|
+| `problem`, `params` | `lorenz1960`, (2, 1) | which system in `src/baseline/systems.py`, and its parameters |
+| `initial_state`, `t_span` | (0.5, 0.75, 1.0), (0, 1) | start state and time window |
 | `depth`, `width`, `activation` | 4, 60, `tanh` | network shape and nonlinearity |
 | `ic`, `gamma` | `hard`, 1.0 | exact initial condition, or a soft penalty with this weight |
 | `epochs`, `lr_start`, `lr_end` | 20000, 1e-3, 1e-4 | Adam schedule, decaying linearly |
@@ -475,6 +477,23 @@ Config(depth=3, width=70, activation="gelu", ic="soft", gamma=10.0,
 | `results_dir`, `ckpt_dir`, `runs_dir` | see `config.py` | output roots, anchored to the repository root |
 
 `activation` accepts `tanh`, `relu`, `sigmoid`, `gelu` and `swish`.
+
+### Other equations
+
+Systems live in [`src/baseline/systems.py`](src/baseline/systems.py). Adding one is a
+right-hand side `rhs(u, *params)` written with plain arithmetic, so the same function
+drives the PINN (torch) and the reference solver (SciPy), plus one `SYSTEMS` entry
+naming its parameters. Lorenz-1963 is already there:
+
+```python
+Config(problem="lorenz1963", params=(10.0, 28.0, 8 / 3), initial_state=(-8.0, 7.0, 27.0),
+       t_span=(0.0, 3.0))
+```
+
+`python run_lorenz1963.py` solves the RK4 baseline and trains the run-of-record
+configuration on it; `python run_lorenz1963.py causal` uses the causal-window
+configuration instead. Output goes to `runs/lorenz1963/`. The invariant figure and
+columns appear only for systems that declare quadratic invariants.
 
 > [!NOTE]
 > L-BFGS polishing is implemented but off by default, so the headline result is

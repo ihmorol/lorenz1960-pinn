@@ -147,7 +147,7 @@ def config_for(run_dir: str | Path) -> Config:
                                   if e not in ("", "nan")),
         causal_delta=float(row.get("causal_delta", 0.99)), causal_max_iters=int(row.get("causal_max_iters", 0)),
         warm_start=bool(row.get("warm_start", False)),
-        k=float(row.get("k", 2.0)), l=float(row.get("l", 1.0)),
+        params=(float(row.get("k", 2.0)), float(row.get("l", 1.0))),
         initial_state=tuple(json.loads(row["initial_state"])) if "initial_state" in row else (0.5, 0.75, 1.0),
         end_state=tuple(json.loads(row["end_state"])) if "end_state" in row and pd.notna(row["end_state"])
                   and row["end_state"] != "null" else None,

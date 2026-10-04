@@ -4,7 +4,11 @@ import pytest
 import torch
 
 from pinn.config import Config, reference_trajectory
-from pinn.pinn import PINN, ode_residual
+from pinn.functions.physics import residual
+from pinn.pinn import PINN
+
+LORENZ63 = Config(problem="lorenz1963", params=(10.0, 28.0, 8 / 3), initial_state=(-8.0, 7.0, 27.0),
+                  t_span=(0.0, 3.0))
 
 
 def test_hard_ic_exact():
@@ -14,15 +18,12 @@ def test_hard_ic_exact():
     assert torch.allclose(out, expected, atol=1e-6)
 
 
-def test_residual_zero_on_truth():
-    t, ys = reference_trajectory(Config(), n=1001)
+@pytest.mark.parametrize("cfg", [Config(), LORENZ63], ids=["lorenz1960", "lorenz1963"])
+def test_residual_zero_on_truth(cfg):
+    t, ys = reference_trajectory(cfg, n=30001)
     dudt = np.gradient(ys, t, axis=0)
-    r = ode_residual(
-        torch.tensor(ys, dtype=torch.float64),
-        torch.tensor(dudt, dtype=torch.float64),
-        Config().coefficients,
-    )
-    assert r[1:-1].abs().max().item() < 1e-2
+    r = residual(torch.tensor(ys), torch.tensor(dudt), cfg.system, cfg.params)
+    assert r[1:-1].abs().max().item() < 1e-2 * np.abs(dudt).max()
 
 
 def test_training_reduces_loss():
@@ -258,7 +259,7 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
     from pinn.train import save_results, train
 
     cfg = Config(depth=3, width=12, activation="gelu", epochs=10, n_collocation=16,
-                 k=1.3, l=0.8, initial_state=(0.25, 0.75, 1.0),
+                 params=(1.3, 0.8), initial_state=(0.25, 0.75, 1.0),
                  log_every=5, eval_every=5, print_every=0,
                  results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
     model, history = train(cfg)
@@ -267,7 +268,7 @@ def test_config_for_round_trips_a_finished_run(tmp_path):
     rebuilt = config_for(tmp_path)
     assert (rebuilt.depth, rebuilt.width, rebuilt.activation) == (3, 12, "gelu")
     assert rebuilt.ckpt_path == tmp_path / "history"
-    assert (rebuilt.k, rebuilt.l, rebuilt.initial_state) == (1.3, 0.8, (0.25, 0.75, 1.0))
+    assert (rebuilt.params, rebuilt.initial_state) == ((1.3, 0.8), (0.25, 0.75, 1.0))
 
 
 def test_load_run_reproduces_the_saved_prediction(tmp_path):
@@ -364,18 +365,27 @@ def test_run_of_record_config_is_unchanged():
     assert cfg.arch == "4x60"
 
 
-def test_problem_registry_matches_locked_baseline():
-    import numpy as np
-    from dataclasses import replace
-    from pinn.config import reference_trajectory
-    from pinn.functions.reference import solve_reference
+def test_system_registry_matches_locked_baseline():
+    from lorenz1960_baseline import Lorenz1960Config, solve_lorenz1960_scipy
 
-    cfg = Config(t_span=(0.0, 2.0))
-    t, ys = reference_trajectory(cfg, n=201)
-    generic = solve_reference(replace(cfg.spec, reference=None), t)
-    assert cfg.spec.name == "lorenz1960" and cfg.spec.dim == 3
-    assert np.abs(generic - ys).max() < 1e-8
-    assert np.abs(solve_reference(cfg.spec, t) - ys).max() < 1e-8
+    t, ys = reference_trajectory(Config(t_span=(0.0, 2.0)), n=201)
+    _, locked, _ = solve_lorenz1960_scipy(config=Lorenz1960Config(t_span=(0.0, 2.0), n_eval=201))
+    assert np.array_equal(ys, locked)
+
+
+def test_lorenz1963_trains_and_reports(tmp_path):
+    from dataclasses import replace
+    from pinn.train import save_results, train
+
+    cfg = replace(LORENZ63, depth=2, width=10, epochs=20, n_collocation=32, log_every=5, eval_every=5,
+                  print_every=0, results_dir=str(tmp_path), ckpt_dir=str(tmp_path / "history"))
+    model, history = train(cfg)
+    save_results(model, history, cfg)
+    summary = pd.read_csv(tmp_path / "run_summary.csv")
+    assert (summary.sigma.iloc[0], summary.rho.iloc[0]) == (10.0, 28.0)
+    assert not (tmp_path / "figures" / "invariant_drift.png").exists()
+    with pytest.raises(ValueError):
+        Config(problem="lorenz1963")
 
 
 def test_end_state_penalty_enters_the_loss():

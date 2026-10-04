@@ -1,4 +1,4 @@
-"""Train the Lorenz-1960 PINN, evaluate against the locked baseline, save results."""
+"""Train the PINN, evaluate against the reference solver, save results."""
 from __future__ import annotations
 
 import json
@@ -16,6 +16,10 @@ from .functions.collocation import latin_hypercube_points, uniform_points
 from .functions.losses import causal_loss
 from .functions.optimizers import adam_with_decay, run_lbfgs
 from .pinn import PINN, WindowedPINN, build_model, loss_terms, pinn_loss, residual_of as residual, residual_parts
+
+
+def _weights(state: dict) -> dict:
+    return {k: v for k, v in state.items() if not k.endswith("coeffs")}   # pre-registry buffer
 
 
 def _save_progress(cfg: Config, model, history: TrainHistory, **state) -> None:
@@ -40,7 +44,7 @@ def _load_progress(cfg: Config, model, device):
         state = torch.load(path, map_location=device)
     if json.loads(json.dumps(state["config"])) != json.loads(json.dumps(cfg.record())):
         raise ValueError(f"checkpoint configuration differs from {path}")
-    model.load_state_dict(state["model"])
+    model.load_state_dict(_weights(state["model"]))
     torch.set_rng_state(state["torch_rng"].cpu())
     np.random.set_state(state["numpy_rng"])
     if state["cuda_rng"] is not None and torch.cuda.is_available():
@@ -364,7 +368,7 @@ def collect_artifacts(model: PINN, history: TrainHistory, cfg: Config) -> figure
         pred=predict(model, t),
         ref=ref,
         history=history,
-        coefficients=cfg.coefficients,
+        coefficients=cfg.invariant_normal,
         collocation_t=grid,
         collocation_residual=residual_at(model, grid),
         dense_residual=residual_at(model, t),
@@ -399,7 +403,6 @@ def run_summary(
     metrics = run.metrics.set_index("state")
 
     row: dict[str, object] = {
-        # --- configuration
         "arch": cfg.arch, "problem": cfg.problem, "depth": cfg.depth, "width": cfg.width,
         "n_windows": cfg.n_windows, "causal_eps_schedule": " ".join(f"{e:g}" for e in cfg.causal_eps_schedule),
         "causal_delta": cfg.causal_delta, "causal_max_iters": cfg.causal_max_iters, "warm_start": cfg.warm_start,
@@ -412,11 +415,10 @@ def run_summary(
         "dtype": cfg.dtype, "ic_scale": cfg.ic_scale, "collocation": cfg.collocation,
         "n_eval": cfg.n_eval, "lr_decay": cfg.lr_decay if cfg.lr_decay is not None else float("nan"),
         "lr_decay_every": cfg.lr_decay_every,
-        "k": cfg.k, "l": cfg.l,
+        **dict(zip(cfg.system.params, cfg.params)),
         "initial_state": json.dumps(cfg.initial_state), "end_state": json.dumps(cfg.end_state),
     }
 
-    # --- accuracy, per state and combined
     for state in ("x", "y", "z", "combined_l2"):
         for metric in ("mae", "rmse", "max_abs_error"):
             row[f"{metric}_{state}"] = float(metrics.loc[state, metric])
@@ -426,7 +428,6 @@ def run_summary(
         ss_tot = float(((ref[:, j] - ref[:, j].mean()) ** 2).sum())
         row[f"rel_mae_{name}"] = float(np.abs(err[:, j]).mean() / span) if span else float("nan")
         row[f"r2_{name}"] = 1.0 - float((err[:, j] ** 2).sum()) / ss_tot if ss_tot else float("nan")
-        # Endpoint state: where the trajectory actually landed versus the truth.
         row[f"final_{name}"] = float(pred[-1, j])
         row[f"final_ref_{name}"] = float(ref[-1, j])
         row[f"final_err_{name}"] = float(err[-1, j])
@@ -435,7 +436,6 @@ def run_summary(
         row[f"err_norm_p{q}"] = float(np.percentile(err_norm, q))
     row["err_norm_max"] = float(err_norm.max())
 
-    # --- physics: does the ODE hold away from the points we trained on?
     coll = float(np.mean(np.asarray(run.collocation_residual) ** 2)) \
         if run.collocation_residual is not None else float("nan")
     dense = float(np.mean(np.asarray(run.dense_residual) ** 2)) \
@@ -450,14 +450,13 @@ def run_summary(
     row["residual_mse_dense"] = dense
     row["residual_generalisation_gap"] = dense / coll if coll else float("nan")
 
-    # --- conserved quantities
-    _, drift = figures.invariant_series(pred, run.coefficients)
-    _, ref_drift = figures.invariant_series(ref, run.coefficients)
-    for i in range(drift.shape[1]):
-        row[f"invariant_{i + 1}_max_drift"] = float(drift[:, i].max())
-        row[f"invariant_{i + 1}_max_drift_reference"] = float(ref_drift[:, i].max())
+    if run.coefficients is not None:
+        _, drift = figures.invariant_series(pred, run.coefficients)
+        _, ref_drift = figures.invariant_series(ref, run.coefficients)
+        for i in range(drift.shape[1]):
+            row[f"invariant_{i + 1}_max_drift"] = float(drift[:, i].max())
+            row[f"invariant_{i + 1}_max_drift_reference"] = float(ref_drift[:, i].max())
 
-    # --- cost
     wall = float(history.wall_clock_s)
     row["wall_clock_s"] = wall
     row["adam_steps"] = history.adam_iters
@@ -473,7 +472,6 @@ def run_summary(
                                                 if comparable_history and row["lbfgs_evals"] == 0
                                                 else float("nan"))
     row["device"] = next(model.parameters()).device.type
-    # CUDA-only; NaN on CPU, where torch exposes no equivalent counter.
     row["peak_mem_mb"] = (
         torch.cuda.max_memory_allocated() / 2**20 if torch.cuda.is_available() else float("nan")
     )
@@ -567,7 +565,7 @@ def load_run(cfg: Config | None = None) -> tuple[PINN, TrainHistory, Config]:
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device, weights_only=True)
     except TypeError:  # older torch
         state = torch.load(cfg.ckpt_path / "pinn.pt", map_location=device)
-    model.load_state_dict(state)
+    model.load_state_dict(_weights(state))
     return model, TrainHistory.from_saved(cfg.ckpt_path, cfg.results_path), cfg
 
 

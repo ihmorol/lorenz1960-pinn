@@ -1,4 +1,4 @@
-"""From-scratch PyTorch PINN for the Lorenz-1960 ODE system."""
+"""From-scratch PyTorch PINN for a three-state ODE system."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -10,7 +10,7 @@ from torch import Tensor, nn
 from .config import Config
 from .functions.derivative import time_derivative
 from .functions.losses import mean_squared_residual
-from .functions.physics import lorenz1960_rhs, residual
+from .functions.physics import residual, system_rhs
 from .functions.trial import hard_initial_condition
 from .functions.windows import split_windows
 
@@ -47,14 +47,13 @@ class PINN(nn.Module):
                 nn.init.zeros_(m.bias)
 
         self.ic, self.ic_scale, self.gamma = cfg.ic, cfg.ic_scale, cfg.gamma
-        self.problem = cfg.spec
+        self.system, self.params = cfg.system, cfg.params
         self.end_state = None if cfg.end_state is None else torch.tensor([cfg.end_state], dtype=cfg.torch_dtype)
         self.register_buffer("u0", torch.tensor([cfg.initial_state], dtype=cfg.torch_dtype))
-        self.register_buffer("coeffs", torch.as_tensor(cfg.coefficients, dtype=cfg.torch_dtype).reshape(1, 3))
         self.t0, self.tf = float(cfg.t_span[0]), float(cfg.t_span[1])
 
     def rhs(self, u: Tensor) -> Tensor:
-        return self.problem.rhs(u)
+        return system_rhs(u, self.system, self.params)
 
     def trial(self, t: Tensor, n: Tensor) -> Tensor:
         if self.ic == "hard":
@@ -63,14 +62,6 @@ class PINN(nn.Module):
 
     def forward(self, t: Tensor) -> Tensor:
         return self.trial(t, self.net(t))
-
-
-def ode_rhs(u: Tensor, coeffs) -> Tensor:
-    return lorenz1960_rhs(u, coeffs)
-
-
-def ode_residual(u: Tensor, dudt: Tensor, coeffs) -> Tensor:
-    return dudt - lorenz1960_rhs(u, coeffs)
 
 
 class WindowedPINN(nn.Module):
@@ -127,7 +118,7 @@ def residual_parts(model: PINN, t: Tensor) -> ResidualParts:
     n = model.net(t)
     u = model.trial(t, n)
     dudt = time_derivative(u, t)
-    return ResidualParts(n=n, u=u, dudt=dudt, f=model.rhs(u), r=residual(u, dudt, model.rhs))
+    return ResidualParts(n=n, u=u, dudt=dudt, f=model.rhs(u), r=residual(u, dudt, model.system, model.params))
 
 
 def residual_of(model: PINN, t: Tensor) -> Tensor:

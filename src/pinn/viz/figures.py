@@ -870,7 +870,7 @@ class RunArtifacts:
     pred: np.ndarray
     ref: np.ndarray
     history: "TrainHistory"
-    coefficients: np.ndarray
+    coefficients: np.ndarray | None
     collocation_t: np.ndarray
     collocation_residual: np.ndarray | None = None
     dense_residual: np.ndarray | None = None
@@ -934,8 +934,9 @@ def generate_all(
     emit("error_analysis", fig_error_analysis(run.t, run.pred, run.ref, run.label))
     emit("phase_portraits", fig_phase_portraits(run.pred, run.ref, run.label))
     emit("metrics_summary", fig_metrics_summary(run.metrics, run.label))
-    emit("invariant_drift",
-         fig_invariant_drift(run.t, run.pred, run.ref, run.coefficients, run.label))
+    if run.coefficients is not None:
+        emit("invariant_drift",
+             fig_invariant_drift(run.t, run.pred, run.ref, run.coefficients, run.label))
     if run.dense_residual is not None:
         emit("physics_residual", fig_physics_residual(run.t, run.dense_residual, run.label))
     return written
