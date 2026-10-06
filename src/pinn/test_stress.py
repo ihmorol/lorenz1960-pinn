@@ -77,9 +77,6 @@ def test_reference_conserves_null_space_invariants():
     assert drift.shape[1] == 2 and drift.max() < 1e-9
 
 
-@pytest.mark.xfail(reason="known bug: solve_lorenz1960_scipy ignores Lorenz1960Config.k/l "
-                          "because solve_ivp calls lorenz1960_rhs(t, y), which falls back "
-                          "to the default k=2, l=1", strict=True)
 def test_reference_uses_the_configured_k_and_l():
     """For k != 2 the reference the pipeline evaluates against must match an
     independent integration with the same coefficients. Today it silently
