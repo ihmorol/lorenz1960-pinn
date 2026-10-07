@@ -230,7 +230,9 @@ def test_sweep_writes_runs_and_comparison(tmp_path):
         assert (run / "run_summary.csv").exists()
         assert (run / "point_summary.csv").exists()
         assert (run / "history" / "pinn.pt").exists()
-        assert len(list((run / "breakdown").glob("epoch_*.csv"))) == 3
+        # every 6th epoch, the last Adam step, and the final trained state
+        assert sorted(f.name for f in (run / "breakdown").glob("epoch_*.csv")) == [
+            f"epoch_{e:06d}.csv" for e in (0, 6, 11, 12)]
     # A single-activation, single-seed sweep has nothing to say about either.
     written = {p.stem for p in (tmp_path / "figures").glob("*.png")}
     assert "architecture_heatmap" in written and "architecture_scatter" in written
