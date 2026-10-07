@@ -14,12 +14,12 @@ drive.mount('/content/drive')
 %cd /content
 !test -d /content/lorenz1960-pinn || git clone https://github.com/ihmorol/lorenz1960-pinn.git /content/lorenz1960-pinn
 %cd /content/lorenz1960-pinn
-!git fetch -q origin && git checkout -q PINNED_COMMIT
+!git fetch -q origin && git checkout -q ed43703
 !pip install -q pandas scipy matplotlib seaborn
 !python /content/lorenz1960-pinn/scripts/colab_suite.py --jobs 4
 ```
 
-`PINNED_COMMIT` is the reviewed revision; every suite invocation appends the
+`ed43703` is the reviewed revision; every suite invocation appends the
 commit, dirty flag, package versions and GPU to `runs/paper_ablations/environment.jsonl`.
 
 When it finishes, download `/content/lorenz1960-pinn/paper_ablations_results.zip`
