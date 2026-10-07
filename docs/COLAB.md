@@ -10,17 +10,26 @@ drive.mount('/content/drive')
 ```
 
 ```python
-# Cell 2: pinned checkout, install, run
+# Cell 2: pinned checkout, install, run (one && chain: nothing runs if the checkout fails)
 %cd /content
 !test -d /content/lorenz1960-pinn || git clone https://github.com/ihmorol/lorenz1960-pinn.git /content/lorenz1960-pinn
 %cd /content/lorenz1960-pinn
-!git fetch -q origin && git checkout -q ed43703
-!pip install -q pandas scipy matplotlib seaborn
-!python /content/lorenz1960-pinn/scripts/colab_suite.py --jobs 4
+!git fetch -q origin feat/colab-ablation-suite && git checkout -q --force ed43703 && git log -1 --oneline && pip install -q pandas scipy matplotlib seaborn && python /content/lorenz1960-pinn/scripts/colab_suite.py --jobs 4
 ```
 
-`ed43703` is the reviewed revision; every suite invocation appends the
-commit, dirty flag, package versions and GPU to `runs/paper_ablations/environment.jsonl`.
+The code is not on `main` yet. The clone starts on `main`, which has no
+`scripts/`; the fetch + checkout switches to `ed43703` (the reviewed revision
+on `feat/colab-ablation-suite`), and the printed line must start with `ed43703`.
+`--force` matters when `/content/lorenz1960-pinn` survives from an earlier
+attempt: that run edited tracked files such as `ablations.csv`, which makes a
+plain checkout abort and would leave the old code in place. It only resets
+tracked files (all regenerated from run summaries); new run directories and
+checkpoints are untracked and kept. Outputs of the old code that no longer
+belong to the plan (`r3_causal_single_seed1/2`, `sequential_single_net`) are
+ignored by the suite; delete them if present.
+
+Every suite invocation appends the commit, dirty flag, package versions and GPU
+to `runs/paper_ablations/environment.jsonl`.
 
 When it finishes, download `/content/lorenz1960-pinn/paper_ablations_results.zip`
 (also copied to `MyDrive/lorenz1960-pinn-ablation/paper_ablations/`), unzip it
