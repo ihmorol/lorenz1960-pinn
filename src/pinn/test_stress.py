@@ -104,6 +104,30 @@ def test_generic_reference_path_is_coefficient_correct():
     assert np.abs(generic - sol.y.T).max() < 1e-8
 
 
+def test_run_record_is_portable_across_machines(tmp_path):
+    """A committed config.json written on another machine carries that machine's
+    absolute output paths; ensure_record must compare only run settings, so a
+    run of record can be resumed anywhere (Colab suite depends on this)."""
+    import json
+
+    cfg = Config(t_span=(0.0, 1.0), epochs=10)
+    ckpt = tmp_path / "history"
+    ckpt.mkdir()
+    record = cfg.record()
+    record["results_dir"] = "/foreign/machine/results"
+    record["ckpt_dir"] = "/foreign/machine/history"
+    record["runs_dir"] = "/foreign/machine/runs"
+    (ckpt / "config.json").write_text(json.dumps(record))
+    replace(cfg, ckpt_dir=str(ckpt)).ensure_record()
+
+    changed = replace(cfg, ckpt_dir=str(ckpt), epochs=11)
+    try:
+        changed.ensure_record()
+        raise SystemError("a genuinely different configuration must be rejected")
+    except ValueError:
+        pass
+
+
 # ---------------------------------------------------------------------------
 # Stages 1-3: trial solution, autograd derivative, residual assembly
 # ---------------------------------------------------------------------------

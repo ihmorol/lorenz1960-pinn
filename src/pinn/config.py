@@ -141,8 +141,15 @@ class Config:
 
     def ensure_record(self) -> None:
         path = self.ckpt_path / "config.json"
+        # The three output directories are anchored to the machine's repo root,
+        # so they differ across machines; resuming a committed run elsewhere is
+        # exactly the point of the record. Only real settings are compared.
+        paths = ("results_dir", "ckpt_dir", "runs_dir")
         if path.exists():
-            if json.loads(path.read_text()) != json.loads(json.dumps(self.record())):
+            existing = json.loads(path.read_text())
+            mine = json.loads(json.dumps(self.record()))
+            if {k: v for k, v in existing.items() if k not in paths} != \
+                    {k: v for k, v in mine.items() if k not in paths}:
                 raise ValueError(f"run configuration differs from {path}; choose a new run directory")
             return
         if (self.ckpt_path / "pinn.pt").exists() or (self.ckpt_path / "progress.pt").exists():

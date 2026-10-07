@@ -59,7 +59,7 @@ def main() -> None:
     started = time.perf_counter()
     for k in range(args.windows):
         m = (pts >= spans[k]) & (pts <= spans[k + 1])
-        t = torch.tensor(pts[m].reshape(-1, 1), dtype=torch.float64)
+        t = torch.tensor(pts[m].reshape(-1, 1), dtype=torch.float64, requires_grad=True)
         u0 = anchors[-1].clone()
         opt, _ = adam_with_decay(net.parameters(), replace(base, epochs=args.epochs_per_window))
         for _ in range(args.epochs_per_window):

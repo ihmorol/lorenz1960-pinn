@@ -57,7 +57,10 @@ def main() -> None:
     base = config_for(CANDIDATE)
     out = _REPO / OUT
     out.mkdir(parents=True, exist_ok=True)
-    rows = []
+    csv_path = out / "ablations.csv"
+    # a previous invocation (possibly on another machine) may have already
+    # recorded arms; keep those rows and replace by arm name as we go
+    rows = pd.read_csv(csv_path).to_dict("records") if csv_path.exists() else []
     started = time.perf_counter()
     for name, cfg in arms(base, seeds):
         if not name.startswith(wanted):
@@ -66,12 +69,13 @@ def main() -> None:
         print(f"\n=== {name} ({(time.perf_counter() - started) / 60:.1f} min elapsed) ===",
               flush=True)
         row = run_one(cfg, resume=True).iloc[0]
-        rows.append({"arm": name, "seed": cfg.seed, "arch": cfg.arch,
-                     "final_loss": row["final_loss"],
-                     "rmse_combined_l2": row["rmse_combined_l2"],
-                     "max_abs_error": row["max_abs_error_combined_l2"],
-                     "wall_clock_s": row["wall_clock_s"]})
-        pd.DataFrame(rows).to_csv(out / "ablations.csv", index=False)
+        entry = {"arm": name, "seed": cfg.seed, "arch": cfg.arch,
+                 "final_loss": row["final_loss"],
+                 "rmse_combined_l2": row["rmse_combined_l2"],
+                 "max_abs_error": row["max_abs_error_combined_l2"],
+                 "wall_clock_s": row["wall_clock_s"]}
+        rows = [r for r in rows if r.get("arm") != name] + [entry]
+        pd.DataFrame(rows).to_csv(csv_path, index=False)
     print(pd.DataFrame(rows).to_string(index=False))
 
 
