@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lorenz-1960 (k, l) loop explorer</title>
+<style>
+  :root { --bg:#0b1220; --panel:#111a2c; --line:#22304a; --text:#dbe4f0; --dim:#8ea0b8;
+          --accent:#22d3ee; --x:#38bdf8; --y:#f472b6; --z:#a3e635; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; background:var(--bg); color:var(--text);
+              font:14px/1.45 "Segoe UI", system-ui, sans-serif; }
+  #app { display:flex; height:100vh; }
+  #panel { width:330px; min-width:330px; overflow-y:auto; padding:14px 16px;
+           background:var(--panel); border-right:1px solid var(--line); }
+  #view { flex:1; display:flex; flex-direction:column; min-width:0; }
+  #three-container { flex:1; position:relative; min-height:0; }
+  #timeseries { height:170px; width:100%; background:var(--panel); border-top:1px solid var(--line); }
+  h1 { font-size:16px; margin:0 0 2px; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:12px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+       margin:16px 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .row { display:flex; align-items:center; gap:8px; margin:7px 0; }
+  .row label { width:96px; color:var(--dim); font-size:12.5px; }
+  .row input[type=range] { flex:1; }
+  .row input[type=number] { width:66px; background:#0b1220; color:var(--text);
+       border:1px solid var(--line); border-radius:4px; padding:3px 5px; font-size:12.5px; }
+  .val { width:52px; text-align:right; font-variant-numeric:tabular-nums; color:var(--accent); }
+  button { background:#1c2a44; color:var(--text); border:1px solid var(--line); border-radius:5px;
+           padding:5px 10px; cursor:pointer; font-size:12.5px; }
+  button:hover { background:#24365a; }
+  button.primary { background:#0e7490; border-color:#0e7490; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .readout { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:12.5px; }
+  .readout dt { color:var(--dim); } .readout dd { margin:0; font-variant-numeric:tabular-nums; }
+  .note { color:var(--dim); font-size:11.5px; margin-top:6px; }
+  .warn { color:#fbbf24; font-size:12px; min-height:15px; margin-top:4px; }
+  select { background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:4px; padding:3px; }
+  input[type=checkbox] { accent-color:#0e7490; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <h1>Lorenz-1960 (k, l) loop explorer</h1>
+    <div class="sub">Reference RHS only, no PINN. Initial state (0.5, 0.75, 1.0).
+      Drag the 3D view to orbit, scroll to zoom.</div>
+
+    <h2>Parameters</h2>
+    <div class="row"><label>k</label><input type="range" id="kSlider"><input type="number" id="kNum" step="0.05"><span class="val" id="kVal"></span></div>
+    <div class="row"><label>l</label><input type="range" id="lSlider"><input type="number" id="lNum" step="0.05"><span class="val" id="lVal"></span></div>
+    <div class="row"><label>time horizon T</label><input type="range" id="tSlider" min="1" max="50" step="0.5" value="15"><input type="number" id="tNum" step="0.5" value="15"><span class="val" id="tVal"></span></div>
+    <div class="row"><label>speed (t-units/s)</label><input type="range" id="speed" min="0.25" max="20" step="0.25" value="2"><span class="val" id="speedVal">2</span></div>
+    <div class="row">
+      <button class="primary" id="replay">&#9654; Replay growth</button>
+      <button id="playPause">&#10073;&#10073; Pause</button>
+      <label style="color:var(--dim); font-size:12px;"><input type="checkbox" id="instant"> instant</label>
+    </div>
+    <div class="warn" id="warn"></div>
+
+    <h2>Preset (k, l)</h2>
+    <div class="chips" id="presets"></div>
+
+    <h2>k / l range (sliders + family)</h2>
+    <div class="grid2">
+      <div class="row"><label>k min</label><input type="number" id="kMin" value="0.5" step="0.1"></div>
+      <div class="row"><label>k max</label><input type="number" id="kMax" value="5" step="0.1"></div>
+      <div class="row"><label>l min</label><input type="number" id="lMin" value="0.5" step="0.1"></div>
+      <div class="row"><label>l max</label><input type="number" id="lMax" value="5" step="0.1"></div>
+    </div>
+    <div class="row"><button id="applyRange">Apply range</button>
+      <span class="note">negatives allowed (loop runs backwards); k or l = 0 is singular</span></div>
+
+    <h2>Loop family overlay</h2>
+    <div class="row">
+      <select id="familyN">
+        <option value="256">256 loops</option>
+        <option value="1024" selected>1,024 loops</option>
+        <option value="4096">4,096 loops</option>
+        <option value="10000">10,000 loops</option>
+      </select>
+      <button id="familyBtn">Overlay family</button>
+    </div>
+    <div class="row"><label><input type="checkbox" id="familyShow" checked> show family</label>
+      <button id="familyClear">clear</button></div>
+    <div class="note">One sampled loop per (k, l) grid point across the range above,
+      each integrated to T. Hue encodes k (blue = k min &rarr; red = k max).</div>
+
+    <h2>Loop readout (current k, l, T)</h2>
+    <dl class="readout">
+      <dt>period (x-mean crossings)</dt><dd id="roPeriod">–</dd>
+      <dt>full cycles within T</dt><dd id="roCycles">–</dd>
+      <dt>max |x|, |y|, |z|</dt><dd id="roMax">–</dd>
+      <dt>sim time shown</dt><dd id="roT">–</dd>
+    </dl>
+    <div class="note">Period counts crossings of x &minus; &lt;x&gt; (two per cycle), so loops that
+      never cross x = 0 are still measured. Values near T are lower bounds — lengthen T to resolve.</div>
+  </div>
+
+  <div id="view">
+    <div id="three-container"></div>
+    <canvas id="timeseries"></canvas>
+  </div>
+</div>
+
+<!-- ===================== math core (plain script, reusable/testable) ===================== -->
+<script>
+"use strict";
+// Lorenz-1960 maximum-simplification RHS: x' = a y z, y' = b x z, z' = c x y
+// with a, b, c the locked-baseline coefficient functions of the wavenumbers k, l.
+// Same equations as src/baseline/lorenz1960_baseline.py and the SciPy reference.
+const IC = [0.5, 0.75, 1.0];
+
+function lorenz1960Coeffs(k, l) {
+  const a = k * l * (1 / (k * k + l * l) - 1 / (k * k));
+  const b = k * l * (1 / (l * l) - 1 / (k * k + l * l));
+  const c = 0.5 * k * l * (1 / (k * k) - 1 / (l * l));
+  return [a, b, c];
+}
+
+function lorenz1960Deriv(a, b, c, s) {
+  return [a * s[1] * s[2], b * s[0] * s[2], c * s[0] * s[1]];
+}
+
+function rk4Step(a, b, c, s, h) {
+  const k1 = lorenz1960Deriv(a, b, c, s);
+  const s2 = [s[0] + 0.5 * h * k1[0], s[1] + 0.5 * h * k1[1], s[2] + 0.5 * h * k1[2]];
+  const k2 = lorenz1960Deriv(a, b, c, s2);
+  const s3 = [s[0] + 0.5 * h * k2[0], s[1] + 0.5 * h * k2[1], s[2] + 0.5 * h * k2[2]];
+  const k3 = lorenz1960Deriv(a, b, c, s3);
+  const s4 = [s[0] + h * k3[0], s[1] + h * k3[1], s[2] + h * k3[2]];
+  const k4 = lorenz1960Deriv(a, b, c, s4);
+  const sixth = h / 6;
+  return [s[0] + sixth * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+          s[1] + sixth * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
+          s[2] + sixth * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])];
+}
+
+// Integrate one (k, l) from IC to T; decimate so at most maxPoints samples are kept.
+// Step adapts to the coefficient magnitude so stiff corners stay accurate.
+function integrateLoop(k, l, T, maxPoints) {
+  maxPoints = maxPoints || 20000;
+  const [a, b, c] = lorenz1960Coeffs(k, l);
+  const cmax = Math.max(Math.abs(a), Math.abs(b), Math.abs(c), 1e-9);
+  const h = Math.min(0.002, 0.05 / cmax);
+  const nSteps = Math.max(1, Math.round(T / h));
+  const storeEvery = Math.max(1, Math.ceil(nSteps / maxPoints));
+  const ts = [0], xs = [IC[0]], ys = [IC[1]], zs = [IC[2]];
+  let s = IC.slice();
+  for (let i = 1; i <= nSteps; i++) {
+    s = rk4Step(a, b, c, s, h);
+    if (i % storeEvery === 0 || i === nSteps) {
+      ts.push(i * h); xs.push(s[0]); ys.push(s[1]); zs.push(s[2]);
+    }
+  }
+  return { ts, xs, ys, zs, h, nSteps };
+}
+
+// Oscillation period from crossings of x - mean(x): a periodic signal crosses its
+// own mean twice per cycle, so this works even for loops that never cross x = 0.
+function loopStats(traj) {
+  const { ts, xs, ys, zs } = traj;
+  const T = ts[ts.length - 1];
+  let mx = 0; for (const v of xs) mx += v; mx /= xs.length;
+  let cross = 0;
+  for (let i = 1; i < xs.length; i++) {
+    if ((xs[i - 1] - mx) * (xs[i] - mx) < 0) cross++;
+  }
+  const period = cross >= 2 ? 2 * T / cross : null;   // null: slower than the horizon
+  const maxAbs = [0, 0, 0];
+  for (let i = 0; i < xs.length; i++) {
+    maxAbs[0] = Math.max(maxAbs[0], Math.abs(xs[i]));
+    maxAbs[1] = Math.max(maxAbs[1], Math.abs(ys[i]));
+    maxAbs[2] = Math.max(maxAbs[2], Math.abs(zs[i]));
+  }
+  return { meanX: mx, crossings: cross, period, cycles: Math.floor(cross / 2), maxAbs, T };
+}
+
+if (typeof module !== "undefined") {   // node smoke-test hook
+  module.exports = { IC, lorenz1960Coeffs, lorenz1960Deriv, rk4Step, integrateLoop, loopStats };
+}
+</script>
+
+<!-- ===================== UI (three.js scene + controls) ===================== -->
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const $ = id => document.getElementById(id);
+const clampAbs = v => Math.abs(v) < 0.02 ? 0.02 * Math.sign(v || 1) : v;
+
+// ---------- state ----------
+const state = {
+  k: 2.0, l: 1.0, T: 15, speed: 2,
+  kMin: 0.5, kMax: 5, lMin: 0.5, lMax: 5,
+  playing: true, revealT: 0, traj: null, stats: null,
+};
+
+// ---------- three.js scene ----------
+const container = $("three-container");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 500);
+camera.position.set(14, 10, 16);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(10, 15, 8);
+scene.add(dirLight);
+
+// trajectory line: preallocated buffer, revealed via drawRange
+const MAXPTS = 60000;
+const trajPos = new Float32Array(MAXPTS * 3);
+const trajGeo = new THREE.BufferGeometry();
+trajGeo.setAttribute("position", new THREE.BufferAttribute(trajPos, 3));
+trajGeo.setDrawRange(0, 0);
+const trajLine = new THREE.Line(trajGeo, new THREE.LineBasicMaterial({ color: 0x22d3ee }));
+trajLine.frustumCulled = false;
+scene.add(trajLine);
+
+// markers: initial state (fixed) and the growing tip
+const icMarker = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12),
+                                new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+scene.add(icMarker);
+const tipMarker = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12),
+                                 new THREE.MeshBasicMaterial({ color: 0xf8fafc }));
+scene.add(tipMarker);
+
+// static frame axes + labels, rebuilt when the data bounding box changes
+const frameGroup = new THREE.Group();
+scene.add(frameGroup);
+
+function textSprite(text, color) {
+  const cvs = document.createElement("canvas");
+  cvs.width = 256; cvs.height = 64;
+  const ctx = cvs.getContext("2d");
+  ctx.font = "bold 44px 'Segoe UI', sans-serif";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 128, 32);
+  const tex = new THREE.CanvasTexture(cvs);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+  sprite.scale.set(1.6, 0.4, 1);
+  return sprite;
+}
+
+function buildFrame(bb) {
+  frameGroup.clear();
+  const center = bb.getCenter(new THREE.Vector3());
+  const size = bb.getSize(new THREE.Vector3());
+  const r = 0.5 * Math.max(size.x, size.y, size.z);
+  const axes = [
+    [[center.x - r * 1.15, center.y, center.z], [center.x + r * 1.15, center.y, center.z], "#38bdf8", "x"],
+    [[center.x, center.y - r * 1.15, center.z], [center.x, center.y + r * 1.15, center.z], "#f472b6", "y"],
+    [[center.x, center.y, center.z - r * 1.15], [center.x, center.y, center.z + r * 1.15], "#a3e635", "z"],
+  ];
+  for (const [p0, p1, color, name] of axes) {
+    const g = new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(...p0), new THREE.Vector3(...p1)]);
+    frameGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color })));
+    const label = textSprite(name, color);
+    label.position.set(...p1);
+    frameGroup.add(label);
+  }
+  frameGroup.add(new THREE.Box3Helper(bb, 0x22304a));
+}
+
+// ---------- family overlay ----------
+let familyGroup = null;
+function clearFamily() {
+  if (familyGroup) {
+    scene.remove(familyGroup);
+    familyGroup.traverse(o => { o.geometry && o.geometry.dispose(); });
+    familyGroup = null;
+  }
+}
+
+function buildFamily() {
+  clearFamily();
+  const nSide = Math.ceil(Math.sqrt(parseInt($("familyN").value, 10)));
+  const kmin = state.kMin, kmax = state.kMax, lmin = state.lMin, lmax = state.lMax;
+  const positions = [];
+  const colors = [];
+  const c = new THREE.Color();
+  for (let i = 0; i < nSide; i++) {
+    const k = clampAbs(kmin + (kmax - kmin) * (i / (nSide - 1 || 1)));
+    const hue = 0.62 * (1 - i / (nSide - 1 || 1));   // blue (k min) -> red (k max)
+    for (let j = 0; j < nSide; j++) {
+      const l = clampAbs(lmin + (lmax - lmin) * (j / (nSide - 1 || 1)));
+      const tr = integrateLoop(k, l, state.T, 320);
+      c.setHSL(hue, 0.75, 0.55);
+      for (let p = 1; p < tr.xs.length; p++) {
+        positions.push(tr.xs[p - 1], tr.ys[p - 1], tr.zs[p - 1],
+                       tr.xs[p], tr.ys[p], tr.zs[p]);
+        colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+  const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.28 });
+  familyGroup = new THREE.LineSegments(geo, mat);
+  familyGroup.frustumCulled = false;
+  familyGroup.visible = $("familyShow").checked;
+  scene.add(familyGroup);
+}
+
+// ---------- trajectory computation + fitting ----------
+function recompute(replay) {
+  const k = clampAbs(state.k), l = clampAbs(state.l);
+  state.traj = integrateLoop(k, l, state.T, 20000);
+  state.stats = loopStats(state.traj);
+
+  // bounding box over the full loop (plus a little margin) -> frame + camera fit
+  const bb = new THREE.Box3();
+  const { ts, xs, ys, zs } = state.traj;
+  for (let i = 0; i < ts.length; i++) bb.expandByPoint(new THREE.Vector3(xs[i], ys[i], zs[i]));
+  bb.expandByScalar(0.05 * bb.getSize(new THREE.Vector3()).length() + 0.01);
+  buildFrame(bb);
+  const center = bb.getCenter(new THREE.Vector3());
+  const size = bb.getSize(new THREE.Vector3());
+  const scale = 9 / Math.max(size.x, size.y, size.z, 1e-9);
+  for (let i = 0; i < ts.length; i++) {
+    trajPos[3 * i]     = (xs[i] - center.x) * scale;
+    trajPos[3 * i + 1] = (ys[i] - center.y) * scale;
+    trajPos[3 * i + 2] = (zs[i] - center.z) * scale;
+  }
+  trajGeo.attributes.position.needsUpdate = true;
+  icMarker.position.set((IC[0] - center.x) * scale, (IC[1] - center.y) * scale, (IC[2] - center.z) * scale);
+  tipMarker.visible = !$("instant").checked;
+
+  // readouts
+  $("roPeriod").textContent = state.stats.period
+    ? state.stats.period.toFixed(3) + " time units" : "not resolved within T";
+  $("roCycles").textContent = state.stats.cycles;
+  const m = state.stats.maxAbs;
+  $("roMax").textContent = m[0].toFixed(3) + ", " + m[1].toFixed(3) + ", " + m[2].toFixed(3);
+
+  drawTimeseries();
+  if (replay || $("instant").checked) {
+    state.revealT = $("instant").checked ? state.T : 0;
+    if (!$("instant").checked) setPlaying(true);
+  }
+  updateReveal();
+}
+
+function updateReveal() {
+  const { ts } = state.traj;
+  let n = 1;
+  if ($("instant").checked) n = ts.length;
+  else {
+    while (n < ts.length && ts[n] <= state.revealT) n++;
+  }
+  trajGeo.setDrawRange(0, n);
+  const i = Math.min(n - 1, ts.length - 1);
+  tipMarker.visible = !$("instant").checked && n < ts.length;
+  tipMarker.position.set(trajPos[3 * i], trajPos[3 * i + 1], trajPos[3 * i + 2]);
+  $("roT").textContent = ts[i].toFixed(2) + " / " + state.T.toFixed(1);
+}
+
+// ---------- time-series canvas ----------
+const tsCanvas = $("timeseries");
+function drawTimeseries() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = tsCanvas.clientWidth, h = tsCanvas.clientHeight;
+  tsCanvas.width = w * dpr; tsCanvas.height = h * dpr;
+  const ctx = tsCanvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  if (!state.traj) return;
+  const { ts, xs, ys, zs } = state.traj;
+  const pad = { l: 42, r: 10, t: 18, b: 20 };
+  const series = [[xs, "#38bdf8", "x"], [ys, "#f472b6", "y"], [zs, "#a3e635", "z"]];
+  let lo = Infinity, hi = -Infinity;
+  for (const [arr] of series) for (const v of arr) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const span = (hi - lo) || 1; lo -= 0.08 * span; hi += 0.08 * span;
+  const X = t => pad.l + (t / state.T) * (w - pad.l - pad.r);
+  const Y = v => pad.t + (1 - (v - lo) / (hi - lo)) * (h - pad.t - pad.b);
+
+  ctx.strokeStyle = "#22304a"; ctx.fillStyle = "#8ea0b8"; ctx.font = "10px sans-serif";
+  ctx.strokeRect(pad.l, pad.t, w - pad.l - pad.r, h - pad.t - pad.b);
+  for (let g = 0; g <= 4; g++) {
+    const v = lo + (hi - lo) * g / 4;
+    ctx.fillText(v.toFixed(1), 4, Y(v) + 3);
+  }
+  ctx.fillText("t = " + state.T.toFixed(1), w - 60, h - 6);
+  for (const [arr, color] of series) {
+    ctx.beginPath();
+    for (let i = 0; i < ts.length; i++) {
+      const px = X(ts[i]), py = Y(arr[i]);
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+  }
+  // reveal progress
+  if (!$("instant").checked) {
+    const px = X(Math.min(state.revealT, state.T));
+    ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, h - pad.b); ctx.stroke();
+    ctx.fillStyle = "#dbe4f0"; ctx.font = "11px sans-serif";
+    ctx.fillText("x", 6, pad.t - 5); ctx.fillStyle = "#38bdf8"; ctx.fillText("blue", 16, pad.t - 5);
+    ctx.fillStyle = "#f472b6"; ctx.fillText("y", 46, pad.t - 5);
+    ctx.fillStyle = "#a3e635"; ctx.fillText("z", 62, pad.t - 5);
+  }
+}
+
+// ---------- animation ----------
+let lastFrame = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((now - lastFrame) / 1000, 0.1);
+  lastFrame = now;
+  if (state.playing && !$("instant").checked && state.traj) {
+    state.revealT += dt * state.speed;
+    if (state.revealT >= state.T) { state.revealT = state.T; setPlaying(false); }
+    updateReveal();
+    drawTimeseries();
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function setPlaying(p) {
+  state.playing = p;
+  $("playPause").innerHTML = p ? "&#10073;&#10073; Pause" : "&#9654; Play";
+}
+
+// ---------- controls wiring ----------
+function syncSlider(id, value, min, max) {
+  const s = $(id), n = $(id.replace("Slider", "Num"));
+  if (min !== undefined) { s.min = min; s.max = max; }
+  s.step = (parseFloat(s.max) - parseFloat(s.min)) / 200;
+  s.value = value; if (n) n.value = value.toFixed(2);
+  $(id.replace("Slider", "Val")).textContent = value.toFixed(2);
+}
+
+function refreshSliders() {
+  syncSlider("kSlider", state.k, state.kMin, state.kMax);
+  syncSlider("lSlider", state.l, state.lMin, state.lMax);
+}
+
+let recomputeTimer = null;
+function scheduleRecompute(replay) {
+  clearTimeout(recomputeTimer);
+  recomputeTimer = setTimeout(() => recompute(replay), 60);
+}
+
+function bindPair(prefix, get, set) {
+  const slider = $(prefix + "Slider"), num = $(prefix + "Num");
+  slider.addEventListener("input", () => {
+    state[get] = parseFloat(slider.value);
+    $(prefix + "Num").value = state[get].toFixed(2);
+    $(prefix + "Val").textContent = state[get].toFixed(2);
+    scheduleRecompute(true);
+  });
+  num.addEventListener("change", () => {
+    let v = parseFloat(num.value);
+    if (!isFinite(v)) return;
+    v = clampAbs(v);
+    state[get] = v;
+    $(prefix + "Val").textContent = v.toFixed(2);
+    scheduleRecompute(true);
+  });
+}
+bindPair("k", "k");
+bindPair("l", "l");
+
+$("tSlider").addEventListener("input", () => {
+  state.T = parseFloat($("tSlider").value);
+  $("tNum").value = state.T; $("tVal").textContent = state.T.toFixed(1);
+  scheduleRecompute(false);
+});
+$("tNum").addEventListener("change", () => {
+  const v = parseFloat($("tNum").value);
+  if (isFinite(v) && v > 0) {
+    state.T = Math.min(v, 200); $("tSlider").value = Math.min(state.T, 50);
+    $("tVal").textContent = state.T.toFixed(1);
+    scheduleRecompute(false);
+  }
+});
+$("speed").addEventListener("input", () => {
+  state.speed = parseFloat($("speed").value);
+  $("speedVal").textContent = state.speed.toFixed(2);
+});
+
+$("replay").addEventListener("click", () => { state.revealT = 0; setPlaying(true); updateReveal(); });
+$("playPause").addEventListener("click", () => setPlaying(!state.playing));
+$("instant").addEventListener("change", () => { updateReveal(); drawTimeseries(); });
+
+// presets: default, sweep corners, the k=l diagonal, and a near-separatrix pair
+const PRESETS = [
+  [2, 1, "default (2, 1)"], [3, 2, "(3, 2)"], [4, 1, "fast (4, 1)"],
+  [1, 3, "(1, 3)"], [2, 2, "diagonal (2, 2)"], [1.5118, 0.8728, "separatrix (1.512, 0.873)"],
+];
+for (const [pk, pl, name] of PRESETS) {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.addEventListener("click", () => {
+    state.k = pk; state.l = pl; refreshSliders();
+    scheduleRecompute(true);
+  });
+  $("presets").appendChild(b);
+}
+
+$("applyRange").addEventListener("click", () => {
+  let kmin = parseFloat($("kMin").value), kmax = parseFloat($("kMax").value);
+  let lmin = parseFloat($("lMin").value), lmax = parseFloat($("lMax").value);
+  if (![kmin, kmax, lmin, lmax].every(isFinite) || kmin >= kmax || lmin >= lmax) {
+    $("warn").textContent = "invalid range: min must be below max";
+    return;
+  }
+  $("warn").textContent = (kmin * kmax <= 0 || lmin * lmax <= 0)
+    ? "range includes 0 — exact zero is singular, near-zero loops are very fast" : "";
+  state.kMin = kmin; state.kMax = kmax; state.lMin = lmin; state.lMax = lmax;
+  state.k = Math.min(Math.max(state.k, kmin), kmax);
+  state.l = Math.min(Math.max(state.l, lmin), lmax);
+  refreshSliders();
+  if (familyGroup) buildFamily();   // rebuild the family on the new range
+});
+
+$("familyBtn").addEventListener("click", () => {
+  $("warn").textContent = "computing family…";
+  requestAnimationFrame(() => {
+    const t0 = performance.now();
+    buildFamily();
+    $("warn").textContent = "family of " + $("familyN").value + " loops built in "
+      + (performance.now() - t0).toFixed(0) + " ms";
+  });
+});
+$("familyShow").addEventListener("change", () => {
+  if (familyGroup) familyGroup.visible = $("familyShow").checked;
+});
+$("familyClear").addEventListener("click", () => { clearFamily(); $("warn").textContent = ""; });
+
+// ---------- resize + start ----------
+function resize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
+  drawTimeseries();
+}
+window.addEventListener("resize", resize);
+new ResizeObserver(resize).observe(container);
+
+refreshSliders();
+recompute(true);
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
