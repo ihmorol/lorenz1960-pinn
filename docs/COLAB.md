@@ -1,7 +1,10 @@
 # Run the paper ablation suite on Colab
 
-One notebook cell, using only this branch. Runtime ~2.5–3.5 h on a T4 GPU;
-if the runtime disconnects, rerun the same cell — finished arms are skipped.
+One notebook cell, using only this branch. The script mounts Google Drive and
+syncs results to `MyDrive/lorenz1960-pinn-ablation/` after every arm, so a
+runtime disconnect loses at most the arm in flight. Runtime ~2.5–3.5 h on a
+T4 GPU; if the runtime disconnects, rerun the same cell — finished arms are
+restored from Drive and skipped.
 
 ```python
 !git clone --branch feat/colab-ablation-suite https://github.com/ihmorol/lorenz1960-pinn.git
