@@ -7,8 +7,7 @@ Arms, all derived from the candidate-1536pt run of record via its config.json:
   r2_no_warm_seedS     windowed-27, causal on, warm start off
   r4_candidate_seedS   the candidate config itself, seeds 1-4 (seed 0 exists)
   r3_causal_single     single network + the causal schedule (isolates windowing)
-  r5_param_matched     single network 4x320 (~307k params), plain, same budget
-                       as the failing full-interval run
+Optimizer budgets are kept exactly as the candidate's; nothing is increased.
 Resume-safe: finished arms are skipped, interrupted ones redone.
 
 Usage:
@@ -39,17 +38,14 @@ def arms(base, seeds):
                                                causal_max_iters=0, epochs=1300)
         yield f"r2_no_warm_seed{s}", replace(base, seed=s, warm_start=False)
         yield f"r4_candidate_seed{s}", replace(base, seed=s)
-    yield f"r3_causal_single_seed{seeds[0]}", replace(
-        base, n_windows=1, n_collocation=39793, collocation="lhs",
-        epochs=40000, lbfgs_iters=5000)
-    yield f"r5_param_matched_seed{seeds[0]}", replace(
-        base, n_windows=1, width=320, n_collocation=39793, collocation="lhs",
-        causal_eps_schedule=(), causal_max_iters=0, epochs=40000, lbfgs_iters=5000)
+        yield f"r3_causal_single_seed{s}", replace(
+            base, seed=s, n_windows=1, n_collocation=39793, collocation="lhs",
+            epochs=40000, lbfgs_iters=5000)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--arms", default="r1,r2,r4,r3,r5",
+    ap.add_argument("--arms", default="r1,r2,r4,r3",
                     help="comma list of arm prefixes to run (default: all)")
     ap.add_argument("--seeds", default="1,2,3", help="seeds for the windowed arms")
     args = ap.parse_args()
