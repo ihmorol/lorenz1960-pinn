@@ -1,66 +1,62 @@
-"""Reference-free physics checks on the candidate run's prediction (R7).
+"""Reference-free physics checks (R7) for the candidate and every finished ablation run.
 
-Loads the candidate-1536pt windowed checkpoint, predicts the 13,265-point
-evaluation grid, and reports two dynamical-systems metrics that need no
-reference fit: drift of the conserved quadratic E = 16x^2 + y^2 (k=2, l=1)
-and the dominant FFT period, each against the same metric on the DOP853
-reference.
+Per run, on the 13,265-point evaluation grid, prediction vs DOP853 reference:
+- invariant drift: max |E(t) - E(0)| / |E(0)| of the conserved E = k^4 x^2 + l^4 y^2
+- orbit closure: ||u(T) - u(0)||; t_span is one closed orbit, so the reference is ~0
+
+An FFT period is not reported: over exactly one orbit its lowest bin is the window
+length itself, so prediction and reference agree by construction.
 
 Usage:
-    python scripts/paper_physics_checks.py
+    python scripts/paper_physics_checks.py [--out runs/paper_ablations]
 """
 from __future__ import annotations
 
-import json
+import argparse
 import sys
 from pathlib import Path
 
 import numpy as np
-import torch
+import pandas as pd
 
 _REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO / "src"))
 
 from pinn.config import reference_trajectory  # noqa: E402
-from pinn.pinn import build_model  # noqa: E402
 from pinn.sweep import config_for  # noqa: E402
+from pinn.train import load_run, predict  # noqa: E402
 
 CANDIDATE = _REPO / "runs" / "causal-window" / "candidate-1536pt" / "4x60_f64_unit_win27_causal_warm_f1cbeebd"
-OUT = _REPO / "runs" / "paper_ablations" / "physics_checks.json"
 
 
-def dominant_period(t: np.ndarray, signal: np.ndarray) -> float:
-    spectrum = np.abs(np.fft.rfft(signal - signal.mean()))
-    freqs = np.fft.rfftfreq(t.size, t[1] - t[0])
-    return float(1.0 / freqs[1:][np.argmax(spectrum[1:])])
-
-
-def invariant_drift(ys: np.ndarray) -> float:
-    e = 16.0 * ys[:, 0] ** 2 + ys[:, 1] ** 2
+def invariant_drift(ys: np.ndarray, k: float, l: float) -> float:
+    e = k ** 4 * ys[:, 0] ** 2 + l ** 4 * ys[:, 1] ** 2
     return float(np.abs(e - e[0]).max() / abs(e[0]))
 
 
+def closure(ys: np.ndarray) -> float:
+    return float(np.linalg.norm(ys[-1] - ys[0]))
+
+
+def check(run_dir: Path) -> dict:
+    model, _, cfg = load_run(config_for(run_dir))
+    t, ref = reference_trajectory(cfg, n=cfg.n_eval)
+    pred = predict(model, t)
+    return {"run": run_dir.name, "eval_points": len(t),
+            "invariant_drift_prediction": invariant_drift(pred, cfg.k, cfg.l),
+            "invariant_drift_reference": invariant_drift(ref, cfg.k, cfg.l),
+            "closure_prediction": closure(pred), "closure_reference": closure(ref)}
+
+
 def main() -> None:
-    cfg = config_for(CANDIDATE)
-    model = build_model(cfg).to(dtype=torch.float64)
-    model.load_state_dict(torch.load(CANDIDATE / "history" / "pinn.pt", map_location="cpu"))
-    model.eval()
-
-    t = np.linspace(*cfg.t_span, 13265)
-    with torch.no_grad():
-        pred = model(torch.tensor(t.reshape(-1, 1), dtype=torch.float64)).numpy()
-    _, ref = reference_trajectory(cfg, n=13265)
-
-    report = {
-        "invariant_drift_prediction": invariant_drift(pred),
-        "invariant_drift_reference": invariant_drift(ref),
-        "period_prediction": dominant_period(t, pred[:, 1]),
-        "period_reference": dominant_period(t, ref[:, 1]),
-        "eval_points": len(t),
-    }
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(report, indent=2) + "\n")
-    print(json.dumps(report, indent=2))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default="runs/paper_ablations")
+    out = Path(ap.parse_args().out)
+    out = out if out.is_absolute() else _REPO / out
+    runs = [CANDIDATE] + sorted(p.parent for p in out.glob("*_seed*/run_summary.csv"))
+    table = pd.DataFrame([check(r) for r in runs if (r / "history" / "pinn.pt").exists()])
+    table.to_csv(out / "physics_checks.csv", index=False)
+    print(table.to_string(index=False))
 
 
 if __name__ == "__main__":

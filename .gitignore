@@ -47,3 +47,7 @@ writings
 runs/paper_ablations/*/breakdown/
 runs/paper_ablations/*/history/progress.pt
 runs/paper_ablations/*/history/param_trail.npz
+runs/paper_ablations/*/history/window_*.pt
+runs/paper_ablations/*/history/*.prev.pt
+runs/paper_ablations/logs/
+!runs/paper_ablations/*/history/pinn.pt
