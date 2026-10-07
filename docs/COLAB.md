@@ -1,10 +1,14 @@
 # Run the paper ablation suite on Colab
 
-One notebook cell, using only this branch. The script mounts Google Drive and
-syncs results to `MyDrive/lorenz1960-pinn-ablation/` after every arm, so a
-runtime disconnect loses at most the arm in flight. Runtime ~2.5–3.5 h on a
-T4 GPU; if the runtime disconnects, rerun the same cell — finished arms are
-restored from Drive and skipped.
+One notebook cell pair, using only this branch. Results cannot be lost:
+
+- Drive is mounted first and every new/changed run file is synced to
+  `MyDrive/lorenz1960-pinn-ablation/` by a background sync every 10 minutes,
+  immediately after each arm, and on any exit (including failures).
+- Windowed arms additionally checkpoint internally at every window boundary;
+  the single-network R3 arm checkpoints every 2,000 Adam steps.
+- On reconnect, rerun the cells: finished and interrupted arms resume from
+  what Drive restored. Runtime ~2.5–3.5 h on a T4 GPU.
 
 ```python
 # Cell 1: mount Drive first -- the auth dialog only works from a notebook cell

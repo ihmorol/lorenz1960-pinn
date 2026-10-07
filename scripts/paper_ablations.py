@@ -40,7 +40,9 @@ def arms(base, seeds):
         yield f"r4_candidate_seed{s}", replace(base, seed=s)
         yield f"r3_causal_single_seed{s}", replace(
             base, seed=s, n_windows=1, n_collocation=39793, collocation="lhs",
-            epochs=40000, lbfgs_iters=5000)
+            epochs=40000, lbfgs_iters=5000,
+            # periodic resume checkpoints only; training math unchanged
+            checkpoint_every=2000)
 
 
 def main() -> None:

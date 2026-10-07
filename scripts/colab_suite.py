@@ -2,28 +2,34 @@
 
 Runs every arm in order -- R1 (windowed, causal off), R4 (candidate seeds),
 R2 (warm start off), R3 (causal single network), R6 (sequential single
-network) -- with results persisted to Google Drive after each arm, so a
-runtime disconnect loses at most the arm in flight. Optimizer budgets are
-the candidate's, unchanged. Every step is resume-safe: rerun the script
-after a reconnect and finished arms are skipped.
+network) -- with results persisted to Google Drive so nothing is lost:
 
-Training happens on Colab's local disk (fast); the runs directory is copied
-to /content/drive/MyDrive/lorenz1960-pinn-ablation/ after each arm and
-restored from there at startup. A zip of all artifacts is left both in the
-working directory and on Drive.
+- an incremental background sync copies new/changed run files to Drive every
+  10 minutes while arms train,
+- every completed arm triggers an immediate sync,
+- a final sync + zip happens even on failure or KeyboardInterrupt.
+
+Training happens on Colab's local disk (fast); Drive keeps the checkpoint
+copy at /content/drive/MyDrive/lorenz1960-pinn-ablation/. Windowed arms also
+checkpoint internally at every window boundary, and the R3 arm checkpoints
+every 2,000 Adam steps. On reconnect, finished and interrupted arms resume
+from what Drive restored. Optimizer budgets are the candidate's, unchanged.
 
 Intended runtime on a Colab T4 GPU: roughly 2.5-3.5 hours.
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 DRIVE_ROOT = Path("/content/drive/MyDrive/lorenz1960-pinn-ablation")
 RUNS = Path("runs/paper_ablations")
+SYNC_EVERY_S = 600
 
 STEPS = [
     [sys.executable, "scripts/paper_ablations.py", "--arms", "r1", "--seeds", "1,2,3"],
@@ -34,16 +40,40 @@ STEPS = [
 ]
 
 
+def _sync_tree(src: Path, dst: Path) -> tuple[int, int]:
+    """Copy only new or changed files (size or mtime differ). Returns (copied, skipped)."""
+    copied = skipped = 0
+    for root, _dirs, files in os.walk(src):
+        rel = Path(root).relative_to(src)
+        (dst / rel).mkdir(parents=True, exist_ok=True)
+        for name in files:
+            s, d = Path(root) / name, dst / rel / name
+            if d.exists() and d.stat().st_size == s.stat().st_size \
+                    and d.stat().st_mtime >= s.stat().st_mtime - 1:
+                skipped += 1
+                continue
+            shutil.copy2(s, d)
+            copied += 1
+    return copied, skipped
+
+
 def sync_to_drive() -> None:
-    DRIVE_ROOT.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(RUNS, DRIVE_ROOT / "paper_ablations", dirs_exist_ok=True)
-    print("[drive] results saved", flush=True)
+    copied, skipped = _sync_tree(RUNS, DRIVE_ROOT / "paper_ablations")
+    print(f"[drive] synced: {copied} files copied, {skipped} unchanged", flush=True)
+
+
+def _periodic_sync(stop: threading.Event) -> None:
+    while not stop.wait(SYNC_EVERY_S):
+        try:
+            print(f"[drive] periodic sync ({time.strftime('%H:%M:%S')})", flush=True)
+            sync_to_drive()
+        except Exception as error:
+            print(f"[drive] sync failed, will retry: {error}", flush=True)
 
 
 def ensure_drive() -> bool:
     """True when Drive is usable. Mounting needs the notebook kernel, so the
     auth dialog cannot be raised from inside this subprocess."""
-    import os
     if not _importable("google.colab"):
         return False
     if os.path.ismount("/content/drive"):
@@ -67,8 +97,13 @@ def main() -> None:
 
     on_colab = ensure_drive()
     if on_colab and (DRIVE_ROOT / "paper_ablations").exists():
-        shutil.copytree(DRIVE_ROOT / "paper_ablations", RUNS, dirs_exist_ok=True)
+        _sync_tree(DRIVE_ROOT / "paper_ablations", RUNS)
         print("[drive] previous results restored", flush=True)
+
+    stop = threading.Event()
+    syncer = threading.Thread(target=_periodic_sync, args=(stop,), daemon=True)
+    if on_colab:
+        syncer.start()
 
     started = time.perf_counter()
     try:
@@ -78,9 +113,9 @@ def main() -> None:
             result = subprocess.run(cmd)
             if result.returncode != 0:
                 sys.exit(f"step failed: {' '.join(cmd)}")
-            if on_colab:
-                sync_to_drive()
     finally:
+        stop.set()
+        syncer.join()
         if on_colab and RUNS.exists():
             sync_to_drive()
         if RUNS.exists():
