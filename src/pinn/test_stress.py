@@ -40,6 +40,15 @@ def test_coefficient_formula_matches_diagram_values():
     assert np.allclose(c, (-0.1, 1.6, -0.75), atol=1e-12)
 
 
+def test_coefficients_depend_only_on_the_k_over_l_ratio():
+    """Scaling both wavenumbers by the same factor leaves the 3-mode system
+    unchanged, so (2, 1) and (3, 1.5) are the same ODE -- confirmed by the
+    byte-identical sweep cells runs/training_sweep/k2_l1_* and k3_l1.5_*."""
+    for lam in (1.5, 2.0):
+        assert np.allclose(lorenz1960_coefficients(2.0, 1.0),
+                           lorenz1960_coefficients(2.0 * lam, 1.0 * lam), atol=1e-12)
+
+
 def test_torch_rhs_matches_hand_written_numpy_rhs():
     rng = np.random.default_rng(0)
     u = torch.tensor(rng.normal(size=(64, 3)), dtype=torch.float64)
