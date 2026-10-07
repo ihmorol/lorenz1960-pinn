@@ -76,18 +76,25 @@
 
     <h2>Time</h2>
     <div class="row"><label>horizon T</label><input type="range" id="tSlider" min="1" max="50" step="0.5" value="15"><span class="val" id="tVal">15.0</span></div>
-    <div class="row"><label>speed (t-units/s)</label><input type="range" id="speed" min="0.25" max="20" step="0.25" value="3"><span class="val" id="speedVal">3.00</span></div>
+    <h2>Growth mode</h2>
+    <div class="row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+      <label style="width:auto; color:var(--text); font-size:12.5px;"><input type="radio" name="mode" value="time" checked>
+        <b>time run</b> &mdash; time increases, every loop grows with it</label>
+      <label style="width:auto; color:var(--text); font-size:12.5px;"><input type="radio" name="mode" value="count">
+        <b>loop run</b> &mdash; time fixed at T, loops appear one by one (1, 2, 3, &hellip;)</label>
+    </div>
+    <div class="row" id="timeRow"><label>time t</label><input type="range" id="timeSlider" min="0" max="15" step="0.01" value="0" disabled>
+      <span class="val" id="timeVal">0.00</span></div>
+    <div class="row" id="countRow" style="display:none;"><label>loops shown</label><input type="range" id="countSlider" min="0" max="100" step="1" value="0" disabled>
+      <span class="val" id="countVal">0</span></div>
+    <div class="row"><label>speed</label><input type="range" id="speed" min="0.25" max="20" step="0.25" value="3"><span class="val" id="speedVal">3.00</span></div>
+    <div class="note" id="speedNote">speed unit: time units per second (time run)</div>
     <div class="row">
       <button class="primary" id="build">Build all loops</button>
       <button id="replay" disabled>&#9654; Replay</button>
       <button id="playPause" disabled>&#10073;&#10073; Pause</button>
+      <label style="color:var(--dim); font-size:12px;"><input type="checkbox" id="instant"> instant</label>
     </div>
-    <div class="row">
-      <label>time t</label><input type="range" id="timeSlider" min="0" max="15" step="0.01" value="0" disabled>
-      <span class="val" id="timeVal">0.00</span>
-    </div>
-    <label class="row" style="color:var(--dim); font-size:12px;">
-      <input type="checkbox" id="instant"> show complete loops instantly (skip growth)</label>
     <div id="progressWrap">
       <div id="progressBar"><div id="progressFill"></div></div>
       <div class="note" id="progressText"></div>
@@ -100,15 +107,16 @@
       <dt>loops closed within T</dt><dd id="roClosed">&ndash;</dd>
       <dt>no full cycle within T</dt><dd id="roOpen">&ndash;</dd>
       <dt>skipped (ran away)</dt><dd id="roSkipped">&ndash;</dd>
-      <dt>sim time shown</dt><dd id="roT">&ndash;</dd>
+      <dt>progress</dt><dd id="roT">&ndash;</dd>
       <dt>build time</dt><dd id="roBuild">&ndash;</dd>
     </dl>
     <div class="note">Every combination's trajectory is integrated to T from the shared
       initial state; since each one retraces its closed curve, the drawn points cover
       the loop shape whatever the horizon. "Closed" counts full cycles via crossings
-      of x &minus; &lt;x&gt; (two per cycle), as in the sweep. The growth animation reveals
-      every loop's segments simultaneously, so you watch the whole family close
-      together. Hue encodes k: blue = k min &rarr; red = k max.</div>
+      of x &minus; &lt;x&gt; (two per cycle), as in the sweep. <b>time run</b>: the reveal
+      advances with simulated time, every loop growing together. <b>loop run</b>: every
+      loop is drawn complete at T, and they appear one by one so you can watch the
+      family build up. Hue encodes k: blue = k min &rarr; red = k max.</div>
   </div>
 
   <div id="view">
@@ -216,7 +224,10 @@ const clampAbs = v => Math.abs(v) < 0.02 ? 0.02 * Math.sign(v || 1) : v;
 
 const state = {
   T: 15, speed: 3, t: 0, playing: false,
-  built: false, revealFrac: 0,   // fraction of each loop's segments shown
+  built: false,
+  mode: "time",        // "time": all loops grow with t; "count": loops appear one by one
+  count: 0,            // loops shown (loop run)
+  totalDrawn: 0,
 };
 
 // ---------- three.js scene ----------
@@ -274,12 +285,14 @@ function buildFrame(bb) {
 }
 
 // ---------- family build ----------
-// Loops are grouped into N_BINS k-bins, one draw call each. Within a bin the
-// segment buffer is laid out in reveal order: segment q of every loop first,
-// then segment q+1 of every loop, ... so a single drawRange reveals all loops
-// growing simultaneously through time.
+// Loops are grouped into N_BINS k-bins, one draw call each. Each bin's buffer is
+// LOOP-MAJOR (a loop's segments consecutive), with a per-vertex aSeg attribute
+// holding the segment index inside its loop. The two growth modes share one GPU
+// mechanism:
+//   time run  -> vertex shader hides segments with aSeg > uSegReveal (all loops grow)
+//   loop run  -> drawRange reveals whole loops one by one (time fixed at T)
 const N_BINS = 24;
-let bins = [];           // { geo, line, nLoops, segsPerLoop }
+let bins = [];           // { geo, line, mat, nLoops, segsPerLoop }
 let buildToken = 0;
 
 function gridParams() {
@@ -289,17 +302,33 @@ function gridParams() {
   if (![kmin, kmax, lmin, lmax].every(isFinite) || kmin >= kmax || lmin >= lmax) return null;
   const nK = Math.floor((kmax - kmin) / step + 1e-9) + 1;
   const nL = Math.floor((lmax - lmin) / step + 1e-9) + 1;
-  return { kmin, kmax, lmin, lmax, nK, nL,
-           combos: nK * nL,
-           ptsPerLoop: state.combosTarget = nK * nL <= 10000 ? 96 : nK * nL <= 60000 ? 56 : 32 };
+  const combos = nK * nL;
+  const ptsPerLoop = combos <= 10000 ? 96 : combos <= 60000 ? 56 : 32;
+  return { kmin, kmax, lmin, lmax, nK, nL, combos, ptsPerLoop };
 }
 
 function disposeBins() {
   for (const b of bins) {
     scene.remove(b.line);
     b.line.geometry.dispose();
+    b.mat.dispose();
   }
   bins = [];
+}
+
+// LineBasicMaterial that hides every segment whose in-loop index exceeds uSegReveal.
+function makeBinMaterial(color) {
+  const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.3,
+                                            depthWrite: false });
+  mat.onBeforeCompile = shader => {
+    shader.uniforms.uSegReveal = { value: 1e9 };
+    shader.vertexShader =
+      "attribute float aSeg;\nuniform float uSegReveal;\n" +
+      shader.vertexShader.replace("void main() {",
+        "void main() {\n  if (aSeg > uSegReveal) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); return; }");
+    mat.userData.shader = shader;
+  };
+  return mat;
 }
 
 function buildFamily() {
@@ -307,6 +336,7 @@ function buildFamily() {
   if (!gp) { $("warn").textContent = "invalid range: min must be below max"; return; }
   disposeBins();
   state.built = false;
+  state.total = gp.combos;
   buildToken++;
   const token = buildToken;
 
@@ -328,17 +358,22 @@ function buildFamily() {
     const i1 = Math.min(i0 + rowsPerBin, gp.nK);
     const nLoops = (i1 - i0) * gp.nL;
     const pos = new Float32Array(nLoops * segsPerLoop * 2 * 3);
+    const seg = new Float32Array(nLoops * segsPerLoop * 2);
+    for (let li = 0; li < nLoops; li++) {
+      for (let q = 0; q < segsPerLoop; q++) seg[li * segsPerLoop * 2 + 2 * q] = q;
+      for (let q = 0; q < segsPerLoop; q++) seg[li * segsPerLoop * 2 + 2 * q + 1] = q;
+    }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("aSeg", new THREE.BufferAttribute(seg, 1));
     geo.setDrawRange(0, 0);
     const hue = 0.62 * (1 - (i0 + (i1 - i0 - 1) / 2) / Math.max(gp.nK - 1, 1));
-    const line = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
-      color: new THREE.Color().setHSL(hue, 0.75, 0.55),
-      transparent: true, opacity: 0.3, depthWrite: false }));
+    const mat = makeBinMaterial(new THREE.Color().setHSL(hue, 0.75, 0.55));
+    const line = new THREE.LineSegments(geo, mat);
     line.frustumCulled = false;
     line.visible = false;   // shown once the build finishes
     scene.add(line);
-    bins.push({ geo, line, nLoops, segsPerLoop, i0, i1, pos });
+    bins.push({ geo, line, mat, nLoops, segsPerLoop, i0, i1, pos });
   }
 
   function chunk() {
@@ -361,8 +396,8 @@ function buildFamily() {
         if (ok) {
           closedCount += res.closed ? 1 : 0;
           const loopIdx = (i - bin.i0) * gp.nL + j;
-          for (let q = 0; q < segsPerLoop; q++) {   // reveal-order slots: segment q of all loops
-            const off = (q * bin.nLoops + loopIdx) * 6;
+          for (let q = 0; q < segsPerLoop; q++) {   // loop-major: this loop's segments consecutive
+            const off = (loopIdx * segsPerLoop + q) * 6;
             bin.pos[off]     = res.pts[3 * q];
             bin.pos[off + 1] = res.pts[3 * q + 1];
             bin.pos[off + 2] = res.pts[3 * q + 2];
@@ -402,6 +437,7 @@ function buildFamily() {
     icMarker.visible = bbMin[0] <= IC[0] && IC[0] <= bbMax[0];
 
     state.built = true;
+    state.totalDrawn = gp.combos - skipped;
     $("roCombos").textContent = gp.combos.toLocaleString();
     $("roClosed").textContent = closedCount.toLocaleString()
       + " (" + (100 * closedCount / gp.combos).toFixed(1) + "%)";
@@ -411,29 +447,49 @@ function buildFamily() {
     $("legend").style.display = "block";
     $("progressWrap").style.display = "none";
     disableTimeControls(false);
-    $("timeSlider").max = state.T;
-    state.t = 0;
-    setPlaying(!$("instant").checked);
-    updateReveal();
+    $("countSlider").max = state.totalDrawn;
+    setMode(state.mode, true);   // reset progress in the active mode
   }
   setTimeout(chunk, 0);
 }
 
 function disableTimeControls(dis) {
-  for (const id of ["replay", "playPause", "timeSlider"]) $(id).disabled = dis;
+  for (const id of ["replay", "playPause", "timeSlider", "countSlider"]) $(id).disabled = dis;
 }
 
-// ---------- reveal ----------
+// ---------- reveal (two modes) ----------
+function setSegReveal(segs) {   // time run: hide segments beyond `segs` inside every loop
+  for (const bin of bins) {
+    if (bin.mat.userData.shader) bin.mat.userData.shader.uniforms.uSegReveal.value = segs;
+    bin.geo.setDrawRange(0, bin.nLoops * bin.segsPerLoop * 2);   // draw all; shader filters
+  }
+}
+
+function setLoopCount(n) {      // loop run: show the first n complete loops (k order)
+  let remaining = n;
+  for (const bin of bins) {
+    if (bin.mat.userData.shader) bin.mat.userData.shader.uniforms.uSegReveal.value = 1e9;
+    const shown = Math.min(remaining, bin.nLoops);
+    bin.geo.setDrawRange(0, shown * bin.segsPerLoop * 2);
+    remaining -= shown;
+  }
+}
+
 function updateReveal() {
   if (!state.built) return;
-  const frac = Math.min(state.t / state.T, 1);
-  const segs = Math.floor(frac * bins[0].segsPerLoop);
-  for (const bin of bins) {
-    bin.geo.setDrawRange(0, segs * bin.nLoops * 2);
+  if (state.mode === "time") {
+    const segs = Math.floor(Math.min(state.t / state.T, 1) * bins[0].segsPerLoop);
+    setSegReveal(segs);
+    $("roT").textContent = "t = " + state.t.toFixed(2) + " / " + state.T.toFixed(1);
+    $("timeVal").textContent = state.t.toFixed(2);
+    $("timeSlider").value = state.t;
+  } else {
+    setLoopCount(Math.floor(state.count));
+    $("roT").textContent = Math.floor(state.count).toLocaleString() + " / "
+      + state.totalDrawn.toLocaleString() + " loops";
+    $("countVal").textContent = Math.floor(state.count).toLocaleString();
+    $("countSlider").value = Math.min(state.count, state.totalDrawn);
   }
-  $("roT").textContent = state.t.toFixed(2) + " / " + state.T.toFixed(1);
-  $("timeVal").textContent = state.t.toFixed(2);
-  $("timeSlider").value = state.t;
 }
 
 // ---------- animation ----------
@@ -443,10 +499,15 @@ function animate(now) {
   const dt = Math.min((now - lastFrame) / 1000, 0.1);
   lastFrame = now;
   if (state.playing && state.built) {
-    state.t += dt * state.speed;
-    if (state.t >= state.T) { state.t = state.T; setPlaying(false); }
-    updateReveal();
+    if (state.mode === "time") {
+      state.t += dt * state.speed;
+      if (state.t >= state.T) { state.t = state.T; setPlaying(false); }
+    } else {
+      state.count += dt * state.speed * 1000;   // speed = thousands of loops per second
+      if (state.count >= state.totalDrawn) { state.count = state.totalDrawn; setPlaying(false); }
+    }
   }
+  if (state.built) updateReveal();   // also keeps uniforms in sync right after shader compile
   controls.update();
   renderer.render(scene, camera);
 }
@@ -457,12 +518,39 @@ function setPlaying(p) {
 }
 
 // ---------- controls ----------
+function setMode(mode, reset) {
+  state.mode = mode;
+  for (const r of document.querySelectorAll('input[name=mode]')) r.checked = r.value === mode;
+  $("timeRow").style.display = mode === "time" ? "flex" : "none";
+  $("countRow").style.display = mode === "count" ? "flex" : "none";
+  $("speedNote").textContent = mode === "time"
+    ? "speed unit: time units per second (time run)"
+    : "speed unit: thousand loops per second (loop run)";
+  if (reset) {
+    if (mode === "time") state.t = 0; else state.count = 0;
+    setPlaying(!$("instant").checked);
+  }
+  updateReveal();
+}
+
+for (const r of document.querySelectorAll('input[name=mode]')) {
+  r.addEventListener("change", () => { if (r.checked) setMode(r.value, true); });
+}
+
 $("build").addEventListener("click", buildFamily);
-$("replay").addEventListener("click", () => { state.t = 0; setPlaying(true); updateReveal(); });
+$("replay").addEventListener("click", () => {
+  if (state.mode === "time") state.t = 0; else state.count = 0;
+  setPlaying(true); updateReveal();
+});
 $("playPause").addEventListener("click", () => setPlaying(!state.playing));
 $("timeSlider").addEventListener("input", () => {
   setPlaying(false);
   state.t = parseFloat($("timeSlider").value);
+  updateReveal();
+});
+$("countSlider").addEventListener("input", () => {
+  setPlaying(false);
+  state.count = parseFloat($("countSlider").value);
   updateReveal();
 });
 $("speed").addEventListener("input", () => {
@@ -475,8 +563,13 @@ $("tSlider").addEventListener("input", () => {
 });
 $("instant").addEventListener("change", () => {
   if (!state.built) return;
-  if ($("instant").checked) { setPlaying(false); state.t = state.T; }
-  else { state.t = 0; setPlaying(true); }
+  if ($("instant").checked) {
+    setPlaying(false);
+    if (state.mode === "time") state.t = state.T; else state.count = state.totalDrawn;
+  } else {
+    if (state.mode === "time") state.t = 0; else state.count = 0;
+    setPlaying(true);
+  }
   updateReveal();
 });
 
