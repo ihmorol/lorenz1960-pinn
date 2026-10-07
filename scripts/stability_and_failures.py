@@ -4,9 +4,11 @@ Family 1 (stability): one preset configuration retrained under several seeds;
 the table reports the run-to-run spread of the final error.
 
 Family 2 (failures): configurations chosen to break plain single-window PINN
-training -- long horizon, large initial amplitude, high wavenumbers, the
-degenerate k=l case -- each trained twice, plain and with the causal-windowed
-arm that is supposed to rescue it.
+training -- the candidate run's 13.26 horizon, large initial amplitude, a
+wavenumber ratio of 12, plus the degenerate k=l case as an easy control -- each
+trained twice, plain and with the causal-windowed arm. The plain arm at full
+budget solves moderate versions of all four, so only this hard tier is kept
+(the moderate tier is on branch history).
 
 Every run uses sweep.run_one's resume semantics, so re-invoking the script
 continues an interrupted batch instead of redoing finished cells.
@@ -36,9 +38,9 @@ CAUSAL = dict(causal_eps_schedule=(0.01, 0.1, 1.0, 10.0), causal_delta=0.99,
               causal_max_iters=2000, n_windows=9)
 
 FAILURES = {
-    "long_horizon": lambda c: replace(c, t_span=(0.0, 5.0)),
-    "large_ic": lambda c: replace(c, initial_state=(4.0, 4.0, 4.0)),
-    "high_wavenumber": lambda c: replace(c, k=4.0, l=0.5),
+    "long_horizon_13": lambda c: replace(c, t_span=(0.0, 13.26446)),
+    "large_ic_10": lambda c: replace(c, initial_state=(10.0, 10.0, 10.0)),
+    "high_wavenumber_12": lambda c: replace(c, k=6.0, l=0.5),
     "degenerate_kl": lambda c: replace(c, k=1.0, l=1.0),
 }
 

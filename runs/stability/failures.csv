@@ -1,0 +1,9 @@
+case,arm,arch,final_loss,rmse_combined_l2,wall_clock_s
+long_horizon,plain,4x60,2.67028971e-08,0.000227610305,309.29023
+long_horizon,causal_windowed,4x60_win9_causal,2.89634901e-06,0.000772700524,14.9718674
+large_ic,plain,4x60,2.28663135e-05,0.000798980166,306.866949
+large_ic,causal_windowed,4x60_win9_causal,0.000685698192,0.00268068452,359.561412
+high_wavenumber,plain,4x60,1.25338185e-05,0.00090776453,311.22179
+high_wavenumber,causal_windowed,4x60_win9_causal,0.000118588587,0.00348582494,212.332624
+degenerate_kl,plain,4x60,1.76989362e-09,7.74521724e-06,313.387714
+degenerate_kl,causal_windowed,4x60_win9_causal,2.25833908e-06,0.000511574526,19.4695159
