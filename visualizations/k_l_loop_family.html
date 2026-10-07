@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lorenz-1960 (k, l) loop family — all combinations at once</title>
+<style>
+  :root { --bg:#0b1220; --panel:#111a2c; --line:#22304a; --text:#dbe4f0; --dim:#8ea0b8;
+          --accent:#22d3ee; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; background:var(--bg); color:var(--text);
+              font:14px/1.45 "Segoe UI", system-ui, sans-serif; }
+  #app { display:flex; height:100vh; }
+  #panel { width:330px; min-width:330px; overflow-y:auto; padding:14px 16px;
+           background:var(--panel); border-right:1px solid var(--line); }
+  #view { flex:1; position:relative; min-width:0; }
+  #three-container { position:absolute; inset:0; }
+  h1 { font-size:16px; margin:0 0 2px; }
+  .sub { color:var(--dim); font-size:12px; margin-bottom:12px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+       margin:16px 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .row { display:flex; align-items:center; gap:8px; margin:7px 0; }
+  .row label { width:100px; color:var(--dim); font-size:12.5px; }
+  .row input[type=range] { flex:1; }
+  .row input[type=number] { width:70px; background:#0b1220; color:var(--text);
+       border:1px solid var(--line); border-radius:4px; padding:3px 5px; font-size:12.5px; }
+  .val { width:56px; text-align:right; font-variant-numeric:tabular-nums; color:var(--accent); }
+  button { background:#1c2a44; color:var(--text); border:1px solid var(--line); border-radius:5px;
+           padding:6px 10px; cursor:pointer; font-size:13px; }
+  button:hover { background:#24365a; }
+  button.primary { background:#0e7490; border-color:#0e7490; }
+  button:disabled { opacity:0.45; cursor:default; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .readout { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; font-size:12.5px; }
+  .readout dt { color:var(--dim); } .readout dd { margin:0; font-variant-numeric:tabular-nums; }
+  .note { color:var(--dim); font-size:11.5px; margin-top:6px; }
+  .warn { color:#fbbf24; font-size:12px; min-height:15px; margin-top:4px; }
+  select { background:#0b1220; color:var(--text); border:1px solid var(--line); border-radius:4px; padding:3px; }
+  input[type=checkbox] { accent-color:#0e7490; }
+  #progressWrap { display:none; margin-top:8px; }
+  #progressBar { height:10px; background:#0b1220; border:1px solid var(--line); border-radius:5px;
+                 overflow:hidden; }
+  #progressFill { height:100%; width:0%; background:var(--accent); transition:width .1s; }
+  #legend { position:absolute; right:12px; top:10px; background:rgba(17,26,44,.85);
+            border:1px solid var(--line); border-radius:6px; padding:8px 12px; font-size:11.5px;
+            color:var(--dim); display:none; }
+  #legend .bar { height:8px; border-radius:4px; margin:4px 0;
+            background:linear-gradient(90deg, hsl(217,75%,55%), hsl(150,75%,50%), hsl(62,75%,50%), hsl(0,75%,50%)); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <h1>Lorenz-1960 loop family</h1>
+    <div class="sub">Every (k, l) combination in a range, each giving its representative
+      loop from the same initial state (0.5, 0.75, 1.0) — all drawn together.
+      Reference RHS only, no PINN. Drag to orbit, scroll to zoom.</div>
+
+    <h2>Range</h2>
+    <div class="grid2">
+      <div class="row"><label>k min</label><input type="number" id="kMin" value="0.5" step="0.1"></div>
+      <div class="row"><label>k max</label><input type="number" id="kMax" value="5" step="0.1"></div>
+      <div class="row"><label>l min</label><input type="number" id="lMin" value="0.5" step="0.1"></div>
+      <div class="row"><label>l max</label><input type="number" id="lMax" value="5" step="0.1"></div>
+    </div>
+    <div class="row"><label>grid step</label>
+      <select id="step">
+        <option value="0.05">0.05 &mdash; 90 &times; 90 = 8,100 loops (fast)</option>
+        <option value="0.02">0.02 &mdash; 225 &times; 225 = 50,625 loops</option>
+        <option value="0.01" selected>0.01 &mdash; 451 &times; 451 = 203,401 loops (heavy)</option>
+      </select>
+    </div>
+    <div class="note">0.01 per unit = 451 k values &times; 451 l values. The heaviest option
+      builds ~200k loops in the background (roughly 10&ndash;30 s) and needs ~300 MB of
+      GPU/RAM; pick 0.02 or 0.05 on a weaker machine.</div>
+
+    <h2>Time</h2>
+    <div class="row"><label>horizon T</label><input type="range" id="tSlider" min="1" max="50" step="0.5" value="15"><span class="val" id="tVal">15.0</span></div>
+    <div class="row"><label>speed (t-units/s)</label><input type="range" id="speed" min="0.25" max="20" step="0.25" value="3"><span class="val" id="speedVal">3.00</span></div>
+    <div class="row">
+      <button class="primary" id="build">Build all loops</button>
+      <button id="replay" disabled>&#9654; Replay</button>
+      <button id="playPause" disabled>&#10073;&#10073; Pause</button>
+    </div>
+    <div class="row">
+      <label>time t</label><input type="range" id="timeSlider" min="0" max="15" step="0.01" value="0" disabled>
+      <span class="val" id="timeVal">0.00</span>
+    </div>
+    <label class="row" style="color:var(--dim); font-size:12px;">
+      <input type="checkbox" id="instant"> show complete loops instantly (skip growth)</label>
+    <div id="progressWrap">
+      <div id="progressBar"><div id="progressFill"></div></div>
+      <div class="note" id="progressText"></div>
+    </div>
+    <div class="warn" id="warn"></div>
+
+    <h2>Readout</h2>
+    <dl class="readout">
+      <dt>combinations</dt><dd id="roCombos">&ndash;</dd>
+      <dt>loops closed within T</dt><dd id="roClosed">&ndash;</dd>
+      <dt>no full cycle within T</dt><dd id="roOpen">&ndash;</dd>
+      <dt>skipped (ran away)</dt><dd id="roSkipped">&ndash;</dd>
+      <dt>sim time shown</dt><dd id="roT">&ndash;</dd>
+      <dt>build time</dt><dd id="roBuild">&ndash;</dd>
+    </dl>
+    <div class="note">Every combination's trajectory is integrated to T from the shared
+      initial state; since each one retraces its closed curve, the drawn points cover
+      the loop shape whatever the horizon. "Closed" counts full cycles via crossings
+      of x &minus; &lt;x&gt; (two per cycle), as in the sweep. The growth animation reveals
+      every loop's segments simultaneously, so you watch the whole family close
+      together. Hue encodes k: blue = k min &rarr; red = k max.</div>
+  </div>
+
+  <div id="view">
+    <div id="three-container"></div>
+    <div id="legend"><div>Hue = k value</div><div class="bar"></div>
+      <div><span>blue = k min</span> &nbsp; <span style="float:right">red = k max</span></div></div>
+  </div>
+</div>
+
+<!-- ===================== math core (plain script, reusable/testable) ===================== -->
+<script>
+"use strict";
+// Lorenz-1960 maximum-simplification RHS: x' = a y z, y' = b x z, z' = c x y
+// with a, b, c the locked-baseline coefficient functions of the wavenumbers k, l.
+// Same equations as src/baseline/lorenz1960_baseline.py and the SciPy reference.
+const IC = [0.5, 0.75, 1.0];
+
+function lorenz1960Coeffs(k, l) {
+  const a = k * l * (1 / (k * k + l * l) - 1 / (k * k));
+  const b = k * l * (1 / (l * l) - 1 / (k * k + l * l));
+  const c = 0.5 * k * l * (1 / (k * k) - 1 / (l * l));
+  return [a, b, c];
+}
+
+function lorenz1960Deriv(a, b, c, s) {
+  return [a * s[1] * s[2], b * s[0] * s[2], c * s[0] * s[1]];
+}
+
+function rk4Step(a, b, c, s, h) {
+  const k1 = lorenz1960Deriv(a, b, c, s);
+  const s2 = [s[0] + 0.5 * h * k1[0], s[1] + 0.5 * h * k1[1], s[2] + 0.5 * h * k1[2]];
+  const k2 = lorenz1960Deriv(a, b, c, s2);
+  const s3 = [s[0] + 0.5 * h * k2[0], s[1] + 0.5 * h * k2[1], s[2] + 0.5 * h * k2[2]];
+  const k3 = lorenz1960Deriv(a, b, c, s3);
+  const s4 = [s[0] + h * k3[0], s[1] + h * k3[1], s[2] + h * k3[2]];
+  const k4 = lorenz1960Deriv(a, b, c, s4);
+  const sixth = h / 6;
+  return [s[0] + sixth * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]),
+          s[1] + sixth * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
+          s[2] + sixth * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])];
+}
+
+// Integrate one (k, l) to T, keeping at most maxPoints decimated samples.
+// The trajectory retraces the same closed curve, so the decimated samples
+// cover the loop shape regardless of how many cycles fit in T. "Closed" is
+// reported via crossings of x - running mean (two per cycle), matching the
+// sweep methodology; a period-quantized estimate near the horizon is a lower
+// bound, same as in the sweep.
+// Returns { pts: Float32Array(maxPoints*3) padded with the last state,
+//           closed: bool, cycles }.
+function integrateFamilyLoop(k, l, T, maxPoints) {
+  const [a, b, c] = lorenz1960Coeffs(k, l);
+  const cmax = Math.max(Math.abs(a), Math.abs(b), Math.abs(c), 1e-9);
+  const h = Math.min(0.012, 0.12 / cmax);
+  const nSteps = Math.max(1, Math.round(T / h));
+  const storeEvery = Math.max(1, Math.ceil(nSteps / maxPoints));
+  const pts = new Float32Array(maxPoints * 3);
+  let stored = 0;
+  pts.set(IC, 0); stored = 1;
+  let s = IC.slice();
+  let sumX = IC[0], meanX = IC[0], prevSide = 0, crossings = 0;
+  for (let i = 1; i <= nSteps; i++) {
+    s = rk4Step(a, b, c, s, h);
+    sumX += s[0];
+    meanX = sumX / (i + 1);
+    const side = (s[0] - meanX) > 0 ? 1 : -1;
+    if (prevSide !== 0 && side !== prevSide) crossings++;
+    prevSide = side;
+    if (i % storeEvery === 0 && stored < maxPoints - 1) {   // last slot: final state
+      pts[3 * stored] = s[0]; pts[3 * stored + 1] = s[1]; pts[3 * stored + 2] = s[2];
+      stored++;
+    }
+  }
+  if (stored < maxPoints) {   // keep the exact final state as the last sample
+    pts[3 * stored] = s[0]; pts[3 * stored + 1] = s[1]; pts[3 * stored + 2] = s[2];
+    stored++;
+  }
+  // pad the unused slots with the final state (degenerate, invisible segments)
+  for (let p = stored; p < maxPoints; p++) {
+    pts[3 * p] = pts[3 * (stored - 1)];
+    pts[3 * p + 1] = pts[3 * (stored - 1) + 1];
+    pts[3 * p + 2] = pts[3 * (stored - 1) + 2];
+  }
+  return { pts, closed: crossings >= 2, cycles: Math.floor(crossings / 2) };
+}
+
+if (typeof module !== "undefined") {   // node smoke-test hook
+  module.exports = { IC, lorenz1960Coeffs, lorenz1960Deriv, rk4Step, integrateFamilyLoop };
+}
+</script>
+
+<!-- ===================== UI (three.js scene + controls) ===================== -->
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const $ = id => document.getElementById(id);
+const clampAbs = v => Math.abs(v) < 0.02 ? 0.02 * Math.sign(v || 1) : v;
+
+const state = {
+  T: 15, speed: 3, t: 0, playing: false,
+  built: false, revealFrac: 0,   // fraction of each loop's segments shown
+};
+
+// ---------- three.js scene ----------
+const container = $("three-container");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1220);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 2000);
+camera.position.set(7, 5, 9);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+
+const icMarker = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10),
+                                new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+icMarker.position.set(...IC);
+scene.add(icMarker);
+
+const frameGroup = new THREE.Group();
+scene.add(frameGroup);
+
+function textSprite(text, color) {
+  const cvs = document.createElement("canvas");
+  cvs.width = 256; cvs.height = 64;
+  const ctx = cvs.getContext("2d");
+  ctx.font = "bold 44px 'Segoe UI', sans-serif";
+  ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(text, 128, 32);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cvs), depthTest: false }));
+  sprite.scale.set(0.5, 0.125, 1);
+  return sprite;
+}
+
+function buildFrame(bb) {
+  frameGroup.clear();
+  const center = bb.getCenter(new THREE.Vector3());
+  const size = bb.getSize(new THREE.Vector3());
+  const r = 0.5 * Math.max(size.x, size.y, size.z);
+  const axes = [
+    [[center.x - r * 1.12, center.y, center.z], [center.x + r * 1.12, center.y, center.z], "#38bdf8", "x"],
+    [[center.x, center.y - r * 1.12, center.z], [center.x, center.y + r * 1.12, center.z], "#f472b6", "y"],
+    [[center.x, center.y, center.z - r * 1.12], [center.x, center.y, center.z + r * 1.12], "#a3e635", "z"],
+  ];
+  for (const [p0, p1, color, name] of axes) {
+    const g = new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(...p0), new THREE.Vector3(...p1)]);
+    frameGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color })));
+    const label = textSprite(name, color);
+    label.position.set(...p1);
+    frameGroup.add(label);
+  }
+}
+
+// ---------- family build ----------
+// Loops are grouped into N_BINS k-bins, one draw call each. Within a bin the
+// segment buffer is laid out in reveal order: segment q of every loop first,
+// then segment q+1 of every loop, ... so a single drawRange reveals all loops
+// growing simultaneously through time.
+const N_BINS = 24;
+let bins = [];           // { geo, line, nLoops, segsPerLoop }
+let buildToken = 0;
+
+function gridParams() {
+  const kmin = parseFloat($("kMin").value), kmax = parseFloat($("kMax").value);
+  const lmin = parseFloat($("lMin").value), lmax = parseFloat($("lMax").value);
+  const step = parseFloat($("step").value);
+  if (![kmin, kmax, lmin, lmax].every(isFinite) || kmin >= kmax || lmin >= lmax) return null;
+  const nK = Math.floor((kmax - kmin) / step + 1e-9) + 1;
+  const nL = Math.floor((lmax - lmin) / step + 1e-9) + 1;
+  return { kmin, kmax, lmin, lmax, nK, nL,
+           combos: nK * nL,
+           ptsPerLoop: state.combosTarget = nK * nL <= 10000 ? 96 : nK * nL <= 60000 ? 56 : 32 };
+}
+
+function disposeBins() {
+  for (const b of bins) {
+    scene.remove(b.line);
+    b.line.geometry.dispose();
+  }
+  bins = [];
+}
+
+function buildFamily() {
+  const gp = gridParams();
+  if (!gp) { $("warn").textContent = "invalid range: min must be below max"; return; }
+  disposeBins();
+  state.built = false;
+  buildToken++;
+  const token = buildToken;
+
+  const rowsPerBin = Math.ceil(gp.nK / N_BINS);
+  const t0 = performance.now();
+  let loopsDone = 0, closedCount = 0, skipped = 0;
+  const bbMin = [Infinity, Infinity, Infinity], bbMax = [-Infinity, -Infinity, -Infinity];
+
+  $("progressWrap").style.display = "block";
+  $("warn").textContent = "";
+  disableTimeControls(true);
+
+  const segsPerLoop = gp.ptsPerLoop - 1;
+  // pre-create bin buffers
+  bins = [];
+  for (let b = 0; b < N_BINS; b++) {
+    const i0 = b * rowsPerBin;
+    if (i0 >= gp.nK) break;
+    const i1 = Math.min(i0 + rowsPerBin, gp.nK);
+    const nLoops = (i1 - i0) * gp.nL;
+    const pos = new Float32Array(nLoops * segsPerLoop * 2 * 3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setDrawRange(0, 0);
+    const hue = 0.62 * (1 - (i0 + (i1 - i0 - 1) / 2) / Math.max(gp.nK - 1, 1));
+    const line = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      color: new THREE.Color().setHSL(hue, 0.75, 0.55),
+      transparent: true, opacity: 0.3, depthWrite: false }));
+    line.frustumCulled = false;
+    line.visible = false;   // shown once the build finishes
+    scene.add(line);
+    bins.push({ geo, line, nLoops, segsPerLoop, i0, i1, pos });
+  }
+
+  function chunk() {
+    if (token !== buildToken) return;   // superseded by a newer build
+    const tChunk = performance.now();
+    while (loopsDone < gp.nK && performance.now() - tChunk < 30) {
+      const i = loopsDone;
+      const k = clampAbs(gp.kmin + (gp.kmax - gp.kmin) * i / Math.max(gp.nK - 1, 1));
+      const b = Math.min(Math.floor(i / rowsPerBin), bins.length - 1);
+      const bin = bins[b];
+      for (let j = 0; j < gp.nL; j++) {
+        const l = clampAbs(gp.lmin + (gp.lmax - gp.lmin) * j / Math.max(gp.nL - 1, 1));
+        const res = integrateFamilyLoop(k, l, state.T, gp.ptsPerLoop);
+        // skip runaway trajectories (near-singular ranges) so the view stays usable
+        let ok = true;
+        for (let p = 0; p < gp.ptsPerLoop && ok; p++) {
+          if (Math.abs(res.pts[3 * p]) > 50 || Math.abs(res.pts[3 * p + 1]) > 50 ||
+              Math.abs(res.pts[3 * p + 2]) > 50) ok = false;
+        }
+        if (ok) {
+          closedCount += res.closed ? 1 : 0;
+          const loopIdx = (i - bin.i0) * gp.nL + j;
+          for (let q = 0; q < segsPerLoop; q++) {   // reveal-order slots: segment q of all loops
+            const off = (q * bin.nLoops + loopIdx) * 6;
+            bin.pos[off]     = res.pts[3 * q];
+            bin.pos[off + 1] = res.pts[3 * q + 1];
+            bin.pos[off + 2] = res.pts[3 * q + 2];
+            bin.pos[off + 3] = res.pts[3 * q + 3];
+            bin.pos[off + 4] = res.pts[3 * q + 4];
+            bin.pos[off + 5] = res.pts[3 * q + 5];
+          }
+          for (let p = 0; p < gp.ptsPerLoop; p++) {
+            for (let c = 0; c < 3; c++) {
+              const v = res.pts[3 * p + c];
+              if (v < bbMin[c]) bbMin[c] = v;
+              if (v > bbMax[c]) bbMax[c] = v;
+            }
+          }
+        } else skipped++;
+      }
+      loopsDone++;
+    }
+    for (const bin of bins) bin.geo.attributes.position.needsUpdate = true;
+    const frac = loopsDone / gp.nK;
+    $("progressFill").style.width = (100 * frac).toFixed(1) + "%";
+    $("progressText").textContent = `k-row ${loopsDone} / ${gp.nK} — ${Math.round(frac * gp.combos).toLocaleString()} / ${gp.combos.toLocaleString()} loops`;
+    if (loopsDone < gp.nK) { setTimeout(chunk, 0); return; }
+
+    // finished: fit the view, show everything
+    for (const bin of bins) {
+      bin.line.visible = true;
+      bin.geo.attributes.position.needsUpdate = true;
+    }
+    const bb = new THREE.Box3(new THREE.Vector3(...bbMin), new THREE.Vector3(...bbMax));
+    buildFrame(bb);
+    const center = bb.getCenter(new THREE.Vector3());
+    const size = bb.getSize(new THREE.Vector3());
+    const d = Math.max(size.x, size.y, size.z, 0.5);
+    controls.target.copy(center);
+    camera.position.set(center.x + d * 1.1, center.y + d * 0.8, center.z + d * 1.3);
+    icMarker.visible = bbMin[0] <= IC[0] && IC[0] <= bbMax[0];
+
+    state.built = true;
+    $("roCombos").textContent = gp.combos.toLocaleString();
+    $("roClosed").textContent = closedCount.toLocaleString()
+      + " (" + (100 * closedCount / gp.combos).toFixed(1) + "%)";
+    $("roOpen").textContent = (gp.combos - closedCount - skipped).toLocaleString();
+    $("roSkipped").textContent = skipped.toLocaleString();
+    $("roBuild").textContent = ((performance.now() - t0) / 1000).toFixed(1) + " s";
+    $("legend").style.display = "block";
+    $("progressWrap").style.display = "none";
+    disableTimeControls(false);
+    $("timeSlider").max = state.T;
+    state.t = 0;
+    setPlaying(!$("instant").checked);
+    updateReveal();
+  }
+  setTimeout(chunk, 0);
+}
+
+function disableTimeControls(dis) {
+  for (const id of ["replay", "playPause", "timeSlider"]) $(id).disabled = dis;
+}
+
+// ---------- reveal ----------
+function updateReveal() {
+  if (!state.built) return;
+  const frac = Math.min(state.t / state.T, 1);
+  const segs = Math.floor(frac * bins[0].segsPerLoop);
+  for (const bin of bins) {
+    bin.geo.setDrawRange(0, segs * bin.nLoops * 2);
+  }
+  $("roT").textContent = state.t.toFixed(2) + " / " + state.T.toFixed(1);
+  $("timeVal").textContent = state.t.toFixed(2);
+  $("timeSlider").value = state.t;
+}
+
+// ---------- animation ----------
+let lastFrame = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((now - lastFrame) / 1000, 0.1);
+  lastFrame = now;
+  if (state.playing && state.built) {
+    state.t += dt * state.speed;
+    if (state.t >= state.T) { state.t = state.T; setPlaying(false); }
+    updateReveal();
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+function setPlaying(p) {
+  state.playing = p;
+  $("playPause").innerHTML = p ? "&#10073;&#10073; Pause" : "&#9654; Play";
+}
+
+// ---------- controls ----------
+$("build").addEventListener("click", buildFamily);
+$("replay").addEventListener("click", () => { state.t = 0; setPlaying(true); updateReveal(); });
+$("playPause").addEventListener("click", () => setPlaying(!state.playing));
+$("timeSlider").addEventListener("input", () => {
+  setPlaying(false);
+  state.t = parseFloat($("timeSlider").value);
+  updateReveal();
+});
+$("speed").addEventListener("input", () => {
+  state.speed = parseFloat($("speed").value);
+  $("speedVal").textContent = state.speed.toFixed(2);
+});
+$("tSlider").addEventListener("input", () => {
+  state.T = parseFloat($("tSlider").value);
+  $("tVal").textContent = state.T.toFixed(1);
+});
+$("instant").addEventListener("change", () => {
+  if (!state.built) return;
+  if ($("instant").checked) { setPlaying(false); state.t = state.T; }
+  else { state.t = 0; setPlaying(true); }
+  updateReveal();
+});
+
+// ---------- resize + start ----------
+function resize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / Math.max(h, 1);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", resize);
+new ResizeObserver(resize).observe(container);
+
+resize();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
