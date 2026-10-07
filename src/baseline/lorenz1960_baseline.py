@@ -107,7 +107,7 @@ def solve_lorenz1960_scipy(
         t_eval = make_uniform_grid(config.t_span, n_eval=config.n_eval)
 
     solution = solve_ivp(
-        lorenz1960_rhs,
+        lambda t, y: lorenz1960_rhs(t, y, k=config.k, l=config.l),
         config.t_span,
         np.asarray(config.initial_state, dtype=float),
         method=method or config.scipy_method,

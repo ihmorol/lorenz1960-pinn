@@ -1,0 +1,2 @@
+arm,seed,arch,final_loss,rmse_combined_l2,max_abs_error,wall_clock_s
+r1_no_causal_seed1,1,4x60_f64_unit_win27_warm,8.80939427e-07,0.000175485348,0.000736901053,1001.8877
