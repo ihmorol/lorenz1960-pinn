@@ -7,8 +7,16 @@ T4 GPU; if the runtime disconnects, rerun the same cell — finished arms are
 restored from Drive and skipped.
 
 ```python
-!git clone --branch feat/colab-ablation-suite https://github.com/ihmorol/lorenz1960-pinn.git
+# Cell 1: mount Drive first -- the auth dialog only works from a notebook cell
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```python
+# Cell 2: clone (idempotent), install, run
+!test -d lorenz1960-pinn || git clone --branch feat/colab-ablation-suite https://github.com/ihmorol/lorenz1960-pinn.git
 %cd lorenz1960-pinn
+!git pull
 !pip install -q pandas scipy matplotlib seaborn
 !python scripts/colab_suite.py
 ```

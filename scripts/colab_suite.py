@@ -40,18 +40,35 @@ def sync_to_drive() -> None:
     print("[drive] results saved", flush=True)
 
 
+def ensure_drive() -> bool:
+    """True when Drive is usable. Mounting needs the notebook kernel, so the
+    auth dialog cannot be raised from inside this subprocess."""
+    import os
+    if not _importable("google.colab"):
+        return False
+    if os.path.ismount("/content/drive"):
+        return True
+    from google.colab import drive
+    try:
+        drive.mount("/content/drive")
+        return True
+    except Exception:
+        print("[drive] mount failed. Run this in a notebook cell first:\n"
+              "    from google.colab import drive\n"
+              "    drive.mount('/content/drive')\n"
+              "then rerun the script.", flush=True)
+        return False
+
+
 def main() -> None:
     import torch
     print(f"device: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'}",
           flush=True)
 
-    on_colab = "google.colab" in sys.modules or _importable("google.colab")
-    if on_colab:
-        from google.colab import drive
-        drive.mount("/content/drive")
-        if (DRIVE_ROOT / "paper_ablations").exists():
-            shutil.copytree(DRIVE_ROOT / "paper_ablations", RUNS, dirs_exist_ok=True)
-            print("[drive] previous results restored", flush=True)
+    on_colab = ensure_drive()
+    if on_colab and (DRIVE_ROOT / "paper_ablations").exists():
+        shutil.copytree(DRIVE_ROOT / "paper_ablations", RUNS, dirs_exist_ok=True)
+        print("[drive] previous results restored", flush=True)
 
     started = time.perf_counter()
     try:
