@@ -71,7 +71,7 @@ def main() -> None:
         rows.append({"arm": name, "seed": cfg.seed, "arch": cfg.arch,
                      "final_loss": row["final_loss"],
                      "rmse_combined_l2": row["rmse_combined_l2"],
-                     "max_abs_error": row["max_abs_error"],
+                     "max_abs_error": row["max_abs_error_combined_l2"],
                      "wall_clock_s": row["wall_clock_s"]})
         pd.DataFrame(rows).to_csv(out / "ablations.csv", index=False)
     print(pd.DataFrame(rows).to_string(index=False))
