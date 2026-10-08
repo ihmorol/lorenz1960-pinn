@@ -72,7 +72,6 @@ The Lorenz-system model is a three-state, nonlinear ordinary differential equati
 
 \subsection{Lorenz Equations}
 Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. Here $x(t)$, $y(t)$ and $z(t)$ are the three states, and $\kappa$ and $\ell$ are the physical wavenumbers. We use $k$ only for the window index, which comes later. The Lorenz system general form \cite{matthews2024pinnde} is:
-
 \begin{equation}
 \begin{aligned}
 \frac{dx}{dt}
@@ -96,7 +95,6 @@ Suppose the state vector is given by $u(t)=[x(t),y(t),z(t)]^\mathsf{T}$. We put 
 
 % Physical wavenumbers: \kappa and \ell.
 % Window index: k.
-
 \[
 \begin{aligned}
 \kappa&=2,\quad \ell=1,\\
@@ -107,23 +105,15 @@ a_z&=(2/2)(1/4-1)=-3/4=-0.75.
 \]
 
 These coefficients multiply $yz$, $xz$ and $xy$, and this gives the reduced system we used in this experiment.
-
 \begin{equation}
 \dot{x}=-0.1\,yz,\qquad \dot{y}=1.6\,xz,\qquad \dot{z}=-0.75\,xy,
 \label{eq:ode}
 \end{equation}
 
 If we collect the three right-hand sides, we get the vector form $du/dt=f(u)$. Here $f$ is the known ODE vector field.
-
-
 \[
-\begin{gathered}
-u=[x,y,z]^\mathsf{T}\in\mathbb{R}^{3},\\
-a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T},\\
-\frac{du}{dt}=f(u),\qquad f:\mathbb{R}^{3}\to\mathbb{R}^{3},\\
 f(u)=\begin{bmatrix}a_x\,yz\\a_y\,xz\\a_z\,xy\end{bmatrix}
-=\begin{bmatrix}-0.1\,yz\\1.6\,xz\\-0.75\,xy\end{bmatrix}.
-\end{gathered}
+=\begin{bmatrix}-0.1\,yz\\1.6\,xz\\-0.75\,xy\end{bmatrix},\qquad f:\mathbb{R}^{3}\to\mathbb{R}^{3}.
 \]
 
 The input of $f$ is a state vector with three components and the output is the rate of change of $x$, $y$ and $z$ in the same order. While training, we use this same function on the predicted state $\hat{u}_k(t)$.
@@ -146,8 +136,6 @@ We used several modelling strategies to approximate the solution for Lorenz syst
 \end{figure}
 
 We tried to keep the split window closer to 0.5, as small windows are better \cite{wang2024causal}. In first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in significant increase in loss with RMSE of 0.350 to 0.648 over three seeds (Table~\ref{tab:ablations}). To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network. Here $k=0,\ldots,26$ is the index of the 27 windows and $t_0,\ldots,t_{27}$ are the 28 boundary times. Each window $W_k$ has width $\Delta t=T/27$ and its own network parameters $\theta_k$.
-
-
 \[
 \begin{aligned}
 t_k&=kT/27,\qquad k=0,\ldots,27,\\
@@ -161,7 +149,6 @@ N_k(\,\cdot\,;\theta_k)&:W_k\to\mathbb{R}^{3}.
 Each window is approximately $0.491$ time units wide.
 
 Each window has its own network $N_k(t;\theta_k)$ with 1 input layer (t), 4 hidden layers of 60 neurons with tanh unit, and an output layer with 3 outputs. The output is not the state $(x,y,z)$ directly. It is a correction vector, and we get the predicted state $\hat{u}_k(t)$ from the trial solution in \eqref{eq:trial}. With biases, the input layer has 120 parameters, the three hidden-to-hidden layers have $3\times3660$ and the output layer has 183. The total counts all 27 networks.
-
 \[
 \begin{aligned}
 P_{\mathrm{window}}&=120+3(3660)+183=11{,}283,\\
@@ -173,7 +160,6 @@ For the model parameter initialization we used xavier-uniform weights and zero b
 
 \subsection{Window Handoff}
 As the Lorenz system is an initial value problem, we enforce the initial state of each window through a trial solution. Here $t_k$ is the starting time of window $k$, $u_{0,k}\in\mathbb{R}^3$ is its fixed starting state and $N_k(t;\theta_k)\in\mathbb{R}^3$ is the network correction.
-
 \begin{equation}
 \begin{aligned}
 \hat{u}_k(t)
@@ -184,25 +170,12 @@ As the Lorenz system is an initial value problem, we enforce the initial state o
 \end{equation}
 
 
-\[
-\begin{gathered}
-u_{0,k},N_k(t;\theta_k),\hat{u}_k(t)\in\mathbb{R}^{3},\quad t-t_k\in\mathbb{R},\\
-\hat{u}_k(t_k)=u_{0,k}+0\,N_k(t_k;\theta_k)=u_{0,k},\\
-u_{0,0}=[0.5,0.75,1.0]^\mathsf{T}.
-\end{gathered}
-\]
-
 
 At $t=t_k$, the second term is zero, so $\hat{u}_k(t_k)=u_{0,k}$ regardless of the network parameters \cite{lagaris1998}. The first window uses the given initial state $u_{0,0}=u(0)$, and every later window uses the predicted endpoint of the last window as its initial state.
-
 \begin{equation}
 u_{0,k+1}=\hat{u}_k(t_{k+1}), \qquad k=0,\ldots,25.
 \label{eq:handoff}
 \end{equation}
-
-\[
-\hat{u}_{k+1}(t_{k+1})=u_{0,k+1}=\hat{u}_k(t_{k+1}).
-\]
 
 The endpoint transfer in \eqref{eq:handoff} and the trial solution make the predicted values continuous at the window boundaries. But the derivatives can still change suddenly at the boundaries. Separately, window $k+1$ starts from a copy of the weights of window $k$, $\theta_{k+1}\leftarrow\theta_k$ for $k=0,\ldots,25$, and then trains its own parameters. As the starting point of the later windows is predicted, it can carry error from earlier windows.
 
@@ -215,21 +188,17 @@ The endpoint transfer in \eqref{eq:handoff} and the trial solution make the pred
 
 \subsection{Training Loss}
 To train the network of each window, we split the time range into $n_k=1536$ uniform collocation points $t_{k,i}$, $i=1,\ldots,n_k$, including both endpoints.
-
 \[
 \begin{aligned}
 n_k&=1536,\qquad i=1,\ldots,n_k,\\
 t_{k,i}&=t_k+\frac{i-1}{n_k-1}(t_{k+1}-t_k),\\
-n_{\mathrm{unique}}&=27(1536-1)+1=41{,}446,\\
-n_{\mathrm{window\ uses}}&=27\cdot1536=41{,}472.
+n_{\mathrm{unique}}&=27(1536-1)+1=41{,}446,\quad 27\cdot1536=41{,}472.
 \end{aligned}
 \]
 
 
 Two windows next to each other share their boundary time. So there are 41,446 unique points in total, but 41,472 points are used in training. On the global grid, each boundary point belongs to the next window, and we also add it when we train the current window. The last window has the final endpoint. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.
 Then we apply the trial solution to enforce the initial value. PyTorch automatic differentiation gives the rate of change of $x$, $y$ and $z$ with respect to time for all the collocation points. As $u_{0,k}$ is fixed while training, the product rule gives the derivative of \eqref{eq:trial}:
-
-
 \[
 \frac{d\hat{u}_k}{dt}
 =N_k+(t-t_k)\frac{\partial N_k}{\partial t}.
@@ -238,7 +207,6 @@ Then we apply the trial solution to enforce the initial value. PyTorch automatic
 % f(\hat{u}_k) evaluates the prescribed ODE vector field.
 
 The ODE residual function compares this derivative with $f(\hat{u}_k(t))$, which is the original ODE right-hand side at the predicted state. Both terms are vectors with three components, and their difference is the residual $r_k(t)$.
-
 \begin{equation}
 r_k(t)
 =\frac{d\hat{u}_k(t)}{dt}
@@ -246,30 +214,9 @@ r_k(t)
 \in\mathbb{R}^{3}.
 \label{eq:residual}
 \end{equation}
-\[
-\begin{aligned}
-r_{k,x}(t)
-  &=\frac{d\hat{x}_k}{dt}
-    +0.1\,\hat{y}_k\hat{z}_k,\\
-r_{k,y}(t)
-  &=\frac{d\hat{y}_k}{dt}
-    -1.6\,\hat{x}_k\hat{z}_k,\\
-r_{k,z}(t)
-  &=\frac{d\hat{z}_k}{dt}
-    +0.75\,\hat{x}_k\hat{y}_k.
-\end{aligned}
-\]
+So the three components are $r_{k,x}=d\hat{x}_k/dt+0.1\,\hat{y}_k\hat{z}_k$, $r_{k,y}=d\hat{y}_k/dt-1.6\,\hat{x}_k\hat{z}_k$ and $r_{k,z}=d\hat{z}_k/dt+0.75\,\hat{x}_k\hat{y}_k$.
 
-For a batch of $n_k$ times, each row is one collocation point and the three columns are $x$, $y$ and $z$. Here $\mathbf{N}_k$, $\hat{\mathbf{U}}_k$, $\dot{\hat{\mathbf{U}}}_k$, $\mathbf{F}_k$ and $\mathbf{R}_k$ mean the network outputs, trial states, time derivatives, ODE right-hand sides and residuals.
-\[
-\mathbf{t}_k
-=[t_{k,1},\ldots,t_{k,n_k}]^\mathsf{T}
-\in\mathbb{R}^{n_k\times1}.
-\]
-\[
-\mathbf{N}_k,\hat{\mathbf{U}}_k,\dot{\hat{\mathbf{U}}}_k,
-\mathbf{F}_k,\mathbf{R}_k\in\mathbb{R}^{n_k\times3}.
-\]
+For a batch of $n_k$ times, each row is one collocation point and the three columns are $x$, $y$ and $z$. Here $\mathbf{N}_k$, $\hat{\mathbf{U}}_k$, $\dot{\hat{\mathbf{U}}}_k$, $\mathbf{F}_k$ and $\mathbf{R}_k$ mean the network outputs, trial states, time derivatives, ODE right-hand sides and residuals. Each of them is in $\mathbb{R}^{n_k\times3}$, and the time batch $\mathbf{t}_k$ is in $\mathbb{R}^{n_k\times1}$.
 % Row i:
 % \mathbf{N}_k: N_k(t_{k,i};\theta_k)^\mathsf{T}
 % \hat{\mathbf{U}}_k: \hat{u}_k(t_{k,i})^\mathsf{T}
@@ -278,23 +225,16 @@ For a batch of $n_k$ times, each row is one collocation point and the three colu
 % \mathbf{R}_k: r_k(t_{k,i})^\mathsf{T}
 
 For each ordered collocation time $t_{k,i}$, we take the mean of the three squared residual components. This gives one non-negative loss value $L_{k,i}$ for each point instead of three components:
-
 \begin{equation}
 \begin{aligned}
 L_{k,i}
-  &=\frac{1}{3}\left\|r_k(t_{k,i})\right\|_2^2\\
-  &=\frac{1}{3}\Bigl(
-       r_{k,x}(t_{k,i})^2
-      +r_{k,y}(t_{k,i})^2\\
-  &\hspace{3.8em}+r_{k,z}(t_{k,i})^2
-    \Bigr)
-  \in\mathbb{R}_{\geq0}.
+  &=\tfrac{1}{3}\left\|r_k(t_{k,i})\right\|_2^2\\
+  &=\tfrac{1}{3}\bigl(r_{k,x}^2+r_{k,y}^2+r_{k,z}^2\bigr)(t_{k,i})\in\mathbb{R}_{\geq0}.
 \end{aligned}
 \label{eq:pointloss}
 \end{equation}
 
 For a long horizon time dependent ODE system, residual loss alone may not be sufficient. That is why we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times \cite{wang2024causal}. Here $S_{k,i}$ is the sum of the point losses at all earlier times of the same window. The first point has no earlier point, so $S_{k,1}=0$ and its causal weight is one.
-
 \[
 S_{k,i}=\sum_{j=1}^{i-1}L_{k,j},
 \qquad
@@ -306,13 +246,7 @@ w_{k,i}
 =\exp\left(-\epsilon\sum_{j=1}^{i-1}L_{k,j}\right).
 \label{eq:weights}
 \end{equation}
-\[
-\begin{gathered}
-w_{k,1}=1,\qquad 0<w_{k,i}\leq1,\\
-\epsilon\in\{0.01,0.1,1,10\}.
-\end{gathered}
-\]
-Then we multiply each point loss with its causal weight and take the mean over all $n_k$ points. This gives one loss value for the window in the current $\epsilon$ stage:
+So $0<w_{k,i}\leq1$. Then we multiply each point loss with its causal weight and take the mean over all $n_k$ points. This gives one loss value for the window in the current $\epsilon$ stage:
 \begin{equation}
 \mathcal{L}_{k,\epsilon}
 =\frac{1}{n_k}
@@ -320,22 +254,12 @@ Then we multiply each point loss with its causal weight and take the mean over a
 \in\mathbb{R}_{\geq0}.
 \label{eq:causalloss}
 \end{equation}
-\[
-\begin{aligned}
-\mathbf{L}_k
-  &=[L_{k,1},\ldots,L_{k,n_k}]^\mathsf{T}
-   \in\mathbb{R}^{n_k},\\
-\mathbf{w}_k
-  &=[w_{k,1},\ldots,w_{k,n_k}]^\mathsf{T}
-   \in\mathbb{R}^{n_k}.
-\end{aligned}
-\]
 % k: window index; i: current point; j: earlier point.
 % \epsilon: scalar causal-weighting parameter.
 % \mathcal{L}_{k,\epsilon}: one scalar objective at current parameters.
 % Weights are recomputed, then detached for gradient calculation.
 
-Here $k$ is the window, $i$ is the current point and $j<i$ means the earlier points of $i$. $\mathbf{L}_k$ and $\mathbf{w}_k$ have one loss and one weight for each point. $\epsilon$ in the equation means how strongly the earlier losses reduce the later weights. We used four $\epsilon$ stages: $0.01$, $0.1$, $1$, and $10$. When the earlier losses go down, the later weights go up towards one. The weights are recomputed during training, and they are fixed (detached) while the Adam optimizer calculates the gradient. The causal weights also depend on the number and spacing of the collocation points \cite{wang2024causal}.
+Here $k$ is the window, $i$ is the current point and $j<i$ means the earlier points of $i$. $\mathbf{L}_k,\mathbf{w}_k\in\mathbb{R}^{n_k}$ have one loss and one weight for each point. $\epsilon$ in the equation means how strongly the earlier losses reduce the later weights. We used four $\epsilon$ stages: $0.01$, $0.1$, $1$, and $10$. When the earlier losses go down, the later weights go up towards one. The weights are recomputed during training, and they are fixed (detached) while the Adam optimizer calculates the gradient. The causal weights also depend on the number and spacing of the collocation points \cite{wang2024causal}.
 
 Only using ODE residual isn't enough for long horizon system like Lorenz system. And specially for the windowed algorithm, early times should be fitted before late times, as the errors accumulates and backtracking isn't possible. Therefore, later states depend on the earlier states, if earlier error is reduced, possibly the later error can be reduced as well. Equations~\eqref{eq:pointloss}--\eqref{eq:causalloss} do this with the point losses and the causal weights. The next subsection explains the stopping rules of the stages and the unweighted L-BFGS refinement steps.
 
@@ -343,7 +267,6 @@ Only using ODE residual isn't enough for long horizon system like Lorenz system.
 
 The causal loss defined above is minimized separately in each window. Figure \ref{fig:pipeline}
 summarize the sequence across the windows. Algorithm \ref{alg:training} gives the training steps. In each window a Adam optimizer and StepLR scheduler is created. The rate of the scheduler is $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates. It is maintained for the four stages of $\epsilon=(0.01,0.1,1,10)$ across the window. There is a 4,000 update limit for each stage. When the saved minimum weight is above 0.99 or if there is an Adam update then the code will recalculate the causal weights at all collocation points at that particular window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records failure. When all four stages are completed then L-BFGS tries to minimize the loss using unweighted residual mean up to 1,000 iterations. For L-BFGS, we remove the causal weights and use the plain mean of the point losses. This is the same as the mean of all $3n_k$ squared residual components.
-
 \[
 \mathcal{L}^{\mathrm{raw}}_k
 =\frac{1}{n_k}\sum_i L_{k,i}
@@ -369,12 +292,9 @@ The code saves the parameters of each window, transfers the endpoint state, and 
   \For{$\epsilon\in(0.01,0.1,1,10)$}
     \For{at most 4,000 Adam steps}
       \State Use ordered times $t_{k,i}$, $i=1,\ldots,n_k$
-    \State Evaluate $N_k(t_{k,i};\theta_k)\in\mathbb{R}^{3}$
-    \State Form $\hat{u}_k(t_{k,i})$ using \eqref{eq:trial}
-    \State Compute $d\hat{u}_k/dt$ by automatic differentiation
-    \State Evaluate $f(\hat{u}_k)$ and form $r_k$ using \eqref{eq:residual}
-    \State Compute $L_{k,i}$ using \eqref{eq:pointloss}
-    \State Compute $w_{k,i}$ using \eqref{eq:weights}; detach weights
+    \State Form $\hat{u}_k$ by \eqref{eq:trial}; get $d\hat{u}_k/dt$ by autograd
+    \State Form $r_k$ by \eqref{eq:residual} and $L_{k,i}$ by \eqref{eq:pointloss}
+    \State Compute $w_{k,i}$ by \eqref{eq:weights}; detach weights
       \State Backpropagate \eqref{eq:causalloss}; Adam then StepLR
       \If{verified post-update $\min_i w_{k,i}>0.99$}
         \State \textbf{break}
@@ -452,11 +372,9 @@ For the combined RMSE, we take the mean of the squared error norms over all eval
 For each state $c\in\{x,y,z\}$ we also report MAE, RMSE and the maximum absolute error. $E_{\mathrm{mean}}$ and $E_{\mathrm{max}}$ are the mean and the maximum of the error norm.
 \[
 \begin{aligned}
-\operatorname{MAE}_c&=\frac{1}{n_{\mathrm{eval}}}\sum_j|e_c(t_j)|,\\
-\operatorname{RMSE}_c&=\left(\frac{1}{n_{\mathrm{eval}}}\sum_j e_c(t_j)^2\right)^{1/2},\\
-\operatorname{Max}_c&=\max_j|e_c(t_j)|,\quad c\in\{x,y,z\},\\
-E_{\mathrm{mean}}&=\frac{1}{n_{\mathrm{eval}}}\sum_j\|e(t_j)\|_2,\\
-E_{\mathrm{max}}&=\max_j\|e(t_j)\|_2.
+\operatorname{MAE}_c&=\tfrac{1}{n_{\mathrm{eval}}}\textstyle\sum_j|e_c(t_j)|,\quad \operatorname{Max}_c=\max_j|e_c(t_j)|,\\
+\operatorname{RMSE}_c&=\bigl(\tfrac{1}{n_{\mathrm{eval}}}\textstyle\sum_j e_c(t_j)^2\bigr)^{1/2},\quad c\in\{x,y,z\},\\
+E_{\mathrm{mean}}&=\tfrac{1}{n_{\mathrm{eval}}}\textstyle\sum_j\|e(t_j)\|_2,\quad E_{\mathrm{max}}=\max_j\|e(t_j)\|_2.
 \end{aligned}
 \]
 
