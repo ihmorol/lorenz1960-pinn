@@ -212,7 +212,7 @@ $\theta_{k+1}\leftarrow\theta_k, \qquad k=0,\ldots,25$, here window k+1 starts f
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/method.png}
+\includegraphics[width=\columnwidth]{figures/method.pdf}
 \caption{Complete implementation pipeline}
 \label{fig:pipeline}
 \end{figure}
@@ -414,11 +414,11 @@ Setting & Value\\
 \midrule
 Interval; windows & $[0,13.26446]$; 27 equal windows\\
 Network per window & $1$--$60$--$60$--$60$--$60$--$3$, tanh\\
-Parameters & 11,283 per window\\
-Initial condition; precision & 0.5, 0.75, 1.0; float64\\
+Parameters & 11,283/window; 304,641 total\\
+Initial condition; precision & $[0.5,0.75,1.0]^\mathsf{T}$; float64\\
 Uniform collocation grid & 41,446 unique points\\
 Adam $\epsilon$ stages & $0.01,0.1,1,10$\\
-Stage threshold; epoch limit & min$\_w_{k,i}>0.99$; 4,000\\
+Stage threshold; steps/stage & $\min_{1\leq i\leq n_k}w_{k,i}>0.99$; 4,000\\
 Adam rate; scheduler & $10^{-3}$; $\times0.9$ per 1,000 steps\\
 L-BFGS budget & at most 1,000 iterations/window\\
 Warm start; seed & Initialize $\theta_k\gets\theta_{k-1}$; 0\\
@@ -465,13 +465,20 @@ E_{\mathrm{max}}&=\max_j\|e(t_j)\|_2.
 
 
 while the combined maximum error is $\max_j\|e(t_j)\|_2$. 
-The dense-grid residual mean square is the average of the three residual components squared, taken over the times of the evaluation. The comparison run is with the same network depth and width for the entire interval [0, T]. The windowed run simultaneously changes the number of networks, the grid, loss, warm start and
+The dense-grid residual mean square is the average of the three residual components squared, taken over the times of the evaluation.
+\[
+\operatorname{MSE}_{r,\mathrm{eval}}
+=\frac{1}{3n_{\mathrm{eval}}}\sum_{j=1}^{n_{\mathrm{eval}}}\|r(t_j)\|_2^2.
+\]
+ The comparison run is with the same network depth and width for the entire interval [0, T]. The windowed run simultaneously changes the number of networks, the grid, loss, warm start and
 the optimizer schedule. We measuere their final output and compare them.
 
 
 
 
 
+
+\input{ablation-table}
 
 \section{Results}
 This section reports the measurements taken from the completed training artifacts. We first look at what the windowed model does correctly and how well it follows the true path and physics. We then compare these results with the baseline reference and a single-network run for comparison with the behaviour of the model.
@@ -523,7 +530,7 @@ Training points & 39,793 LHS & 41,446 uniform\\
 Combined state RMSE & 2.237 & $6.97\times10^{-5}$\\
 Maximum state-error norm & 3.346 & $3.09\times10^{-4}$\\
 Collocation residual MSE & $2.80\times10^{-4}$ & $1.87\times10^{-7}$\\
-Recorded wall time (s) & 4,529 & 881\\
+Recorded Adam steps & 40,000 & 34,765\\
 \bottomrule
 \end{tabular}
 \end{table}
