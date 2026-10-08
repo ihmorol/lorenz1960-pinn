@@ -55,7 +55,7 @@ kabir@cse.uiu.ac.bd}
 \maketitle
 
 \begin{abstract}
-We study a physics-informed neural network (PINN) approximation of a single full-cycle orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that produce a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval in total 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. We reported, in a single-seed run the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$.  The full-interval and windowed runs also vary in terms of number of parameters, sampling and optimizer schedule. In contrast, these are described with the word configurations, not isolation of the effect of causal weighting.
+We study a physics-informed neural network (PINN) approximation of a single full-cycle orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that produces a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval in total 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. In the seed-0 run, the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$. Across five seeds, the median RMSE is $8.13\times10^{-5}$. The full-interval and windowed runs also vary in terms of number of parameters, sampling and optimizer schedule. We therefore describe them as different configurations, not as an isolation of the effect of causal weighting. Separate ablation runs remove causal weighting, warm start, or the separate window networks.
 
 \end{abstract}
 
@@ -64,15 +64,14 @@ physics-informed neural network, Lorenz system, causal training, time windows, o
 \end{IEEEkeywords}
 
 \section{Introduction}
-The Lorenz-system model is a three-state, nonlinear ordinary differential equation (ODE) that was obtained from a reduced flow model \cite{lorenz1960}. It has an initial-value problem which provides a simple test of the convergence of a learned continuous-time function from a specified trajectory over a long interval. A reference trajectory is provided by numerical integration. A PINN is trained with the residual of the ODE instead of the solution samples \cite{raissi2019}. To train a a long horizon problem using traditional PINN is not suggested by previous works\cite{wang2024causal}. It couples early and late times, but the state at a later time is determined by the previous trajectory. To overcome this ordering, Wang \emph{et al.} suggested the use of time-dependent residual weights PINN training \cite{wang2024causal}. An initial condition can also be met by construction using a hard trial solution  \cite{lagaris1998}. We use both concepts, we split the time period in equal 27 windows and a separate network for every windows. The initial state is fixed with the endpoint predicted in one window of the next. The parameters of a trained window is copied to the next trainable window. This paper provides an implementation and its saved results. An interval that completes a full-cycle loop for the chosen initial state is $[0,13.26446]$. We report one implementation and its saved result on $[0, 13.26446]$ which is essentially an closed orbit. The actual training goal and window handoff is then given and compared to a saved single-network training of the same initial-value problem. The state error, ODE residual, causal weights residual are also checked. The comparison is descriptive because multiple configuration options are changing simultaneously.
+The Lorenz-system model is a three-state, nonlinear ordinary differential equation (ODE) that was obtained from a reduced flow model \cite{lorenz1960}. It has an initial-value problem which provides a simple test of the convergence of a learned continuous-time function from a specified trajectory over a long interval. A reference trajectory is provided by numerical integration. A PINN is trained with the residual of the ODE instead of the solution samples \cite{raissi2019}. To train a long horizon problem using traditional PINN is not suggested by previous works\cite{wang2024causal}. It couples early and late times, but the state at a later time is determined by the previous trajectory. To overcome this ordering, Wang \emph{et al.} suggested the use of time-dependent residual weights PINN training \cite{wang2024causal}. An initial condition can also be met by construction using a hard trial solution  \cite{lagaris1998}. We use both concepts, we split the time period in equal 27 windows and a separate network for every windows. The initial state of each window is fixed to the endpoint predicted by the previous window. The parameters of a trained window are copied to the next trainable window. We report one implementation and its saved result on $[0,13.26446]$, which is a nearly closed orbit for the chosen initial state. The actual training goal and window handoff is then given and compared to a saved single-network training of the same initial-value problem. The state error, ODE residual, causal weights residual are also checked. The comparison is descriptive because multiple configuration options are changing simultaneously. We also report ablation and failure-case runs that remove causal weighting, warm start, or the separate window networks.
 
 
 
 \section{Problem and Background}
-In this section we introduce the mathematical goal of our study and place our configuration within the framework of existing neural-network techniques. We first describe the exact equations and the initial value problem of the Lorenz trajectory that we want the model to learn. Then we explain the existing methods that we used and then we merged them.
 
 \subsection{Lorenz Equations}
-Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. The Lorenz system general form \cite{matthews2024pinnde} is:
+Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. Here $x(t)$, $y(t)$, and $z(t)$ are the three state components, and $\kappa$ and $\ell$ are the physical wavenumber parameters. We use $k$ separately to index the time windows introduced below. The Lorenz system general form \cite{matthews2024pinnde} is:
 
 \begin{equation}
 \begin{aligned}
@@ -92,7 +91,7 @@ Our main object is a three-state nonlinear ordinary differential equation (ODE) 
 \label{eq:lorenz1960}
 \end{equation}
 
-Suppose the state vector is given by $u=[x,y,z]^\mathsf{T}$. 
+We write the state as $u(t)=[x(t),y(t),z(t)]^\mathsf{T}$. Substituting $\kappa=2$ and $\ell=1$ into \eqref{eq:lorenz1960} gives the following coefficients.
 
 
 % Physical wavenumbers: \kappa and \ell.
@@ -107,10 +106,14 @@ a_z&=(2/2)(1/4-1)=-3/4=-0.75.
 \end{aligned}
 \]
 
+These coefficients multiply $yz$, $xz$, and $xy$, respectively, giving the reduced system used in this experiment.
+
 \begin{equation}
 \dot{x}=-0.1\,yz,\qquad \dot{y}=1.6\,xz,\qquad \dot{z}=-0.75\,xy,
 \label{eq:ode}
 \end{equation}
+
+Collecting the three right-hand sides gives the vector form $du/dt=f(u)$, where $f$ is the prescribed ODE vector field.
 
 
 \[
@@ -123,10 +126,7 @@ f(u)=\begin{bmatrix}a_x\,yz\\a_y\,xz\\a_z\,xy\end{bmatrix}
 \end{gathered}
 \]
 
-
-
-
-
+The input to $f$ is a three-component state vector, and its output contains the prescribed rates of change of $x$, $y$, and $z$ in that order. During training, we evaluate this same function at the predicted state $\hat{u}_k(t)$.
 
 For our experiment we used the coefficients $a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}$. We track the system starting from an initial state \cite{matthews2024pinnde} of $u(0)=[0.5,0.75,1.0]^\mathsf{T}$ until a final time of $T=13.26446$. On this particular rounded endpoint, the reference trajectory nearly returns to its starting state. It is very similar but not exactly closed so we call this interval a nearly closed orbit and not an exact period.
 
@@ -135,7 +135,6 @@ For our experiment we used the coefficients $a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.
 In this study we are making an experimental investigation of a series of well known concepts. The approach adopted is a PINN that embeds the physics residual into the training objective \cite{raissi2019}. We use a hard trial-function design \cite{lagaris1998} to ensure our starting state precisely at the point we want to implement it . Learning long trajectories is a well-known challenge due to the ordering of the time axis so we take inspiration from the causal residual weighting technique \cite{wang2024causal}. Lastly segmenting the timeline is based on ideas of causal sweeping and temporal decomposition \cite{penwarden2023}. Our implementation is an investigation of the performance of the individual components in this particular closed orbit of lorenz system.
 
 \section{Windowed PINN}
-This section explains the implementation of windowed PINN with causal weigths. This section also contains the model construction, physics enforcement, window segmentation, its handoff and the sequence in how the optimizer works for this particular case. 
 \subsection{Network Structure}
 We used several modelling strategies to approximate the solution for Lorenz system trajectory over  $[0,T]$, where $T=13.26446$ is one closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. As it failed by stucking in a platue so we tried to split the time interval in equal segments.
 
@@ -146,7 +145,7 @@ We used several modelling strategies to approximate the solution for Lorenz syst
 \label{fig:plateau}
 \end{figure}
 
-We tried to keep the split window closer to 0.5, as small windows are better \cite{wang2024causal}. In first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in significant increase in loss with RMSE of 2.237. To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network.
+We tried to keep the split window closer to 0.5, as small windows are better \cite{wang2024causal}. In first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in a significant increase in error, with RMSE between 0.350 and 0.648 over three seeds (Table~\ref{tab:ablations}). To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network. The index $k=0,\ldots,26$ identifies the 27 windows, while $t_0,\ldots,t_{27}$ are their 28 boundary times. Each window $W_k$ has width $\Delta t=T/27$ and its own network parameters $\theta_k$.
 
 
 \[
@@ -159,9 +158,9 @@ N_k(\,\cdot\,;\theta_k)&:W_k\to\mathbb{R}^{3}.
 \]
 
 
-Each aprroximately $0.491$ time units wide. Shorter window gives each network an easier piece to learn, therefore we tried to keep the window size closer to 0.5. 
+Each window is approximately $0.491$ time units wide.
 
-Each window has its own network  $N_k(t;\theta_k)$ with 1 input layer (t), 4 hidden layers of 60 neurons with tanh unit, and with an output layer with 3 output $(x,y,z)$. 
+Each window uses a network $N_k(t;\theta_k)$ with one scalar time input, four hidden layers of 60 tanh units, and three output components. These outputs form a correction vector; the predicted state $\hat{u}_k(t)$ is obtained by applying the trial solution in \eqref{eq:trial}. The input layer, three hidden-to-hidden connections, and output layer contribute 120, $3\times3660$, and 183 parameters, respectively, including biases. The total below counts all 27 stored networks.
 
 \[
 \begin{aligned}
@@ -173,7 +172,7 @@ P_{\mathrm{total}}&=27P_{\mathrm{window}}=304{,}641.
 For the model parameter initialization we used xavier-uniform weights and zero biases. The 27 networks don't share parameters but the windows has shared boundary. The completed windows predicted endpoint for the boundary is used for the initial state of the next window. 
 
 \subsection{Window Handoff}
-As Lorenz system is an initial value problem, we enforce the initial state of each window through a trial solution.
+As the Lorenz system is an initial value problem, we enforce the initial state of each window through a trial solution. For window $k=0,\ldots,26$, let $t_k$ be its starting time and $u_{0,k}\in\mathbb{R}^3$ its fixed starting state. $N_k(t;\theta_k)\in\mathbb{R}^3$ is the network correction.
 
 \begin{equation}
 \begin{aligned}
@@ -194,10 +193,7 @@ u_{0,0}=[0.5,0.75,1.0]^\mathsf{T}.
 \]
 
 
-where $k=0,\ldots,26$, $t_k$ is the starting time of window $k$, and $u_{0,k}$
-is its fixed starting state. At $t=t_k$, the second term is zero, so
-$\hat{u}_k(t_k)=u_{0,k}$ regardless of the network parameters
-\cite{lagaris1998}. The first window uses the trial initial state, every later windows uses the predicted value of the last window as its initial state.
+At $t=t_k$, the scalar factor $t-t_k$ is zero, so the predicted state equals $u_{0,k}$ independently of the network parameters \cite{lagaris1998}. The first window uses the prescribed initial state $u_{0,0}=u(0)$; each later window uses the predicted endpoint of its predecessor, as specified below.
 
 \begin{equation}
 u_{0,k+1}=\hat{u}_k(t_{k+1}), \qquad k=0,\ldots,25.
@@ -208,7 +204,7 @@ u_{0,k+1}=\hat{u}_k(t_{k+1}), \qquad k=0,\ldots,25.
 \hat{u}_{k+1}(t_{k+1})=u_{0,k+1}=\hat{u}_k(t_{k+1}).
 \]
 
-$\theta_{k+1}\leftarrow\theta_k, \qquad k=0,\ldots,25$, here window k+1 starts from a copy of the weights of window k then train on its own parameters . This makes the predicted values continuous at the window boundaries. As the starting point of the later windows is predicted, it can carry error from earlier windows. 
+The endpoint transfer in \eqref{eq:handoff}, together with the hard trial solution, makes the predicted states continuous at shared boundaries. The values remain continuous at the boundaries, but the derivatives can still change suddenly at the boundaries. Separately, we initialize the next network by copying $\theta_{k+1}\leftarrow\theta_k$, $k=0,\ldots,25$, and then train its parameters independently. As the starting point of the later windows is predicted, it can carry error from earlier windows.
 
 \begin{figure}[t]
 \centering
@@ -218,7 +214,7 @@ $\theta_{k+1}\leftarrow\theta_k, \qquad k=0,\ldots,25$, here window k+1 starts f
 \end{figure}
 
 \subsection{Training Loss}
-To predict and train the networks of each window, we split the time range into 1536 uniform collocation points per window. 
+Each window is trained on $n_k=1536$ uniformly spaced times $t_{k,i}$, ordered by $i=1,\ldots,n_k$ and including both endpoints.
 
 \[
 \begin{aligned}
@@ -230,8 +226,8 @@ n_{\mathrm{window\ uses}}&=27\cdot1536=41{,}472.
 \]
 
 
-Ideally 1535 points for each window and 1 handoff point that becomes the initial state for the next window. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.
-Then we apply the trial solution to enforce the intial value. While calculating ODE residuals, pytorch automatic differentiation uses the vectors of x,y,z and create a graph that is differentiable. Pytorch autograd function gives the rate of change for all the collocation points with respect to time. And we use this value and the mathematical derivative to calculate the ODE residual.
+Adjacent windows share boundary times, giving 41,446 unique global points but 41,472 point uses across window training. The implementation assigns each shared boundary to the next window on the global grid and also includes it when training the outgoing window. The last window includes the final endpoint. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.
+We apply the trial solution to the network outputs and compute its time derivative component by component using PyTorch automatic differentiation. Because $u_{0,k}$ is fixed during training, differentiating \eqref{eq:trial} gives the product-rule expression below.
 
 
 \[
@@ -241,6 +237,7 @@ Then we apply the trial solution to enforce the intial value. While calculating 
 % PyTorch autograd computes d\hat{u}_k/dt.
 % f(\hat{u}_k) evaluates the prescribed ODE vector field.
 
+The vector-valued ODE residual function compares this learned trajectory derivative with $f(\hat{u}_k(t))$, the original ODE right-hand side evaluated at the predicted state. Both terms are three-component rate vectors; their difference is $r_k(t)$.
 
 \begin{equation}
 r_k(t)
@@ -263,7 +260,7 @@ r_{k,z}(t)
 \end{aligned}
 \]
 
-
+For a batch of $n_k$ times, each row represents one collocation point and the three columns follow the $x,y,z$ order. We denote the network outputs, trial states, time derivatives, ODE right-hand sides, and residuals by $\mathbf{N}_k$, $\hat{\mathbf{U}}_k$, $\dot{\hat{\mathbf{U}}}_k$, $\mathbf{F}_k$, and $\mathbf{R}_k$, respectively.
 \[
 \mathbf{t}_k
 =[t_{k,1},\ldots,t_{k,n_k}]^\mathsf{T}
@@ -280,7 +277,7 @@ r_{k,z}(t)
 % \mathbf{F}_k: f(\hat{u}_k(t_{k,i}))^\mathsf{T}
 % \mathbf{R}_k: r_k(t_{k,i})^\mathsf{T}
 
-For each ordered collocation time $t_{k,i}$, we take the mean of the three squared residual components:
+At each time $t_{k,i}$, we square the three residual components and average them to obtain the nonnegative scalar point loss $L_{k,i}$. This reduces each residual row from three components to one loss value.
 
 \begin{equation}
 \begin{aligned}
@@ -296,7 +293,7 @@ L_{k,i}
 \label{eq:pointloss}
 \end{equation}
 
-To solve a long horizon time dependent ODE system, only residual loss is not sufficient. Thats why use we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times \cite{wang2024causal}:
+For a long horizon time dependent ODE system, residual loss alone may not be sufficient. That is why we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times \cite{wang2024causal}. The prefix $S_{k,i}$ sums point losses at earlier times in the same window. Its sum is empty at the first point, so $S_{k,1}=0$ and the first causal weight is one.
 
 \[
 S_{k,i}=\sum_{j=1}^{i-1}L_{k,j},
@@ -315,6 +312,7 @@ w_{k,1}=1,\qquad 0<w_{k,i}\leq1,\\
 \epsilon\in\{0.01,0.1,1,10\}.
 \end{gathered}
 \]
+We multiply each point loss by its causal weight and average over all $n_k$ points. The resulting $\mathcal{L}_{k,\epsilon}$ is one scalar objective for the current window and $\epsilon$ stage at the current parameter values.
 \begin{equation}
 \mathcal{L}_{k,\epsilon}
 =\frac{1}{n_k}
@@ -337,14 +335,14 @@ w_{k,1}=1,\qquad 0<w_{k,i}\leq1,\\
 % \mathcal{L}_{k,\epsilon}: one scalar objective at current parameters.
 % Weights are recomputed, then detached for gradient calculation.
 
-Here $n_k=1536$. $L_{k,j}$ in \eqref{eq:weights} means the error at earliar points of $i$, where $j < i$ and $L_{k,i}$ means the loss at collocation point $i$ in \eqref{eq:causalloss}. $w_{k,i}$ denotes the causal weights of the collocation points. Here the causal weights are fixed while Adam optimizer calculated the gradient. We used four $\epsilon$ stages: $0.01$, $0.1$, $1$, and $10$  to reduce the earlier points error, and increase the weights. $\epsilon$ in the equation means the penalty for the models in each stages. Model must try to reduce the earlier loss to improve each points weights.
+Here $k$ identifies the window, $i$ its current point, and $j<i$ an earlier point. The vectors $\mathbf{L}_k$ and $\mathbf{w}_k$ contain one scalar loss and one scalar weight per point. The parameter $\epsilon$ controls how strongly accumulated earlier losses suppress later weights. We use the ordered stages $0.01$, $0.1$, $1$, and $10$. As earlier losses decrease, later weights rise toward one. We recompute the weights during training and detach them when calculating the parameter gradient. The causal weights also depend on the number and spacing of the collocation points \cite{wang2024causal}.
 
-Only using ODE residual isn't enough for long horizon system like Lorenz system. And specially for the windowed algorithm, early times should be fitted before late times, as the errors accumulates and backtracking isn't possible. Therefore, later states depend on the earlier states, if earlier error is reduced, possibly the later error can be reduced as well. To address this, we first calculate the per-collocation point loss, $L_{k,i}$ which is the mean of the three squared ode residuals at time $i$. We assign weights for each point in time. Each points weight updates its value with the accumulated loss of all earlier points. The Causal loss \eqref{eq:causalloss} is the weighted mean of the residual loss. Weights are recomputed at every epoch. Later section explains the stopping rules of the stages and unweighted L-BFGS refinement steps. 
+Only using ODE residual isn't enough for long horizon system like Lorenz system. And specially for the windowed algorithm, early times should be fitted before late times, as the errors accumulates and backtracking isn't possible. Therefore, later states depend on the earlier states, if earlier error is reduced, possibly the later error can be reduced as well. Equations~\eqref{eq:pointloss}--\eqref{eq:causalloss} implement this ordering through point losses and causal weights. The following subsection gives the stage stopping rule and unweighted L-BFGS refinement.
 
 \subsection{Training Procedure}
 
-The causal loss defined in above, is minimized seperately in each window. Figure \ref{fig:pipeline}
-summarize the sequence across the windows. Algorithm \ref{alg:training} gives the training steps. In each window a Adam optimizer and StepLR scheduler is created. The rate of the scheduler is $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates. It is maintained for the four stages of $\epsilon=(0.01,0.1,1,10)$ across the window. There is a 4,000 update limit for each stage. When the saved minimum weight is above 0.99 or if there is an Adam update then the code will recalculate the causal weights at all collocation points at that particular window. If the minimum causal weight from the entire window among 1535 points is above 0.99 then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the epoch threshold then it moves to the next stage and records failure. When all four stages are completed then L-BFGS tries to minimize the loss using unweighted residual mean up to 1,000 epoch. 
+The causal loss defined above is minimized separately in each window. Figure \ref{fig:pipeline}
+summarize the sequence across the windows. Algorithm \ref{alg:training} gives the training steps. In each window a Adam optimizer and StepLR scheduler is created. The rate of the scheduler is $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates. It is maintained for the four stages of $\epsilon=(0.01,0.1,1,10)$ across the window. There is a 4,000 update limit for each stage. When the saved minimum weight is above 0.99 or if there is an Adam update then the code will recalculate the causal weights at all collocation points at that particular window. If the verified post-update minimum over all 1536 training-point weights exceeds $0.99$, training advances to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records failure. When all four stages are completed then L-BFGS tries to minimize the loss using unweighted residual mean up to 1,000 iterations. For L-BFGS refinement, we remove the causal weights and minimize the unweighted mean of the point losses. Equivalently, this is the mean of all $3n_k$ squared residual components.
 
 \[
 \mathcal{L}^{\mathrm{raw}}_k
@@ -390,18 +388,16 @@ The code saves the parameters of each window, transfers the endpoint state, and 
 \end{algorithmic}
 \end{algorithm}
 
+\input{ablation-table}
+
 \section{Experimental Setup}
-This section explain the experimental setup for the saved windowed run. It contains the configuration and reference information, the evaluation measures and the separate full interval comparison.
-
-
-
 
 \subsection{Reference Solution}
 
 
 
 
-Table \ref{tab:config} shows the parameters used for the reported windowed run. We use SciPy’s DOP853 \cite{virtanen2020} as the numerical reference, a relative tolerance of $10^{-10}$ and a absolute tolerance of $10^{-12}$. It is sampled at 13,265 equally-spaced time points, and Distances away from training grid. This is a numerical reference at specified tolerances.
+Table \ref{tab:config} shows the parameters used for the reported windowed run. We use SciPy’s DOP853 \cite{virtanen2020} as the numerical reference, a relative tolerance of $10^{-10}$ and an absolute tolerance of $10^{-12}$. It is sampled at 13,265 equally-spaced time points on a separate evaluation grid. This is a numerical reference at specified tolerances.
 
 
 \begin{table}[t]
@@ -428,6 +424,7 @@ Reference grid & 13,265 uniform times\\
 \end{table}
 
 \subsection{Evaluation}
+At evaluation time $t_j$, we subtract the numerical reference state from the predicted state to obtain the error vector $e(t_j)\in\mathbb{R}^3$, with $j=1,\ldots,n_{\mathrm{eval}}$. This state-reference error is distinct from the ODE residual.
 \[
 \begin{aligned}
 e(t_j)&=\hat{u}(t_j)-u_{\mathrm{ref}}(t_j)\\
@@ -435,6 +432,7 @@ e(t_j)&=\hat{u}(t_j)-u_{\mathrm{ref}}(t_j)\\
 &\qquad j=1,\ldots,n_{\mathrm{eval}}.
 \end{aligned}
 \]
+The combined RMSE averages the squared Euclidean error norms over evaluation times and then takes the square root. Its equivalent component form is the square root of the sum of the three squared component RMSEs.
 \begin{equation}
 \begin{aligned}
 \operatorname{RMSE}_2
@@ -451,7 +449,7 @@ e(t_j)&=\hat{u}(t_j)-u_{\mathrm{ref}}(t_j)\\
 \end{aligned}
 \label{eq:rmse}
 \end{equation}
-
+For $c\in\{x,y,z\}$, we report componentwise MAE, RMSE, and maximum absolute error. We also report the mean and maximum Euclidean error norms, denoted by $E_{\mathrm{mean}}$ and $E_{\mathrm{max}}$.
 \[
 \begin{aligned}
 \operatorname{MAE}_c&=\frac{1}{n_{\mathrm{eval}}}\sum_j|e_c(t_j)|,\\
@@ -464,30 +462,28 @@ E_{\mathrm{max}}&=\max_j\|e(t_j)\|_2.
 
 
 
-while the combined maximum error is $\max_j\|e(t_j)\|_2$. 
-The dense-grid residual mean square is the average of the three residual components squared, taken over the times of the evaluation.
+The dense-grid residual MSE averages the squared ODE residuals over all evaluation times and all three components. It therefore includes a factor of $1/(3n_{\mathrm{eval}})$, whereas the squared combined state RMSE averages vector norms over times without dividing by three.
 \[
 \operatorname{MSE}_{r,\mathrm{eval}}
 =\frac{1}{3n_{\mathrm{eval}}}\sum_{j=1}^{n_{\mathrm{eval}}}\|r(t_j)\|_2^2.
 \]
  The comparison run is with the same network depth and width for the entire interval [0, T]. The windowed run simultaneously changes the number of networks, the grid, loss, warm start and
-the optimizer schedule. We measuere their final output and compare them.
+the optimizer schedule. We measure their final output and compare them.
 
+\subsection{Ablation Protocol}
+Table~\ref{tab:ablations} lists the ablation and failure-case runs. All runs use the same initial state, coefficients, float64 precision, interval, and DOP853 reference grid. The candidate is the configuration of Section~III, run with seeds 0--4; seed 0 is the run reported in Tables~\ref{tab:errors} and~\ref{tab:comparison}. The ablations use seeds 1--3. The no-causal case removes the causal weights and trains each window for 1,300 Adam steps (35,100 in total), close to the candidate mean of 34,768 observed steps. The no-warm-start case keeps the candidate schedule but does not copy the previous window's parameters. The shared-network case uses the no-causal schedule but trains one network for all 27 windows in sequence. The causal single-network case applies causal weighting to one network on the full interval, with the full-interval grid and budget: 39,793 LHS points, 40,000 Adam steps, and at most 5,000 L-BFGS iterations. The runs used both CPU and GPU, so we compare Adam steps instead of wall time.
 
+\subsection{Failure Cases}
+The shared-network case tests whether one network keeps what it learned in earlier windows. The causal single-network case tests whether causal weighting alone can fix the full-interval error. We classify a run only by its final error against DOP853. All reported runs completed training, so a large error here is a poor prediction, not an interrupted job. A stage that reaches the 4,000-step cap is recorded separately and does not by itself mean the trajectory failed. We did not use a success cutoff to select runs, and Table~\ref{tab:ablations} reports every completed seed.
 
-
-
-
-\input{ablation-table}
 
 \section{Results}
-This section reports the measurements taken from the completed training artifacts. We first look at what the windowed model does correctly and how well it follows the true path and physics. We then compare these results with the baseline reference and a single-network run for comparison with the behaviour of the model.
 
 \subsection{Prediction Accuracy}
-We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853. As shown in Table \ref{tab:errors}, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure \ref{fig:trajectory} plots these predictions against the reference over time. The trajectories are shown to overlap completely but the error show small peaks in the errors particularly at $t\simeq5$.
+We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853. As shown in Table \ref{tab:errors}, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure \ref{fig:trajectory} plots these predictions against the reference over time. The trajectories are shown to overlap completely but the error show small peaks in the errors particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$, and the maximum entry is $E_{\mathrm{max}}$.
 
 \begin{table}[t]
-\caption{Windowed-run error against DOP853 on 13,265 times}
+\caption{Seed-0 windowed-run error against DOP853 on 13,265 times}
 \label{tab:errors}
 \centering\footnotesize
 \begin{tabular}{lccc}
@@ -515,7 +511,7 @@ Lastly, the hard trial solution ensures that the values of the state are exactly
 
 
 \subsection{Run Comparison}
-The differences with respect to the two saved configurations are shown in Table \ref{tab:comparison}. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network's RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. All of the above are uncontrolled types of ablation in the concept of causal weighting \cite{wang2024causal}, windowing \cite{penwarden2023} and warm starts as well as precision and even L-BFGS. In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid. Reducing the parameter count of each network might result in similar error.
+The differences with respect to the two saved configurations are shown in Table \ref{tab:comparison}. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network's RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. This is a comparison of two saved configurations, which differ in causal weighting \cite{wang2024causal}, windowing \cite{penwarden2023} and warm starts as well as precision and even L-BFGS. In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid.
 
 \begin{table}[t]
 \caption{Saved full-interval and windowed runs on the same IVP}
@@ -535,15 +531,14 @@ Recorded Adam steps & 40,000 & 34,765\\
 \end{tabular}
 \end{table}
 
-The 27 run windows had 34,765 Adam updates and 1000 L-BFGS closure evaluations per window. Closure evaluations are function calls made by L-BFGS, not iterations. Only two of the 108 causal stages ended at the 4,000-step cap without meeting the $0.99$ weight threshold.
-\section{Discussion and Limitations}
-There are a few limitations of our method. The trial solution \cite{lagaris1998} defines the initial state for each window exactly. The values remain continuous at the boundaries, but the derivatives can still change suddenly at the boundaries. This comparison with the single network is only a description of two saved runs. The two runs differed in a number of things, including the number of networks, grid, loss and schedule. There was not a windowed run that was saved without using causal weights, because \cite{wang2024causal} they are finding was respecting causality gives one or two order less error. This research applies to only one seed, one initial state and one coefficient set. Other initial states and other coefficient sets may result in different behavior. There is a weakness with the handoff. All windows that follow the first window begin from a predicted state and not the actual state. This means that errors from earlier windows get carried over to later windows. Only 2 of the 108 causal stages were at the 4,000-step limit but failed to reach the $0.99$ weight limit. The causal weights Wang \emph{et al.} vary depending on the number and spacing of the collocation points so if we increase the number of collocation points that will decrease the training loss. To obtain a fairer future test, one and only one training option will be changed at a time, with several seeds.
+The 27 run windows had 34,765 Adam updates and 33,143 L-BFGS closure evaluations in total. Closure evaluations are function calls made by L-BFGS, not iterations. Only two of the 108 causal stages ended at the 4,000-step cap without meeting the $0.99$ weight threshold.
+
+\subsection{Ablation and Failure Results}
+Table~\ref{tab:ablations} gives the ablation results. The candidate median RMSE is $8.13\times10^{-5}$, and three of the five seeds are below $10^{-4}$. Without causal weighting, the median is about 2.3 times larger, but this configuration has lower RMSE than the candidate for seed 2. Without warm start, all three matched seeds have larger RMSE and the mean number of Adam steps rises to 102,989; 17--19 of the 108 stages reach the cap, compared with 1--2 for the candidate. Reusing one network gives RMSE between 0.350 and 0.648, compared with $1.75\times10^{-4}$--$5.16\times10^{-4}$ for separate networks with the same no-causal schedule. Causal single-network training gives 0.275 in its one run, which is lower than the full-interval run but far from the windowed runs. These runs support the tested combination of windows, warm start and causal weights for this orbit. With three to five seeds, they do not show that causal weighting always improves accuracy.
 
 \section{Conclusion}
 
-
-
-Each of our 27 window PINN passes each of the tests on the nearly closed Lorenz-system interval $[0,13.26446]$. The next window was predicted to be at the end. The saved run had a combined state RMSE of $6.97\times10^{-5}$ in comparison to DOP853. A network designed separately to full intervals recorded an RMSE of 2.237. Future research will focus on matched configurations and initial states and generalise to problems with specified boundary conditions at each end.
+Each of our 27 window PINN passes each of the tests on the nearly closed Lorenz-system interval $[0,13.26446]$. Each window starts from the predicted endpoint of the previous window. The seed-0 run had a combined state RMSE of $6.97\times10^{-5}$ in comparison to DOP853, and the median over five seeds is $8.13\times10^{-5}$. A network designed separately to full intervals recorded an RMSE of 2.237. This research applies to one initial state and one coefficient set. Other initial states and other coefficient sets may result in different behavior. Future research will focus on matched configurations and initial states and generalise to problems with specified boundary conditions at each end.
 
 
 
