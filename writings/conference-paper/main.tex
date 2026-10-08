@@ -57,7 +57,7 @@ kabir@cse.uiu.ac.bd}
 \maketitle
 
 \begin{abstract}
-We study a physics-informed neural network (PINN) approximation of a single full-cycle orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that produces a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval into 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. In the seed-0 run, the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$. Across five seeds, the median RMSE is $8.13\times10^{-5}$. The full-interval and windowed runs also vary in number of parameters, sampling and optimizer schedule, so we describe them as different configurations. Ablations show that separate window networks and warm start are needed. Without causal weighting the median RMSE is 2.3 times larger, but with three to five seeds this difference is not significant.
+We study a physics-informed neural network (PINN) approximation of a single nearly closed orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that produces a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval into 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. In the seed-0 run, the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$. Across five seeds, the median RMSE is $8.13\times10^{-5}$. The full-interval and windowed runs also vary in number of parameters, sampling and optimizer schedule, so we describe them as different configurations. Ablations show that separate window networks and warm start are needed. Without causal weighting the median RMSE is 2.3 times larger, but with three to five seeds this difference is not significant.
 
 \end{abstract}
 
@@ -94,7 +94,7 @@ Our main object is a three-state nonlinear ordinary differential equation (ODE) 
 \label{eq:lorenz1960}
 \end{equation}
 
-Suppose the state vector is given by $u(t)=[x(t),y(t),z(t)]^\mathsf{T}$. We put $\kappa=2$ and $\ell=1$ in \eqref{eq:lorenz1960} and get the three coefficients.
+Suppose the state vector is given by $u(t)=[x(t),y(t),z(t)]^\mathsf{T}$. We put $\kappa=2$ and $\ell=1$ in~\eqref{eq:lorenz1960} and get the three coefficients.
 
 
 % Physical wavenumbers: \kappa and \ell.
@@ -139,7 +139,7 @@ We used several modeling strategies to approximate the solution for Lorenz syste
 \label{fig:plateau}
 \end{figure}
 
-We tried to keep the split window closer to 0.5, as small windows are better~\cite{wang2024causal}. In the first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in a significant increase in error with RMSE of 0.350 to 0.648 over three seeds (Table~\ref{tab:ablations}). To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network. Here $k=0,\ldots,26$ is the index of the 27 windows and $t_0,\ldots,t_{27}$ are the 28 boundary times. Each window $W_k$ has width $\Delta t=T/27$ and its own network parameters $\theta_k$.
+We chose a window width close to 0.5. In the first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in a significant increase in error with RMSE of 0.350 to 0.648 over three seeds (Table~\ref{tab:ablations}). To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network. Here $k=0,\ldots,26$ is the index of the 27 windows and $t_0,\ldots,t_{27}$ are the 28 boundary times. Each window $W_k$ has width $\Delta t=T/27$ and its own network parameters $\theta_k$.
 \[
 \begin{aligned}
 t_k&=kT/27,\quad k=0,\ldots,27,\quad W_k=[t_k,t_{k+1}],\\
@@ -148,7 +148,7 @@ t_k&=kT/27,\quad k=0,\ldots,27,\quad W_k=[t_k,t_{k+1}],\\
 \]
 
 
-Each window has its own network $N_k(t;\theta_k)$ with 1 input layer (t), 4 hidden layers of 60 neurons with tanh unit, and an output layer with 3 outputs. The output is not the state $(x,y,z)$ directly. It is a correction vector, and we get the predicted state $\hat{u}_k(t)$ from the trial solution in \eqref{eq:trial}. With biases, the input layer has 120 parameters, the three hidden-to-hidden layers have $3\times3660$ and the output layer has 183. The total counts all 27 networks.
+Each window has its own network $N_k(t;\theta_k)$ with 1 input layer (t), 4 hidden layers of 60 neurons with tanh unit, and an output layer with 3 outputs. The output is not the state $(x,y,z)$ directly. It is a correction vector, and we get the predicted state $\hat{u}_k(t)$ from the trial solution in~\eqref{eq:trial}. With biases, the input layer has 120 parameters, the three hidden-to-hidden layers have $3\times3660$ and the output layer has 183. The total counts all 27 networks.
 \[
 P_{\mathrm{window}}=120+3(3660)+183=11{,}283,\; P_{\mathrm{total}}=304{,}641.
 \]
@@ -173,7 +173,7 @@ u_{0,k+1}=\hat{u}_k(t_{k+1}), \qquad k=0,\ldots,25.
 \label{eq:handoff}
 \end{equation}
 
-The endpoint transfer in \eqref{eq:handoff} and the trial solution make the predicted values continuous at the window boundaries. But the derivatives can still change suddenly at the boundaries. Separately, window $k+1$ starts from a copy of the weights of window $k$, $\theta_{k+1}\leftarrow\theta_k$ for $k=0,\ldots,25$, and then trains its own parameters. As the starting point of the later windows is predicted, it can carry error from earlier windows.
+The endpoint transfer in~\eqref{eq:handoff} and the trial solution make the predicted values continuous at the window boundaries. But the derivatives can still change suddenly at the boundaries. Separately, window $k+1$ starts from a copy of the weights of window $k$, $\theta_{k+1}\leftarrow\theta_k$ for $k=0,\ldots,25$, and then trains its own parameters. As the starting point of the later windows is predicted, it can carry error from earlier windows.
 
 \begin{figure}[t]
 \centering
@@ -193,7 +193,7 @@ n_{\mathrm{unique}}&=27(1536-1)+1=41{,}446,\quad 27\cdot1536=41{,}472.
 
 
 Two windows next to each other share their boundary time. So there are 41,446 unique points in total, but 41,472 points are used in training. On the global grid, each boundary point belongs to the next window, and we also add it when we train the current window. The last window has the final endpoint. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.
-Then we apply the trial solution to enforce the initial value. PyTorch automatic differentiation gives the rate of change of $x$, $y$ and $z$ with respect to time for all the collocation points. As $u_{0,k}$ is fixed while training, the product rule gives the derivative of \eqref{eq:trial}:
+Then we apply the trial solution to enforce the initial value. PyTorch automatic differentiation gives the rate of change of $x$, $y$ and $z$ with respect to time for all the collocation points. As $u_{0,k}$ is fixed while training, the product rule gives the derivative of~\eqref{eq:trial}:
 \[
 \frac{d\hat{u}_k}{dt}
 =N_k+(t-t_k)\frac{\partial N_k}{\partial t}.
@@ -282,10 +282,10 @@ The code saves the parameters of each window, transfers the endpoint state, and 
   \For{$\epsilon\in(0.01,0.1,1,10)$}
     \For{at most 4,000 Adam steps}
       \State Use ordered times $t_{k,i}$, $i=1,\ldots,n_k$
-    \State Form $\hat{u}_k$ by \eqref{eq:trial}; get $d\hat{u}_k/dt$ by autograd
-    \State Form $r_k$ by \eqref{eq:residual} and $L_{k,i}$ by \eqref{eq:pointloss}
-    \State Compute $w_{k,i}$ by \eqref{eq:weights}; detach weights
-      \State Backpropagate \eqref{eq:causalloss}; Adam then StepLR
+    \State Form $\hat{u}_k$ by~\eqref{eq:trial}; get $d\hat{u}_k/dt$ by autograd
+    \State Form $r_k$ by~\eqref{eq:residual} and $L_{k,i}$ by~\eqref{eq:pointloss}
+    \State Compute $w_{k,i}$ by~\eqref{eq:weights}; detach weights
+      \State Backpropagate~\eqref{eq:causalloss}; Adam then StepLR
       \If{verified post-update $\min_i w_{k,i}>0.99$}
         \State \textbf{break}
       \EndIf
@@ -310,7 +310,7 @@ The code saves the parameters of each window, transfers the endpoint state, and 
 Table~\ref{tab:config} shows the parameters used for the reported windowed run. We use SciPy’s DOP853~\cite{virtanen2020} as the numerical reference, a relative tolerance of $10^{-10}$ and an absolute tolerance of $10^{-12}$. It is sampled at 13,265 equally-spaced time points on a separate evaluation grid.
 
 \begin{table}[t]
-\caption{windowed-run configuration}
+\caption{Windowed-run configuration}
 \label{tab:config}
 \centering\footnotesize
 \begin{tabular}{ll}
@@ -378,7 +378,7 @@ We used two failure cases. The shared-network case checks if one network can kee
 \section{Results}
 
 \subsection{Prediction Accuracy}
-We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853. As shown in Table~\ref{tab:errors}, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure~\ref{fig:trajectory} plots these predictions against the reference over time. The trajectories overlap completely, but the error shows small peaks, particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$, and the maximum entry is $E_{\mathrm{max}}$.
+We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853. As shown in Table~\ref{tab:errors}, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure~\ref{fig:trajectory} plots these predictions against the reference over time. The trajectories overlap completely, but the error shows small peaks, particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$ from~\eqref{eq:rmse}, and the maximum entry is $E_{\mathrm{max}}$.
 
 \begin{table}[t]
 \caption{Seed-0 windowed-run error against DOP853 on 13,265 times}
@@ -403,13 +403,13 @@ State norm & $5.12\times10^{-5}$ & $6.97\times10^{-5}$ & $3.09\times10^{-4}$\\
 \label{fig:trajectory}
 \end{figure}
 
-We also measured how closely the model obeyed the underlying equations. The MSE of the ODE residual was very small on the evaluation grid at $1.872\times10^{-7}$. The residual MSE of the windowed run on the collocation grid is nearly the same ($1.874\times10^{-7}$). The DOP853 reference drifted less than $4\times10^{-10}$ for perspective.
+We also measured how closely the model obeyed the underlying equations. The MSE of the ODE residual was very small on the evaluation grid at $1.872\times10^{-7}$. The residual MSE of the windowed run on the collocation grid is nearly the same ($1.874\times10^{-7}$). The system~\eqref{eq:ode} conserves every quadratic form $\alpha x^2+\beta y^2+\gamma z^2$ with $[\alpha,\beta,\gamma]^\mathsf{T}$ orthogonal to $a$. The maximum relative drift of its two independent invariants is below $4\times10^{-10}$ for DOP853 and below $2.6\times10^{-4}$ for our PINN.
 
 Lastly, the hard trial solution ensures that the values of the state are exactly continuous at the inner 26 interfaces connecting the windows.
 
 
 \subsection{Run Comparison}
-The differences with respect to the two saved configurations are shown in Table~\ref{tab:comparison}. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network's RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. This is a comparison of two saved configurations, which differ in causal weighting~\cite{wang2024causal}, windowing~\cite{penwarden2023} and warm starts as well as the collocation grid, the Adam schedule and the L-BFGS budget. In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid.
+The differences with respect to the two saved configurations are shown in Table~\ref{tab:comparison}. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network's RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. This is a comparison of two saved configurations, which differ in causal weighting~\cite{wang2024causal}, windowing~\cite{penwarden2023} and warm starts as well as the collocation grid, the Adam schedule and the L-BFGS budget. The full-interval row of Table~\ref{tab:ablations} is this same run. In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid.
 
 \begin{table}[t]
 \caption{Saved full-interval and windowed runs on the same IVP}
