@@ -1,0 +1,166 @@
+
+=== r2_no_warm_seed2 -> /content/lorenz1960-pinn/runs/paper_ablations/r2_no_warm_seed2 ===
+[setup] device=cuda | seed=2 | 4x60 tanh, hard IC, 41446 uniform points, 27 windows, causal
+[setup] 304641 params | 41446 collocation pts on t in [0.0, 13.26446] | ref traj 13265 pts
+[setup] 27 windows, up to 4000 Adam steps per epsilon stage, then up to 1000 L-BFGS iterations per window; lr 1.0e-03, StepLR factor 0.9 every 1000 steps
+[setup] per-point snapshots every 2000 logged evaluations and at final window states -> /content/lorenz1960-pinn/runs/paper_ablations/r2_no_warm_seed2/breakdown
+[adam]  window  0 eps 0.01 | epoch       0 | loss 6.2825e-02 | min_w 0.036 |    21.2s
+[adam]  window  0 eps 10.0 | epoch     250 | loss 6.6011e-07 | min_w 0.990 |    30.6s
+[window]  0 done | loss 6.5099e-07 |   133.4s
+[adam]  window  1 eps 1.0 | epoch    1750 | loss 1.3916e-05 | min_w 0.979 |   141.6s
+[adam]  window  1 eps 1.0 | epoch    2000 | loss 8.3482e-06 | min_w 0.987 |   155.4s
+[adam]  window  1 eps 10.0 | epoch    2250 | loss 4.1840e-06 | min_w 0.936 |   164.1s
+[adam]  window  1 eps 10.0 | epoch    2500 | loss 6.7564e-06 | min_w 0.896 |   174.7s
+[adam]  window  1 eps 10.0 | epoch    2750 | loss 5.1964e-06 | min_w 0.920 |   185.9s
+[adam]  window  1 eps 10.0 | epoch    3000 | loss 5.8009e-06 | min_w 0.911 |   196.4s
+[adam]  window  1 eps 10.0 | epoch    3250 | loss 6.0260e-06 | min_w 0.908 |   206.8s
+[adam]  window  1 eps 10.0 | epoch    3500 | loss 7.2727e-06 | min_w 0.888 |   217.6s
+[window]  1 done | loss 7.4698e-08 |   334.9s
+[adam]  window  2 eps 1.0 | epoch    5000 | loss 8.1804e-06 | min_w 0.987 |   341.7s
+[adam]  window  2 eps 1.0 | epoch    5250 | loss 3.0188e-05 | min_w 0.954 |   352.0s
+[adam]  window  2 eps 1.0 | epoch    5500 | loss 2.4869e-05 | min_w 0.962 |   362.5s
+[adam]  window  2 eps 1.0 | epoch    5750 | loss 2.1431e-05 | min_w 0.967 |   370.9s
+[adam]  window  2 eps 10.0 | epoch    6000 | loss 2.5278e-06 | min_w 0.961 |   385.0s
+[adam]  window  2 eps 10.0 | epoch    6250 | loss 1.3051e-05 | min_w 0.800 |   394.8s
+[adam]  window  2 eps 10.0 | epoch    6500 | loss 1.3398e-05 | min_w 0.794 |   404.4s
+[adam]  window  2 eps 10.0 | epoch    6750 | loss 1.3138e-05 | min_w 0.798 |   413.7s
+[adam]  window  2 eps 10.0 | epoch    7000 | loss 9.1125e-06 | min_w 0.860 |   424.2s
+[adam]  window  2 eps 10.0 | epoch    7250 | loss 1.0657e-05 | min_w 0.836 |   433.1s
+[adam]  window  2 eps 10.0 | epoch    7500 | loss 1.0318e-05 | min_w 0.842 |   442.7s
+[adam]  window  2 eps 10.0 | epoch    7750 | loss 1.0402e-05 | min_w 0.840 |   453.1s
+[window]  2 done | loss 1.8180e-07 |   544.9s
+[adam]  window  3 eps 10.0 | epoch    9250 | loss 3.5682e-06 | min_w 0.945 |   550.2s
+[adam]  window  3 eps 10.0 | epoch    9500 | loss 1.4860e-06 | min_w 0.977 |   560.7s
+[adam]  window  3 eps 10.0 | epoch    9750 | loss 1.4632e-05 | min_w 0.776 |   571.0s
+[adam]  window  3 eps 10.0 | epoch   10000 | loss 1.8977e-05 | min_w 0.709 |   585.5s
+[adam]  window  3 eps 10.0 | epoch   10250 | loss 1.3596e-05 | min_w 0.791 |   594.6s
+[adam]  window  3 eps 10.0 | epoch   10500 | loss 1.5996e-05 | min_w 0.754 |   606.6s
+[adam]  window  3 eps 10.0 | epoch   10750 | loss 1.6685e-05 | min_w 0.744 |   617.1s
+[adam]  window  3 eps 10.0 | epoch   11000 | loss 1.6065e-05 | min_w 0.753 |   626.8s
+[adam]  window  3 eps 10.0 | epoch   11250 | loss 1.0593e-05 | min_w 0.838 |   637.6s
+[adam]  window  3 eps 10.0 | epoch   11500 | loss 1.3749e-05 | min_w 0.789 |   650.0s
+[adam]  window  3 eps 10.0 | epoch   11750 | loss 1.3944e-05 | min_w 0.786 |   661.9s
+[adam]  window  3 eps 10.0 | epoch   12000 | loss 1.3132e-05 | min_w 0.798 |   676.7s
+[adam]  window  3 eps 10.0 | epoch   12250 | loss 6.5030e-06 | min_w 0.900 |   688.2s
+[adam]  window  3 eps 10.0 | epoch   12500 | loss 1.0598e-05 | min_w 0.837 |   698.9s
+[adam]  window  3 eps 10.0 | epoch   12750 | loss 1.0850e-05 | min_w 0.833 |   710.4s
+[adam]  window  3 eps 10.0 | epoch   13000 | loss 9.3102e-06 | min_w 0.857 |   721.8s
+[window]  3 done | loss 1.7586e-07 |   819.0s
+[adam]  window  4 eps 1.0 | epoch   14500 | loss 4.6317e-05 | min_w 0.929 |   825.8s
+[adam]  window  4 eps 10.0 | epoch   14750 | loss 1.4121e-05 | min_w 0.783 |   835.8s
+[adam]  window  4 eps 10.0 | epoch   15000 | loss 2.0161e-05 | min_w 0.691 |   847.1s
+[adam]  window  4 eps 10.0 | epoch   15250 | loss 2.1184e-05 | min_w 0.675 |   857.6s
+[adam]  window  4 eps 10.0 | epoch   15500 | loss 1.4575e-05 | min_w 0.776 |   866.9s
+[adam]  window  4 eps 10.0 | epoch   15750 | loss 1.6882e-05 | min_w 0.741 |   878.0s
+[adam]  window  4 eps 10.0 | epoch   16000 | loss 1.6961e-05 | min_w 0.740 |   892.7s
+[adam]  window  4 eps 10.0 | epoch   16250 | loss 1.6378e-05 | min_w 0.749 |   905.3s
+[adam]  window  4 eps 10.0 | epoch   16500 | loss 9.0623e-06 | min_w 0.861 |   917.6s
+[adam]  window  4 eps 10.0 | epoch   16750 | loss 1.2237e-05 | min_w 0.812 |   927.3s
+[adam]  window  4 eps 10.0 | epoch   17000 | loss 1.2590e-05 | min_w 0.807 |   938.6s
+[adam]  window  4 eps 10.0 | epoch   17250 | loss 1.2190e-05 | min_w 0.813 |   949.8s
+[adam]  window  4 eps 10.0 | epoch   17500 | loss 5.4989e-06 | min_w 0.916 |   960.8s
+[adam]  window  4 eps 10.0 | epoch   17750 | loss 1.0799e-05 | min_w 0.834 |   971.3s
+[adam]  window  4 eps 10.0 | epoch   18000 | loss 1.1596e-05 | min_w 0.822 |   987.7s
+[adam]  window  4 eps 10.0 | epoch   18250 | loss 1.1421e-05 | min_w 0.825 |   999.2s
+[window]  4 done | loss 6.0452e-07 |  1084.0s
+[adam]  window  5 eps 0.1 | epoch   19750 | loss 1.3695e-04 | min_w 0.979 |  1087.7s
+[adam]  window  5 eps 10.0 | epoch   20000 | loss 1.6090e-06 | min_w 0.975 |  1102.8s
+[window]  5 done | loss 6.3933e-08 |  1318.7s
+[adam]  window  6 eps 1.0 | epoch   21500 | loss 3.3971e-05 | min_w 0.948 |  1326.7s
+[window]  6 done | loss 5.9039e-07 |  1458.8s
+[adam]  window  7 eps 0.01 | epoch   23000 | loss 2.7970e-03 | min_w 0.957 |  1459.5s
+[adam]  window  7 eps 1.0 | epoch   23250 | loss 9.4347e-05 | min_w 0.855 |  1471.2s
+[adam]  window  7 eps 1.0 | epoch   23500 | loss 3.1523e-05 | min_w 0.952 |  1480.0s
+[adam]  window  7 eps 1.0 | epoch   23750 | loss 2.7220e-05 | min_w 0.958 |  1490.1s
+[adam]  window  7 eps 10.0 | epoch   24000 | loss 3.0835e-06 | min_w 0.953 |  1506.4s
+[adam]  window  7 eps 10.0 | epoch   24250 | loss 1.0026e-05 | min_w 0.846 |  1516.8s
+[adam]  window  7 eps 10.0 | epoch   24500 | loss 1.4958e-05 | min_w 0.770 |  1525.5s
+[adam]  window  7 eps 10.0 | epoch   24750 | loss 1.7484e-05 | min_w 0.732 |  1535.6s
+[adam]  window  7 eps 10.0 | epoch   25000 | loss 5.1413e-06 | min_w 0.921 |  1545.6s
+[adam]  window  7 eps 10.0 | epoch   25250 | loss 1.2977e-05 | min_w 0.801 |  1555.1s
+[adam]  window  7 eps 10.0 | epoch   25500 | loss 1.4215e-05 | min_w 0.782 |  1565.8s
+[adam]  window  7 eps 10.0 | epoch   25750 | loss 1.5086e-05 | min_w 0.768 |  1576.3s
+[adam]  window  7 eps 10.0 | epoch   26000 | loss 5.5911e-06 | min_w 0.914 |  1595.6s
+[adam]  window  7 eps 10.0 | epoch   26250 | loss 1.1519e-05 | min_w 0.823 |  1607.0s
+[adam]  window  7 eps 10.0 | epoch   26500 | loss 1.4340e-05 | min_w 0.780 |  1617.7s
+[adam]  window  7 eps 10.0 | epoch   26750 | loss 1.5499e-05 | min_w 0.762 |  1628.4s
+[adam]  window  7 eps 10.0 | epoch   27000 | loss 5.8888e-06 | min_w 0.910 |  1639.9s
+[adam]  window  7 eps 10.0 | epoch   27250 | loss 1.1442e-05 | min_w 0.824 |  1646.4s
+[adam]  window  7 eps 10.0 | epoch   27500 | loss 1.2017e-05 | min_w 0.816 |  1656.7s
+[adam]  window  7 eps 10.0 | epoch   27750 | loss 1.2470e-05 | min_w 0.809 |  1666.6s
+[window]  7 done | loss 4.3631e-08 |  1956.5s
+[adam]  window  8 eps 0.1 | epoch   29250 | loss 3.8626e-04 | min_w 0.941 |  1960.3s
+[adam]  window  8 eps 10.0 | epoch   29500 | loss 2.3419e-06 | min_w 0.964 |  1970.9s
+[adam]  window  8 eps 10.0 | epoch   29750 | loss 1.3831e-05 | min_w 0.788 |  1981.2s
+[adam]  window  8 eps 10.0 | epoch   30000 | loss 2.3722e-05 | min_w 0.636 |  1997.7s
+[adam]  window  8 eps 10.0 | epoch   30250 | loss 1.9968e-05 | min_w 0.694 |  2006.9s
+[adam]  window  8 eps 10.0 | epoch   30500 | loss 2.3573e-05 | min_w 0.638 |  2017.9s
+[adam]  window  8 eps 10.0 | epoch   30750 | loss 2.4468e-05 | min_w 0.625 |  2029.1s
+[adam]  window  8 eps 10.0 | epoch   31000 | loss 2.4201e-05 | min_w 0.629 |  2038.3s
+[adam]  window  8 eps 10.0 | epoch   31250 | loss 1.9064e-05 | min_w 0.707 |  2049.5s
+[adam]  window  8 eps 10.0 | epoch   31500 | loss 2.1663e-05 | min_w 0.668 |  2061.1s
+[adam]  window  8 eps 10.0 | epoch   31750 | loss 2.4751e-05 | min_w 0.620 |  2072.7s
+[adam]  window  8 eps 10.0 | epoch   32000 | loss 2.3286e-05 | min_w 0.643 |  2090.0s
+[adam]  window  8 eps 10.0 | epoch   32250 | loss 1.7332e-05 | min_w 0.734 |  2100.2s
+[adam]  window  8 eps 10.0 | epoch   32500 | loss 1.9315e-05 | min_w 0.704 |  2111.2s
+[adam]  window  8 eps 10.0 | epoch   32750 | loss 2.0765e-05 | min_w 0.682 |  2123.5s
+[adam]  window  8 eps 10.0 | epoch   33000 | loss 2.1274e-05 | min_w 0.673 |  2136.4s
+[adam]  window  8 eps 10.0 | epoch   33250 | loss 1.2066e-05 | min_w 0.815 |  2146.7s
+[window]  8 done | loss 1.1003e-07 |  2380.0s
+[adam]  window  9 eps 0.01 | epoch   34750 | loss 7.6731e-04 | min_w 0.988 |  2382.5s
+[adam]  window  9 eps 10.0 | epoch   35000 | loss 2.3861e-06 | min_w 0.963 |  2394.5s
+[adam]  window  9 eps 10.0 | epoch   35250 | loss 2.2899e-05 | min_w 0.649 |  2406.5s
+[adam]  window  9 eps 10.0 | epoch   35500 | loss 2.8431e-05 | min_w 0.564 |  2417.0s
+[adam]  window  9 eps 10.0 | epoch   35750 | loss 2.1532e-05 | min_w 0.670 |  2429.0s
+[adam]  window  9 eps 10.0 | epoch   36000 | loss 2.5788e-05 | min_w 0.604 |  2446.8s
+[adam]  window  9 eps 10.0 | epoch   36250 | loss 2.7175e-05 | min_w 0.583 |  2457.9s
+[adam]  window  9 eps 10.0 | epoch   36500 | loss 2.9027e-05 | min_w 0.554 |  2469.3s
+[adam]  window  9 eps 10.0 | epoch   36750 | loss 1.9894e-05 | min_w 0.695 |  2478.9s
+[adam]  window  9 eps 10.0 | epoch   37000 | loss 2.5686e-05 | min_w 0.606 |  2489.7s
+[adam]  window  9 eps 10.0 | epoch   37250 | loss 2.5862e-05 | min_w 0.603 |  2500.6s
+[adam]  window  9 eps 10.0 | epoch   37500 | loss 2.6223e-05 | min_w 0.597 |  2511.4s
+[adam]  window  9 eps 10.0 | epoch   37750 | loss 1.7881e-05 | min_w 0.726 |  2520.9s
+[adam]  window  9 eps 10.0 | epoch   38000 | loss 1.9525e-05 | min_w 0.701 |  2537.4s
+[adam]  window  9 eps 10.0 | epoch   38250 | loss 2.1153e-05 | min_w 0.676 |  2549.1s
+[adam]  window  9 eps 10.0 | epoch   38500 | loss 2.2171e-05 | min_w 0.660 |  2560.5s
+[adam]  window  9 eps 10.0 | epoch   38750 | loss 1.3095e-05 | min_w 0.799 |  2572.2s
+[window]  9 done | loss 5.9747e-07 |  2878.4s
+[adam]  window 10 eps 0.01 | epoch   40250 | loss 1.4027e-03 | min_w 0.978 |  2879.9s
+[adam]  window 10 eps 1.0 | epoch   40500 | loss 4.6015e-05 | min_w 0.929 |  2889.6s
+[adam]  window 10 eps 10.0 | epoch   40750 | loss 1.7045e-05 | min_w 0.739 |  2900.3s
+[adam]  window 10 eps 10.0 | epoch   41000 | loss 2.3882e-05 | min_w 0.634 |  2910.6s
+[adam]  window 10 eps 10.0 | epoch   41250 | loss 2.0462e-05 | min_w 0.686 |  2921.3s
+[adam]  window 10 eps 10.0 | epoch   41500 | loss 2.6481e-05 | min_w 0.594 |  2931.5s
+[adam]  window 10 eps 10.0 | epoch   41750 | loss 2.8929e-05 | min_w 0.556 |  2940.7s
+[adam]  window 10 eps 10.0 | epoch   42000 | loss 3.2685e-05 | min_w 0.499 |  2956.0s
+[adam]  window 10 eps 10.0 | epoch   42250 | loss 2.5935e-05 | min_w 0.602 |  2966.3s
+[adam]  window 10 eps 10.0 | epoch   42500 | loss 2.7116e-05 | min_w 0.584 |  2976.6s
+[adam]  window 10 eps 10.0 | epoch   42750 | loss 2.7070e-05 | min_w 0.585 |  2986.2s
+[adam]  window 10 eps 10.0 | epoch   43000 | loss 3.1198e-05 | min_w 0.521 |  2996.8s
+[adam]  window 10 eps 10.0 | epoch   43250 | loss 2.2101e-05 | min_w 0.661 |  3007.2s
+[adam]  window 10 eps 10.0 | epoch   43500 | loss 2.2339e-05 | min_w 0.657 |  3016.5s
+[adam]  window 10 eps 10.0 | epoch   43750 | loss 2.5756e-05 | min_w 0.605 |  3028.1s
+[adam]  window 10 eps 10.0 | epoch   44000 | loss 2.6844e-05 | min_w 0.588 |  3045.5s
+[adam]  window 10 eps 10.0 | epoch   44250 | loss 1.5046e-05 | min_w 0.769 |  3056.7s
+[adam]  window 10 eps 10.0 | epoch   44500 | loss 1.9713e-05 | min_w 0.698 |  3070.9s
+[window] 10 done | loss 1.4947e-06 |  3357.3s
+[adam]  window 11 eps 0.1 | epoch   46000 | loss 2.0586e-04 | min_w 0.968 |  3370.7s
+[adam]  window 11 eps 1.0 | epoch   46250 | loss 9.4710e-05 | min_w 0.855 |  3381.6s
+[adam]  window 11 eps 1.0 | epoch   46500 | loss 8.7602e-05 | min_w 0.866 |  3392.4s
+[adam]  window 11 eps 1.0 | epoch   46750 | loss 7.9023e-05 | min_w 0.879 |  3404.4s
+[adam]  window 11 eps 10.0 | epoch   47000 | loss 1.0601e-05 | min_w 0.838 |  3416.6s
+[adam]  window 11 eps 10.0 | epoch   47250 | loss 2.4184e-05 | min_w 0.629 |  3427.3s
+[adam]  window 11 eps 10.0 | epoch   47500 | loss 2.8817e-05 | min_w 0.558 |  3436.9s
+[adam]  window 11 eps 10.0 | epoch   47750 | loss 3.4646e-05 | min_w 0.468 |  3447.6s
+[adam]  window 11 eps 10.0 | epoch   48000 | loss 3.0056e-05 | min_w 0.539 |  3463.4s
+[adam]  window 11 eps 10.0 | epoch   48250 | loss 3.1714e-05 | min_w 0.514 |  3473.9s
+[adam]  window 11 eps 10.0 | epoch   48500 | loss 3.4199e-05 | min_w 0.475 |  3484.0s
+[adam]  window 11 eps 10.0 | epoch   48750 | loss 3.4161e-05 | min_w 0.476 |  3493.7s
+[adam]  window 11 eps 10.0 | epoch   49000 | loss 2.7648e-05 | min_w 0.576 |  3504.2s
+[adam]  window 11 eps 10.0 | epoch   49250 | loss 2.8154e-05 | min_w 0.568 |  3510.0s
+[adam]  window 11 eps 10.0 | epoch   49500 | loss 3.1331e-05 | min_w 0.519 |  3520.8s
+[adam]  window 11 eps 10.0 | epoch   49750 | loss 2.7213e-05 | min_w 0.583 |  3531.6s
+[adam]  window 11 eps 10.0 | epoch   50000 | loss 2.2286e-05 | min_w 0.658 |  3549.4s
+[adam]  window 11 eps 10.0 | epoch   50250 | loss 2.2402e-05 | min_w 0.656 |  3561.4s
+[adam]  window 11 eps 10.0 | epoch   50500 | loss 2.2263e-05 | min_w 0.659 |  3572.1s
+[adam]  window 11 eps 10.0 | epoch   50750 | loss 2.4765e-05 | min_w 0.620 |  3583.1s

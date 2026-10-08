@@ -1,0 +1,170 @@
+
+=== r3_causal_single_seed0 -> /content/lorenz1960-pinn/runs/paper_ablations/r3_causal_single_seed0 ===
+[setup] device=cuda | seed=0 | 4x60 tanh, hard IC, 39793 LHS points, causal
+[setup] 11283 params | 39793 collocation pts on t in [0.0, 13.26446] | ref traj 13265 pts
+[setup] 1 windows, up to 10000 Adam steps per epsilon stage, then up to 5000 L-BFGS iterations per window; lr 1.0e-03, StepLR factor 0.9 every 5000 steps
+[setup] per-point snapshots every 2000 logged evaluations and at final window states -> /content/lorenz1960-pinn/runs/paper_ablations/r3_causal_single_seed0/breakdown
+[adam]  window  0 eps 0.01 | epoch       0 | loss 2.5160e-03 | min_w 0.000 |    23.9s
+[adam]  window  0 eps 0.01 | epoch     250 | loss 2.5132e-03 | min_w 0.000 |    63.7s
+[adam]  window  0 eps 0.01 | epoch     500 | loss 2.1722e-03 | min_w 0.136 |    99.0s
+[adam]  window  0 eps 0.01 | epoch     750 | loss 6.0988e-04 | min_w 0.757 |   133.9s
+[adam]  window  0 eps 0.01 | epoch    1000 | loss 3.5789e-04 | min_w 0.858 |   172.3s
+[adam]  window  0 eps 0.01 | epoch    1250 | loss 3.1543e-04 | min_w 0.874 |   214.0s
+[adam]  window  0 eps 0.01 | epoch    1500 | loss 3.8951e-04 | min_w 0.845 |   254.0s
+[adam]  window  0 eps 0.01 | epoch    1750 | loss 3.3418e-04 | min_w 0.867 |   290.4s
+[adam]  window  0 eps 0.01 | epoch    2000 | loss 2.7908e-04 | min_w 0.889 |   336.5s
+[adam]  window  0 eps 0.01 | epoch    2250 | loss 2.9140e-04 | min_w 0.884 |   376.9s
+[adam]  window  0 eps 0.01 | epoch    2500 | loss 3.0345e-04 | min_w 0.879 |   415.4s
+[adam]  window  0 eps 0.01 | epoch    2750 | loss 2.9810e-04 | min_w 0.881 |   454.2s
+[adam]  window  0 eps 0.01 | epoch    3000 | loss 2.9502e-04 | min_w 0.883 |   496.0s
+[adam]  window  0 eps 0.01 | epoch    3250 | loss 2.9274e-04 | min_w 0.884 |   539.6s
+[adam]  window  0 eps 0.01 | epoch    3500 | loss 2.8946e-04 | min_w 0.885 |   580.6s
+[adam]  window  0 eps 0.01 | epoch    3750 | loss 2.9329e-04 | min_w 0.883 |   620.7s
+[adam]  window  0 eps 0.01 | epoch    4000 | loss 2.7660e-04 | min_w 0.890 |   674.0s
+[adam]  window  0 eps 0.01 | epoch    4250 | loss 1.2867e-03 | min_w 0.488 |   716.7s
+[adam]  window  0 eps 0.01 | epoch    4500 | loss 2.4828e-03 | min_w 0.012 |   758.0s
+[adam]  window  0 eps 0.01 | epoch    4750 | loss 2.8645e-04 | min_w 0.886 |   797.3s
+[adam]  window  0 eps 0.01 | epoch    5000 | loss 2.7696e-04 | min_w 0.890 |   841.1s
+[adam]  window  0 eps 0.01 | epoch    5250 | loss 2.7368e-04 | min_w 0.891 |   882.6s
+[adam]  window  0 eps 0.01 | epoch    5500 | loss 2.7175e-04 | min_w 0.892 |   922.8s
+[adam]  window  0 eps 0.01 | epoch    5750 | loss 2.7052e-04 | min_w 0.892 |   965.2s
+[adam]  window  0 eps 0.01 | epoch    6000 | loss 3.0711e-04 | min_w 0.878 |  1016.0s
+[adam]  window  0 eps 0.01 | epoch    6250 | loss 2.6833e-04 | min_w 0.893 |  1057.7s
+[adam]  window  0 eps 0.01 | epoch    6500 | loss 2.7544e-04 | min_w 0.890 |  1095.7s
+[adam]  window  0 eps 0.01 | epoch    6750 | loss 2.8596e-04 | min_w 0.886 |  1130.9s
+[adam]  window  0 eps 0.01 | epoch    7000 | loss 2.8513e-04 | min_w 0.887 |  1168.6s
+[adam]  window  0 eps 0.01 | epoch    7250 | loss 2.6879e-04 | min_w 0.893 |  1204.1s
+[adam]  window  0 eps 0.01 | epoch    7500 | loss 3.5074e-04 | min_w 0.860 |  1239.0s
+[adam]  window  0 eps 0.01 | epoch    7750 | loss 2.6704e-04 | min_w 0.894 |  1273.7s
+[adam]  window  0 eps 0.01 | epoch    8000 | loss 2.7212e-04 | min_w 0.892 |  1321.7s
+[adam]  window  0 eps 0.01 | epoch    8250 | loss 2.9836e-04 | min_w 0.881 |  1364.0s
+[adam]  window  0 eps 0.01 | epoch    8500 | loss 5.6404e-04 | min_w 0.776 |  1404.0s
+[adam]  window  0 eps 0.01 | epoch    8750 | loss 2.8025e-04 | min_w 0.888 |  1446.8s
+[adam]  window  0 eps 0.01 | epoch    9000 | loss 2.7064e-04 | min_w 0.892 |  1487.0s
+[adam]  window  0 eps 0.01 | epoch    9250 | loss 2.6765e-04 | min_w 0.893 |  1524.5s
+[adam]  window  0 eps 0.01 | epoch    9500 | loss 2.6682e-04 | min_w 0.894 |  1563.0s
+[adam]  window  0 eps 0.01 | epoch    9750 | loss 2.6620e-04 | min_w 0.894 |  1600.9s
+[adam]  window  0 eps 0.1 | epoch   10000 | loss 1.8213e-04 | min_w 0.275 |  1648.2s
+[adam]  window  0 eps 0.1 | epoch   10250 | loss 1.7974e-04 | min_w 0.285 |  1685.8s
+[adam]  window  0 eps 0.1 | epoch   10500 | loss 1.7980e-04 | min_w 0.285 |  1720.1s
+[adam]  window  0 eps 0.1 | epoch   10750 | loss 1.7978e-04 | min_w 0.285 |  1756.0s
+[adam]  window  0 eps 0.1 | epoch   11000 | loss 1.7975e-04 | min_w 0.285 |  1795.4s
+[adam]  window  0 eps 0.1 | epoch   11250 | loss 1.7973e-04 | min_w 0.285 |  1832.5s
+[adam]  window  0 eps 0.1 | epoch   11500 | loss 1.7970e-04 | min_w 0.285 |  1871.3s
+[adam]  window  0 eps 0.1 | epoch   11750 | loss 1.7968e-04 | min_w 0.285 |  1909.9s
+[adam]  window  0 eps 0.1 | epoch   12000 | loss 1.7966e-04 | min_w 0.285 |  1958.4s
+[adam]  window  0 eps 0.1 | epoch   12250 | loss 1.7964e-04 | min_w 0.285 |  1996.4s
+[adam]  window  0 eps 0.1 | epoch   12500 | loss 1.7960e-04 | min_w 0.285 |  2034.7s
+[adam]  window  0 eps 0.1 | epoch   12750 | loss 1.8075e-04 | min_w 0.281 |  2075.0s
+[adam]  window  0 eps 0.1 | epoch   13000 | loss 1.8068e-04 | min_w 0.281 |  2113.2s
+[adam]  window  0 eps 0.1 | epoch   13250 | loss 1.8102e-04 | min_w 0.280 |  2151.2s
+[adam]  window  0 eps 0.1 | epoch   13500 | loss 1.8117e-04 | min_w 0.279 |  2186.3s
+[adam]  window  0 eps 0.1 | epoch   13750 | loss 1.8123e-04 | min_w 0.279 |  2221.0s
+[adam]  window  0 eps 0.1 | epoch   14000 | loss 1.8123e-04 | min_w 0.279 |  2266.8s
+[adam]  window  0 eps 0.1 | epoch   14250 | loss 1.8120e-04 | min_w 0.279 |  2303.3s
+[adam]  window  0 eps 0.1 | epoch   14500 | loss 1.8115e-04 | min_w 0.279 |  2338.0s
+[adam]  window  0 eps 0.1 | epoch   14750 | loss 1.8102e-04 | min_w 0.280 |  2373.2s
+[adam]  window  0 eps 0.1 | epoch   15000 | loss 1.8152e-04 | min_w 0.278 |  2413.0s
+[adam]  window  0 eps 0.1 | epoch   15250 | loss 1.7941e-04 | min_w 0.286 |  2449.6s
+[adam]  window  0 eps 0.1 | epoch   15500 | loss 1.8022e-04 | min_w 0.283 |  2487.9s
+[adam]  window  0 eps 0.1 | epoch   15750 | loss 1.8013e-04 | min_w 0.283 |  2526.4s
+[adam]  window  0 eps 0.1 | epoch   16000 | loss 1.8337e-04 | min_w 0.270 |  2576.4s
+[adam]  window  0 eps 0.1 | epoch   16250 | loss 1.7959e-04 | min_w 0.285 |  2615.2s
+[adam]  window  0 eps 0.1 | epoch   16500 | loss 1.7925e-04 | min_w 0.287 |  2654.4s
+[adam]  window  0 eps 0.1 | epoch   16750 | loss 1.8114e-04 | min_w 0.279 |  2693.3s
+[adam]  window  0 eps 0.1 | epoch   17000 | loss 1.8040e-04 | min_w 0.282 |  2733.4s
+[adam]  window  0 eps 0.1 | epoch   17250 | loss 1.7937e-04 | min_w 0.286 |  2771.3s
+[adam]  window  0 eps 0.1 | epoch   17500 | loss 1.8312e-04 | min_w 0.271 |  2808.9s
+[adam]  window  0 eps 0.1 | epoch   17750 | loss 1.7962e-04 | min_w 0.285 |  2843.4s
+[adam]  window  0 eps 0.1 | epoch   18000 | loss 1.8035e-04 | min_w 0.282 |  2885.8s
+[adam]  window  0 eps 0.1 | epoch   18250 | loss 1.8114e-04 | min_w 0.279 |  2926.6s
+[adam]  window  0 eps 0.1 | epoch   18500 | loss 1.8088e-04 | min_w 0.280 |  2964.6s
+[adam]  window  0 eps 0.1 | epoch   18750 | loss 1.7949e-04 | min_w 0.286 |  3003.5s
+[adam]  window  0 eps 0.1 | epoch   19000 | loss 1.8101e-04 | min_w 0.280 |  3042.6s
+[adam]  window  0 eps 0.1 | epoch   19250 | loss 1.8164e-04 | min_w 0.277 |  3083.8s
+[adam]  window  0 eps 0.1 | epoch   19500 | loss 1.7962e-04 | min_w 0.285 |  3122.9s
+[adam]  window  0 eps 0.1 | epoch   19750 | loss 1.8086e-04 | min_w 0.280 |  3160.6s
+[adam]  window  0 eps 1.0 | epoch   20000 | loss 2.5144e-05 | min_w 0.000 |  3207.2s
+[adam]  window  0 eps 1.0 | epoch   20250 | loss 2.5139e-05 | min_w 0.000 |  3245.7s
+[adam]  window  0 eps 1.0 | epoch   20500 | loss 2.5138e-05 | min_w 0.000 |  3283.5s
+[adam]  window  0 eps 1.0 | epoch   20750 | loss 2.5134e-05 | min_w 0.000 |  3317.5s
+
+=== r3_causal_single_seed0 -> /content/lorenz1960-pinn/runs/paper_ablations/r3_causal_single_seed0 ===
+[setup] device=cuda | seed=0 | 4x60 tanh, hard IC, 39793 LHS points, causal
+[setup] 11283 params | 39793 collocation pts on t in [0.0, 13.26446] | ref traj 13265 pts
+[setup] 1 windows, up to 10000 Adam steps per epsilon stage, then up to 5000 L-BFGS iterations per window; lr 1.0e-03, StepLR factor 0.9 every 5000 steps
+[setup] per-point snapshots every 2000 logged evaluations and at final window states -> /content/lorenz1960-pinn/runs/paper_ablations/r3_causal_single_seed0/breakdown
+[adam]  window  0 eps 0.01 | epoch       0 | loss 2.5160e-03 | min_w 0.000 |    21.8s
+[adam]  window  0 eps 0.01 | epoch     250 | loss 2.5132e-03 | min_w 0.000 |    91.1s
+[adam]  window  0 eps 0.01 | epoch     500 | loss 1.0477e-03 | min_w 0.583 |   157.1s
+[adam]  window  0 eps 0.01 | epoch     750 | loss 3.4018e-04 | min_w 0.865 |   224.0s
+[adam]  window  0 eps 0.01 | epoch    1000 | loss 3.4660e-04 | min_w 0.862 |   289.7s
+[adam]  window  0 eps 0.01 | epoch    1250 | loss 4.3178e-04 | min_w 0.828 |   344.9s
+[adam]  window  0 eps 0.01 | epoch    1500 | loss 3.9933e-04 | min_w 0.841 |   415.0s
+[adam]  window  0 eps 0.01 | epoch    1750 | loss 3.7358e-04 | min_w 0.851 |   482.3s
+[adam]  window  0 eps 0.01 | epoch    2000 | loss 2.8896e-04 | min_w 0.885 |   560.1s
+[adam]  window  0 eps 0.01 | epoch    2250 | loss 3.0853e-04 | min_w 0.877 |   621.1s
+[adam]  window  0 eps 0.01 | epoch    2500 | loss 3.1005e-04 | min_w 0.877 |   685.3s
+[adam]  window  0 eps 0.01 | epoch    2750 | loss 3.0388e-04 | min_w 0.879 |   746.8s
+[adam]  window  0 eps 0.01 | epoch    3000 | loss 2.9991e-04 | min_w 0.881 |   808.3s
+[adam]  window  0 eps 0.01 | epoch    3250 | loss 2.9643e-04 | min_w 0.882 |   860.0s
+[adam]  window  0 eps 0.01 | epoch    3500 | loss 2.9340e-04 | min_w 0.883 |   923.2s
+[adam]  window  0 eps 0.01 | epoch    3750 | loss 2.9082e-04 | min_w 0.884 |   988.5s
+[adam]  window  0 eps 0.01 | epoch    4000 | loss 2.8875e-04 | min_w 0.885 |  1064.6s
+[adam]  window  0 eps 0.01 | epoch    4250 | loss 2.8695e-04 | min_w 0.886 |  1129.0s
+[adam]  window  0 eps 0.01 | epoch    4500 | loss 3.5580e-04 | min_w 0.858 |  1196.4s
+[adam]  window  0 eps 0.01 | epoch    4750 | loss 2.7472e-04 | min_w 0.891 |  1260.8s
+[adam]  window  0 eps 0.01 | epoch    5000 | loss 2.7026e-04 | min_w 0.892 |  1327.7s
+[adam]  window  0 eps 0.01 | epoch    5250 | loss 2.6849e-04 | min_w 0.893 |  1390.6s
+[adam]  window  0 eps 0.01 | epoch    5500 | loss 2.6828e-04 | min_w 0.893 |  1461.8s
+[adam]  window  0 eps 0.01 | epoch    5750 | loss 2.6673e-04 | min_w 0.894 |  1526.9s
+Traceback (most recent call last):
+  File "/content/lorenz1960-pinn/scripts/paper_ablations.py", line 105, in <module>
+    main()
+    ~~~~^^
+  File "/content/lorenz1960-pinn/scripts/paper_ablations.py", line 97, in main
+    run_arm(arm, seed, args.out)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/content/lorenz1960-pinn/scripts/paper_ablations.py", line 65, in run_arm
+    return run_one(cfg, resume=True)
+  File "/content/lorenz1960-pinn/src/pinn/sweep.py", line 66, in run_one
+    train_and_save(cfg)
+    ~~~~~~~~~~~~~~^^^^^
+  File "/content/lorenz1960-pinn/src/pinn/train.py", line 602, in main
+    model, history = train(cfg)
+                     ~~~~~^^^^^
+  File "/content/lorenz1960-pinn/src/pinn/train.py", line 121, in train
+    train_windows(model, grid, cfg, history, t_start, t_ref, ys_ref,
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  state["next_window"] if progress is not None else 0,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  state.get("inside") if progress is not None else None)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/content/lorenz1960-pinn/src/pinn/train.py", line 286, in train_windows
+    loss.backward()
+    ~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/dist-packages/torch/_tensor.py", line 631, in backward
+    torch.autograd.backward(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        self, gradient, retain_graph, create_graph, inputs=inputs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/dist-packages/torch/autograd/__init__.py", line 381, in backward
+    _engine_run_backward(
+    ~~~~~~~~~~~~~~~~~~~~^
+        tensors,
+        ^^^^^^^^
+    ...<5 lines>...
+        accumulate_grad=True,
+        ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/usr/local/lib/python3.13/dist-packages/torch/autograd/graph.py", line 869, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        t_outputs, *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )  # Calls into the C++ engine to run the backward pass
+    ^
+KeyboardInterrupt
