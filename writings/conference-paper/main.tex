@@ -10,7 +10,7 @@
 
 \begin{document}
 
-\title{Sequential Causal Training of Windowed PINNs for The  Lorenz ODE System}
+\title{Sequential Training of Windowed PINNs for the Lorenz ODE System}
 
 % \author{
 % \IEEEauthorblockN{Ikramul Hasan Moral, Md. Abu Bakar, Samiur Rahman Omlan,\\
@@ -135,7 +135,7 @@ We used several modeling strategies to approximate the solution for Lorenz syste
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/plateau-results.pdf}
-\caption{Single network trained on the entire interval at once. The prediction leaves the reference early, the combined RMSE is 2.237, and the loss stays on a plateau near $3\times10^{-4}$.}
+\caption{Single network on the full interval}
 \label{fig:plateau}
 \end{figure}
 
@@ -178,7 +178,7 @@ The endpoint transfer in~\eqref{eq:handoff} and the trial solution make the pred
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/method.pdf}
-\caption{Complete implementation pipeline. The figure numbers the windows 1--27, while the equations use $k=0,\ldots,26$.}
+\caption{Implementation pipeline (windows numbered 1--27)}
 \label{fig:pipeline}
 \end{figure}
 
@@ -268,7 +268,7 @@ To keep track of training, we save a snapshot every 50 updates.
 The code saves the parameters of each window, transfers the endpoint state, and copies the parameters to the next trainable window. The config file stores the configuration, initial states, training history, next window and the PyTorch and NumPy states. A run with a different configuration is rejected. DOP853 values are captured at fixed evaluation points. They do not enter the loss, gradient, or stopping test. After training, a dedicated custom function collects all the artifacts and evaluates the final piecewise model and its residual on the collocation and evaluation grids. Finally, a summary function computes error and invariant measures from these arrays. The reported dense residual is one of these measures.
 
 \begin{algorithm}[t]
-\caption{Sequential causal window training}
+\caption{Sequential window training}
 \label{alg:training}
 \begin{algorithmic}[1]
 \Require Ordered windows $W_0,\ldots,W_{26}$ and their uniform time points
@@ -381,7 +381,7 @@ We used two failure cases. The shared-network case checks if one network can kee
 We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853. As shown in Table~\ref{tab:errors}, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure~\ref{fig:trajectory} plots these predictions against the reference over time. The trajectories overlap completely, but the error shows small peaks, particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$ from~\eqref{eq:rmse}, and the maximum entry is $E_{\mathrm{max}}$.
 
 \begin{table}[t]
-\caption{Seed-0 windowed-run error against DOP853 on 13,265 times}
+\caption{Windowed-run error (seed 0)}
 \label{tab:errors}
 \centering\footnotesize
 \begin{tabular}{lccc}
@@ -399,7 +399,7 @@ State norm & $5.12\times10^{-5}$ & $6.97\times10^{-5}$ & $3.09\times10^{-4}$\\
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/solution_vs_reference.pdf}
-\caption{Seed-0 windowed PINN against DOP853. The prediction overlaps the reference, and the signed errors stay below $3\times10^{-4}$.}
+\caption{Windowed PINN vs.\ DOP853 (seed 0)}
 \label{fig:trajectory}
 \end{figure}
 
@@ -412,7 +412,7 @@ Lastly, the hard trial solution ensures that the values of the state are exactly
 The differences with respect to the two saved configurations are shown in Table~\ref{tab:comparison}. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network's RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. This is a comparison of two saved configurations, which differ in causal weighting~\cite{wang2024causal}, windowing~\cite{penwarden2023} and warm starts as well as the collocation grid, the Adam schedule and the L-BFGS budget. The full-interval row of Table~\ref{tab:ablations} is this same run. In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid.
 
 \begin{table}[t]
-\caption{Saved full-interval and windowed runs on the same IVP}
+\caption{Full-interval and windowed runs}
 \label{tab:comparison}
 \centering\footnotesize
 \begin{tabular}{lcc}
