@@ -2,8 +2,9 @@
 
     python scripts/ablation_report.py
 
-Statistics pool only the 14 Colab-suite runs in runs/paper_ablations. The two
-earlier runs of record (r4 seed 0, F1) are printed alongside, never pooled.
+Statistics pool the 14 Colab-suite runs in runs/paper_ablations plus r4 seed 0,
+the paper's run of record (identical config, trained earlier). F1 is printed
+alongside as reference and never pooled.
 A run counts as complete when every window has Adam and L-BFGS entries in
 loss_history.csv, the iteration index has no gaps or NaN, and run_summary.csv
 exists.
@@ -53,7 +54,7 @@ def load() -> pd.DataFrame:
 
 def main() -> None:
     df = load()
-    records, df = df[df.arm.isin(RECORDS)], df[~df.arm.isin(RECORDS)]
+    records, df = df[df.arm == "F1_seed0"], df[df.arm != "F1_seed0"]
     ref = df[df.group == "r4_candidate"]
     print()
     for group, d in df.groupby("group", sort=False):
@@ -65,7 +66,7 @@ def main() -> None:
             p = {m[:8]: mannwhitneyu(d[m], ref[m], alternative="greater", method="exact").pvalue for m in METRICS}
             line += " | MWU p vs r4: " + ", ".join(f"{k}={v:.3f}" for k, v in p.items())
         print(line)
-    print("\nruns of record (reference only, not pooled):")
+    print("\nreference only, not pooled:")
     for _, r in records.iterrows():
         print(f"  {r.arm:18s} rmse={r.rmse_combined_l2:.3g} max={r.max_abs_error_combined_l2:.3g}")
 
