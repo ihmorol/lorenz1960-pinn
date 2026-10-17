@@ -1,0 +1,243 @@
+{
+  "scope": "six-page preview",
+  "checks": [
+    [
+      "IEEE double-column template",
+      "Pass",
+      "IEEEtran conference class and default dimensions."
+    ],
+    [
+      "PDF format",
+      "Pass",
+      "main.pdf opens correctly."
+    ],
+    [
+      "File size at most 3 MB",
+      "Pass",
+      "499,381 bytes."
+    ],
+    [
+      "A4 paper",
+      "Pass",
+      "All pages A4."
+    ],
+    [
+      "Maximum six pages including everything",
+      "Pass",
+      "Six including tables, figures and references."
+    ],
+    [
+      "No Type 3 fonts",
+      "Pass",
+      "None among 31 fonts."
+    ],
+    [
+      "All fonts embedded",
+      "Pass",
+      "All 31 embedded."
+    ],
+    [
+      "Every author meets authorship criteria",
+      "Unverified",
+      "Requires contribution confirmation."
+    ],
+    [
+      "Strict IEEE typesetting and bibliography",
+      "Fail",
+      "Figure fonts below 8pt/not Times New Roman; acronym omissions; reference [12] wrong author."
+    ],
+    [
+      "Agreement on author sequence",
+      "Unverified",
+      "Collective approval not recorded."
+    ],
+    [
+      "All authors approve submission",
+      "Unverified",
+      "Final six-page version not approved by everyone."
+    ],
+    [
+      "Original contribution; not previously published or submitted",
+      "Unverified",
+      "Originality and submission history require author confirmation."
+    ],
+    [
+      "No simultaneous submission without TPC permission",
+      "Unverified",
+      "Author commitment required."
+    ],
+    [
+      "Similarity strictly below 30%",
+      "Unverified",
+      "No similarity report."
+    ],
+    [
+      "LLM use acknowledged",
+      "Pass",
+      "Explicit acknowledgment present."
+    ],
+    [
+      "LLM use solely non-intellectual",
+      "Conditional",
+      "Declaration matches your reported formatting/language/proofreading use; full history requires confirmation."
+    ],
+    [
+      "LLM output carefully reviewed and approved",
+      "Unverified",
+      "Final author approval not established; paper does not claim it."
+    ],
+    [
+      "Authors accept accuracy/content responsibility",
+      "Pass",
+      "Explicit responsibility statement; errors still need correction."
+    ],
+    [
+      "Double blind: names, affiliations, addresses, emails, self-citation, other identifiers",
+      "Pass on inspection",
+      "PDF text/metadata anonymous; no repository link. External online matching not certified."
+    ],
+    [
+      "Qualified presenter if accepted",
+      "Future obligation",
+      "Presenter not confirmed."
+    ],
+    [
+      "No-show papers excluded from Xplore",
+      "Policy consequence",
+      "Not a current manuscript pass/fail test."
+    ],
+    [
+      "No-show fees not refunded",
+      "Policy consequence",
+      "Not a current manuscript pass/fail test."
+    ],
+    [
+      "Every coauthor has correct-email CMT account",
+      "Conditional",
+      "You report accounts created; every account/email not inspected."
+    ],
+    [
+      "Xplore inclusion subject to scope and quality",
+      "Conditional outcome",
+      "Publication is not guaranteed by acceptance or this audit."
+    ]
+  ],
+  "ratings": [
+    [
+      "Rationale",
+      "Motivation and grounding",
+      1,
+      "Relevant citations; practical need for this single-orbit study is weak."
+    ],
+    [
+      "Rationale",
+      "Venue scope",
+      2,
+      "Track 1 covers machine learning and neural networks."
+    ],
+    [
+      "Contribution",
+      "Importance of question",
+      1,
+      "Useful bounded training study; limited practical reach."
+    ],
+    [
+      "Contribution",
+      "Innovation",
+      0,
+      "Established components; no clearly established new mechanism or theory."
+    ],
+    [
+      "Contribution",
+      "Potential disciplinary advance",
+      1,
+      "One orbit, initial state and coefficient set."
+    ],
+    [
+      "Clarity",
+      "Writing clarity",
+      0,
+      "Grammar errors; misleading RK4, logging and necessity statements."
+    ],
+    [
+      "Clarity",
+      "Organization and flow",
+      2,
+      "Logical problem, method, setup, results and conclusion sequence."
+    ],
+    [
+      "Clarity",
+      "Reference appropriateness/completeness",
+      1,
+      "Closest works cited; author error and metadata/detail corrections remain."
+    ],
+    [
+      "Clarity",
+      "IEEE organization/typesetting",
+      1,
+      "Basic file checks pass; figure typography and acronym omissions remain."
+    ],
+    [
+      "Methods",
+      "Strategy and design",
+      2,
+      "Hard ICs, per-window models and staged causal loss are well specified."
+    ],
+    [
+      "Methods",
+      "Information for reproducibility",
+      1,
+      "Invariant definitions, logging and seed exceptions need correction."
+    ],
+    [
+      "Methods",
+      "Implementation rigor/reporting",
+      1,
+      "Completed runs verified; control, scope and source-provenance limits need care."
+    ],
+    [
+      "Methods",
+      "Appropriateness of analysis",
+      1,
+      "Small samples, test direction and forgetting attribution need care."
+    ],
+    [
+      "Results",
+      "Collection/analysis/reporting",
+      1,
+      "Saved results support numbers; solver/protocol descriptions conflict."
+    ],
+    [
+      "Results",
+      "Reasoning and concision",
+      1,
+      "Main findings clear; repetition and overclaims remain."
+    ],
+    [
+      "Results",
+      "Tables and figures",
+      0,
+      "Useful tables; tiny figure labels impair reading."
+    ],
+    [
+      "Results",
+      "Supplemental material",
+      null,
+      "None incorporated in anonymous PDF; named public repository is not linked."
+    ],
+    [
+      "Discussion",
+      "Interpretation in context",
+      1,
+      "Prior methods discussed; necessity/forgetting conclusions too strong."
+    ],
+    [
+      "Discussion",
+      "Limitations and future work",
+      1,
+      "One-state scope, small seeds and unmatched configurations acknowledged but scattered."
+    ]
+  ],
+  "total": 18,
+  "maximum": 54
+}
