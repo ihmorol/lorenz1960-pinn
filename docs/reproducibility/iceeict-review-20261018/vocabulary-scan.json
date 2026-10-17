@@ -1,0 +1,8 @@
+{
+  "scope": [
+    "main.tex",
+    "ablation-table.tex"
+  ],
+  "excluded": "LaTeX comments and bibliography titles",
+  "findings": []
+}
