@@ -13,6 +13,7 @@ runs/epoch_probe/
 !src/pinn/history/pinn.pt
 !runs/*/history/pinn.pt
 !runs/causal-window/*/*/history/pinn.pt
+!runs/paper_ablations/*/history/pinn.pt
 *.npz
 *.npy
 
