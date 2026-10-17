@@ -1,0 +1,20 @@
+{
+  "revision_branch": "https://github.com/ihmorol/lorenz1960-pinn/tree/dev/iceeict2027-revision",
+  "public_repository": "https://github.com/ihmorol/lorenz1960-windowed-pinn",
+  "public_commit": "a3239b7",
+  "public_visibility": "PUBLIC",
+  "public_branches": [
+    "main"
+  ],
+  "published_clone_verified": true,
+  "evaluated_models": 16,
+  "results_files_hashed": 150,
+  "archive_sha256": "9e9534611bffc2a233d688185de0d3b73e5102622a3838f1709e95edd6b3f159",
+  "pending": [
+    "six-page limit",
+    "small figure text retained by explicit user choice",
+    "writing/accuracy findings",
+    "historical R6 retraining source and corrected runner decision",
+    "author approval, similarity, authenticated CMT"
+  ]
+}

@@ -26,3 +26,7 @@ A4, anonymity, abstract math presentation, acronym definitions, figure reference
 The bibliography has thirteen cited keys, all resolved. Two uncited entries are retained. Metadata completeness, grammar, abstract sentence fragments, keyword selection and prose repetition remain for the writing pass.
 
 Sources checked 17 October 2026: https://iceeict.mist.ac.bd/authors/paper-submission/ ; https://iceeict.mist.ac.bd/authors/important-dates/ ; https://conferences.ieeeauthorcenter.ieee.org/write-your-paper/structure-your-paper/ ; https://conferences.ieeeauthorcenter.ieee.org/write-your-paper/improve-your-graphics/ .
+
+## Recovered runner limitation
+
+The historical shared-network script is incomplete and differs from the saved R6 settings, including optimizer/refinement handling. The exact dirty training source is unavailable. All sixteen saved checkpoints, including all three R6 runs, reproduce their recorded RMSE values on 13,265 DOP853 evaluation times. This verifies evaluation, not exact historical retraining. The public README marks the historical R6 runner unsupported. A corrected reproduction runner awaits the user decision; no method has been silently substituted.
