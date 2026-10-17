@@ -1,3 +1,7 @@
+## ICEEICT manuscript and evidence
+
+The current manuscript is [the Overleaf import and formatting draft](writings/iceeict2027-overleaf/README.md). The [run evidence and provenance](docs/reproducibility/README.md) cover all sixteen paper runs, including the recovered trained models. The draft remains seven pages; the six-page limit and printed figure readability are pending.
+
 <div align="center">
 
 # Lorenz-1960 PINN
