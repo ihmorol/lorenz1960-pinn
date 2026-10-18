@@ -1,5 +1,5 @@
 {
-  "source_commit": "9a9e5ab56338c0e5c4c7b8d1a754179612853268",
+  "source_commit": "70618fe6ca7766abe0bff5ee6086b69708a5bb9d",
   "rows": [
     {
       "id": "S01",
@@ -17,7 +17,7 @@
       "id": "S03",
       "requirement": "File size at most 3 MB",
       "status": "Pass",
-      "evidence": "2,697,666 bytes, below 3 MB."
+      "evidence": "2,725,485 bytes, below 3 MB."
     },
     {
       "id": "S04",
@@ -35,13 +35,13 @@
       "id": "S06",
       "requirement": "No Type 3 fonts",
       "status": "Pass",
-      "evidence": "Zero Type 3 fonts among 26 final fonts."
+      "evidence": "Zero Type 3 fonts among 27 final fonts."
     },
     {
       "id": "S07",
       "requirement": "All fonts embedded",
       "status": "Pass",
-      "evidence": "All 26 font programs are embedded."
+      "evidence": "All 27 font programs are embedded."
     },
     {
       "id": "S08",
@@ -146,5 +146,5 @@
       "evidence": "Xplore submission/inclusion depends on scope/quality and conference processes; not guaranteed."
     }
   ],
-  "pdf_sha256": "9494f54f1ec97d4a3bee13c866bb03aeec4b747d7478bdbca2be2a3a50f80de9"
+  "pdf_sha256": "2716949a56776b846f80cdca9e41e599c68d627c1e1afd52cd9fc975ffd321c4"
 }

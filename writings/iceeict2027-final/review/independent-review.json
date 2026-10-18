@@ -1,43 +1,35 @@
 {
   "review_date": "2026-10-18",
-  "paper_source_commit": "9a9e5ab56338c0e5c4c7b8d1a754179612853268",
-  "pdf_sha256": "9494f54f1ec97d4a3bee13c866bb03aeec4b747d7478bdbca2be2a3a50f80de9",
-  "verdict": "PASS: bounded technical file and figure audit",
+  "paper_source_commit": "70618fe6ca7766abe0bff5ee6086b69708a5bb9d",
+  "pdf_sha256": "2716949a56776b846f80cdca9e41e599c68d627c1e1afd52cd9fc975ffd321c4",
+  "verdict": "PASS: bounded restored-diagram and final-layout audit",
   "findings": {
     "critical": 0,
     "major": 0,
     "minor": 0
   },
-  "previous_M7": "resolved",
   "pages": 6,
   "a4": true,
-  "bytes": 2697666,
-  "fonts": 26,
+  "bytes": 2725485,
   "all_fonts_embedded": true,
+  "fonts": 27,
   "type3_count": 0,
   "minimum_placed_figure_font_pt": 8.5,
-  "figure_family": "Times New Roman",
-  "all_six_pages_visually_inspected": true,
-  "viewed_renders_match_final_pdf_pixels": true,
-  "all_three_figures_visually_inspected": true,
-  "evaluation_points_per_run": 13265,
-  "recomputed_rmse": {
-    "full_interval": 2.2370605122285716,
-    "windowed": 6.966965305660092e-05
-  },
-  "data_hashes_verified": true,
-  "numbered_equations_algorithm_tables_bib_preserved": true,
-  "no_training": true,
-  "remaining_author_gates": [
-    "exact final PDF approval",
-    "final LLM-output approval",
-    "updated screening if required",
-    "CMT details and presenter obligations"
-  ],
-  "scope_limits": [
-    "no literature novelty search",
-    "no new training",
-    "no new screening",
-    "no CMT authentication or upload"
+  "original_nine_stages_restored": true,
+  "network_structure_restored": true,
+  "three_decision_diamonds_restored": true,
+  "feedback_structure_restored": true,
+  "page3_visually_inspected": true,
+  "six_page_contact_sheet_inspected": true,
+  "all_rendered_pages_match_pdf": true,
+  "numeric_figures_unchanged_vs": "34ae92a",
+  "only_main_tex_change_vs_34ae92a": "method float [t] to [!t]",
+  "new_blocking_findings": [],
+  "limits": [
+    "no repeat literature or statistics audit",
+    "no training",
+    "no screening",
+    "no CMT authentication or upload",
+    "final author approval remains separate"
   ]
 }
