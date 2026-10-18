@@ -1,0 +1,39 @@
+{
+  "scope": "entire active main.tex and ablation-table.tex; comments and external bibliography titles excluded",
+  "scan": {
+    "main.tex": {
+      "sha256": "2777a67000eee743c275dd074398ccaa0822a2f5cf83189003464f178a7e023d",
+      "terms": {},
+      "em_dash_lines": []
+    },
+    "ablation-table.tex": {
+      "sha256": "74b2541d891b77df9f909b003428fb255d71acfcda3f92ec38afdee9b0db407d",
+      "terms": {},
+      "em_dash_lines": []
+    }
+  },
+  "duplicate_labels": false,
+  "cited_keys": [
+    "krishnapriyan2021",
+    "lagaris1998",
+    "lorenz1960",
+    "mattey2022bcpinn",
+    "matthews2024pinnde",
+    "penwarden2023",
+    "raissi2019",
+    "rathore2024",
+    "rohrhofer2023",
+    "virtanen2020",
+    "wang2021gradient",
+    "wang2022ntk",
+    "wang2024causal"
+  ],
+  "missing_cited_keys": [],
+  "unused_bib_keys": [
+    "hao2024pinnacle",
+    "mcgreivy2024"
+  ],
+  "all_numbered_equations_referenced": true,
+  "equation_count": 9,
+  "source_commit": "a85ccb66be4bbce5631f80653fbcfaeebeea9d09"
+}

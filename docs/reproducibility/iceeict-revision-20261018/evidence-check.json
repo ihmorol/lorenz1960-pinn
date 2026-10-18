@@ -70,5 +70,7 @@
     "snapshot_every": 2000,
     "seed": 0,
     "n_windows": 27
-  }
+  },
+  "source_commit": "a85ccb66be4bbce5631f80653fbcfaeebeea9d09",
+  "pdf_sha256": "8d31c0068bb7ac6a80bd54287936f85f487c31251a28a1a0904a71a731f896ed"
 }

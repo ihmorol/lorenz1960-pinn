@@ -13,7 +13,7 @@ This is a separate revision of the supplied Overleaf manuscript. Previous folder
 
 Compile from this folder with pdflatex main.tex, bibtex main, then pdflatex main.tex twice. The included class/style and three figure PDFs make the manuscript build independent of the research code and run archives.
 
-The complete strategy, baseline hashes, source diff, primary-reference audit, verification and point-by-point review are in ../../docs/reproducibility/iceeict-revision-20261018/ .
+The review/ folder contains the complete strategy, baseline hashes, source diff, primary-reference audit, verification and point-by-point review. The repository also keeps these records in docs/reproducibility/iceeict-revision-20261018/.
 
 ## Remaining submission matters
 

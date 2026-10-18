@@ -1,0 +1,25 @@
+{
+  "source_commit": "ec11b586d2d12b6a7921788791ed129144241371",
+  "source_folder": "writings/iceeict2027-six-page-preview",
+  "destination_folder": "writings/iceeict2027-submission",
+  "files": {
+    "ablation-table.tex": "74b2541d891b77df9f909b003428fb255d71acfcda3f92ec38afdee9b0db407d",
+    "build-bibtex.txt": "5f1b968e2cc55969f3ed4a376a976f0336d8c753222a57422c698f48bcb7a96c",
+    "build-pass1.txt": "d6feeebfd7d9e8b1f605aa1257e74e9c7b8b9ce02a63018cac12b7cc6515bc6f",
+    "build-pass2.txt": "d6feeebfd7d9e8b1f605aa1257e74e9c7b8b9ce02a63018cac12b7cc6515bc6f",
+    "build-pass3.txt": "d6feeebfd7d9e8b1f605aa1257e74e9c7b8b9ce02a63018cac12b7cc6515bc6f",
+    "IEEEtran.bst": "314f0ece704568faf827011bac498650691b2b5ee06320720830e782416d5a5f",
+    "IEEEtran.cls": "da751920a317ed318b7b5cd7fa585a6cc7d28502d457856382e9be24b10a3bd7",
+    "main.aux": "b42dee23e3880f79a406f12e3a52205a7729c61e42377bf0d199ba80848e1c44",
+    "main.bbl": "0d446677f64851b1a6257f5ca92caf037d1b633a29b88d14e3e2bb3ad30a67af",
+    "main.blg": "8ab9449f695e936df3dbe1ae13fc016f678206a9956f23e25cda1bd4423cd30a",
+    "main.log": "cc0cb044e4daa347a6821b8d2a2cada65b91c6f7ac5df4bed63f9952ff76f6a3",
+    "main.pdf": "b8a8f55c3eeafb9be3023de487cc6136c2a055324c3fb81997b0e1d0ff79e99a",
+    "main.tex": "87d0277f538b122248d29999c0472ecbed41b19204732f5bc4175f91338931e3",
+    "README.md": "c383d9e92434a9ae6449be13fa98678a69ff0c9472e2f2071109daa78e659985",
+    "references.bib": "3973c51cf5f50f5d6b804afdd757db3e38f8d0e33b7a21477e659d3b4ac927cd",
+    "figures/method.pdf": "73beef10d98a5a16b8c3a79497587b023faec26791cffd1a080aa1cec6b8a235",
+    "figures/plateau-results.pdf": "1c6a844804f184b4c380bf4f7bb05db6b34135c4e39f799b664f5cf22db274d6",
+    "figures/solution_vs_reference.pdf": "dfd00d34264023db2ca9a356096056b6286168e32455fc9abe9e75d2445f33eb"
+  }
+}

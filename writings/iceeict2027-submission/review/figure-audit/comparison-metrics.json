@@ -1,0 +1,24 @@
+{
+  "render_dpi": 144,
+  "pixels_per_page": 3818880,
+  "baseline_vs_recovered_rerender": {
+    "identical_pixels_percent": 100.0,
+    "changed_pixels_percent": 0.0,
+    "mean_absolute_channel_error": 0.0,
+    "root_mean_square_channel_error": 0.0,
+    "chromatic_region_iou": 1.0
+  },
+  "baseline_vs_times_candidate": {
+    "identical_pixels_percent": 94.86111111111111,
+    "changed_pixels_percent": 5.138888888888888,
+    "mean_absolute_channel_error": 6.692631696553265,
+    "root_mean_square_channel_error": 33.80007219959753,
+    "chromatic_region_iou": 0.977203776271408
+  },
+  "printed_minimum_points": {
+    "method": 4.153409957885742,
+    "plateau_results": 2.6631357669830322,
+    "solution_vs_reference": 3.804
+  },
+  "replacement_decision": "retain_originals"
+}
