@@ -1,0 +1,15 @@
+{
+  "scope": "restored original method-diagram structure",
+  "reference": "preserved previous figures and archived result arrays",
+  "verdict": "pass",
+  "numeric_meaning_preserved": true,
+  "plot_points_per_curve": 13265,
+  "label_readability": "Times New Roman at least 8.5 pt, verified after placement",
+  "layout": "Detailed original branching flow restored; final page/figure inspection recorded in independent-review.md.",
+  "intentional_visual_changes": [
+    "original nine numbered sections and network subblocks restored",
+    "stage and window decision diamonds/return paths restored",
+    "taller diagram at unchanged column width with readable labels"
+  ],
+  "original_structure_restored": true
+}
