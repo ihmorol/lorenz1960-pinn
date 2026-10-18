@@ -1,0 +1,26 @@
+{
+  "plateau-results": {
+    "width_pt": 251.05999755859375,
+    "height_pt": 237.60000610351562,
+    "minimum_text_pt": 8.5,
+    "font_names": [
+      "TimesNewRomanPSMT"
+    ],
+    "embedded_fonts": 1,
+    "all_fonts_embedded": true,
+    "type3_fonts": 0,
+    "sha256": "f66a1522d57d8b67ec0ca25e63819032381fbe04ae1711163419bcefb7e91267"
+  },
+  "solution_vs_reference": {
+    "width_pt": 251.05999755859375,
+    "height_pt": 255.60000610351562,
+    "minimum_text_pt": 8.5,
+    "font_names": [
+      "TimesNewRomanPSMT"
+    ],
+    "embedded_fonts": 1,
+    "all_fonts_embedded": true,
+    "type3_fonts": 0,
+    "sha256": "c9aeb46a9aca25571e61f172aa9037f0bc702a83340b5da9cb6bec22d5718257"
+  }
+}
