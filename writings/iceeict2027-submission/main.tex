@@ -35,7 +35,7 @@ We use both concepts. We split the time period into 27 equal windows and use a s
 In this section we describe the Lorenz equations and the initial value problem that we want the model to learn. Then we explain the existing methods or components that we used.
 
 \subsection{Lorenz Equations}
-Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. The system is non-chaotic and periodic and the time range approximates the period of a single loop.  Here $x(t)$, $y(t)$ and $z(t)$ are the three states, and $\kappa$ and $\ell$ are the physical wavenumbers. We use $k$ only for the window index, which comes later. The Lorenz system general form~\cite{lorenz1960} is:
+Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. The system is non-chaotic and periodic and the time range approximates the period of a single loop.  Here $x(t)$, $y(t)$ and $z(t)$ are the three states, and $\kappa$ and $\ell$ are the physical wavenumbers. We use $k$ only for the window index, which comes later. The general form of the Lorenz system~\cite{lorenz1960} is:
 \begin{equation}
 \begin{aligned}
 \frac{dx}{dt}
@@ -92,17 +92,17 @@ a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}.
 
 
 \subsection{Related Work}
-In this study we are making an experimental investigation of a series of well known concepts. The approach adopted is a PINN that embeds the physics residual into the training objective~\cite{raissi2019}. We use a hard trial-function design~\cite{lagaris1998} to fix our starting state exactly at the point we want. Learning long trajectories is a well-known challenge due to the ordering of the time axis so we take inspiration from the causal residual weighting technique~\cite{wang2024causal}. Lastly segmenting the timeline is based on ideas of causal sweeping and temporal decomposition~\cite{penwarden2023}. Our implementation is an investigation of the performance of the individual components in this nearly closed orbit of the Lorenz system.
+In this study we investigate a combination of established concepts. A PINN embeds the physics residual into the training objective~\cite{raissi2019}. We use a hard trial-function design~\cite{lagaris1998} to fix the starting state exactly. Learning long trajectories is challenging because of the ordering of the time axis, which motivates causal residual weighting~\cite{wang2024causal}. Finally, timeline segmentation follows causal sweeping and temporal decomposition~\cite{penwarden2023}. We investigate these components on the nearly closed Lorenz-system orbit.
 
 Several works explain why PINN training fails. Krishnapriyan \emph{et al.} studied failure modes and used sequence-to-sequence training~\cite{krishnapriyan2021}. Wang \emph{et al.} analyzed gradient imbalance and loss convergence through the neural tangent kernel~\cite{wang2021gradient,wang2022ntk}. For dynamical systems, fixed points can attract training toward an incorrect solution~\cite{rohrhofer2023}. Rathore \emph{et al.} found that Adam followed by limited-memory Broyden--Fletcher--Goldfarb--Shanno (L-BFGS) performed better than Adam alone on their PINN benchmarks~\cite{rathore2024}. Mattey and Ghosh retrained one network over successive segments while constraining it to retain earlier solutions~\cite{mattey2022bcpinn}. Our shared-network control does not include that backward-compatibility constraint.
 
 \section{Windowed PINN}
 \label{sec:windowed-pinn}
 
-This section explains the implementation of windowed PINN. It also contains the model construction, physics enforcement, causal weights, window segmentation, its handoff and the sequence in how the optimizer works for this particular case.
+This section describes the network, hard initial conditions, causal loss and sequential training procedure.
 
 \subsection{Network Structure}
-We used several modeling strategies to approximate the solution for the Lorenz-system trajectory over $[0,T]$, where $T=13.26446$ is one nearly closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. As it got stuck in a plateau, we tried to split the time interval in equal segments.
+We used several modeling strategies to approximate the solution for the Lorenz-system trajectory over $[0,T]$, where $T=13.26446$ is one nearly closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. After the full-interval run reached a training plateau, we split the interval into equal segments.
 
 Fig.~\ref{fig:plateau} shows the saved full-interval result.
 
@@ -122,7 +122,7 @@ t_k&=kT/27,\quad k=0,\ldots,27,\quad W_k=[t_k,t_{k+1}],\\
 \]
 
 
-Each window has its own network $N_k(t;\theta_k)$ with one input ($t$), four hidden layers of 60 neurons with tanh units, and an output layer with 3 outputs. The output is a correction vector rather than the state $(x,y,z)$ directly. We get the predicted state $\hat{u}_k(t)$ from the trial solution in~\eqref{eq:trial}. With biases, the input layer has 120 parameters, the three hidden-to-hidden layers have $3\times3660$ and the output layer has 183. The total counts all 27 networks.
+Each window has its own network $N_k(t;\theta_k)$ with one input ($t$), four hidden layers of 60 neurons with tanh units, and an output layer with 3 outputs. The output is a correction vector rather than the state $(x,y,z)$ directly. We get the predicted state $\hat{u}_k(t)$ from the trial solution in~\eqref{eq:trial}. With biases, the input layer has 120 parameters, the three hidden-to-hidden layers have $3\times3660$ and the output layer has 183. The total parameter count includes all 27 networks.
 \[
 P_{\mathrm{window}}=120+3(3660)+183=11{,}283,\; P_{\mathrm{total}}=304{,}641.
 \]
@@ -168,7 +168,7 @@ n_{\mathrm{unique}}&=27(1536-1)+1=41{,}446,\quad 27\cdot1536=41{,}472.
 \]
 
 
-Two windows next to each other share their boundary time. So there are 41,446 unique collocation points in total, but 41,472 collocation points are used in training. On the global grid, each boundary point belongs to the next window, and we also add it when we train the current window. The last window has the final endpoint. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.
+Two windows next to each other share their boundary time. So there are 41,446 unique collocation points in total, but 41,472 collocation points are used in training. On the global grid, each boundary point belongs to the next window, and we also add it when we train the current window. The last window has the final endpoint. While training, all the points in a single window are passed to the network at once, which gives an output of shape $(1536,3)$.
 Then we apply the trial solution to enforce the initial value. PyTorch automatic differentiation gives the rate of change of $x$, $y$ and $z$ with respect to time for all the collocation points. As $u_{0,k}$ is fixed while training, the product rule gives the derivative of~\eqref{eq:trial}:
 \[
 \frac{d\hat{u}_k}{dt}
@@ -204,7 +204,7 @@ L_{k,i}
 \label{eq:pointloss}
 \end{equation}
 
-For a long horizon time dependent ODE system, residual loss alone may not be sufficient. That is why we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times~\cite{wang2024causal}. Here $S_{k,i}$ is the sum of the point losses at all earlier times of the same window. The first point has no earlier point, so $S_{k,1}=0$ and its causal weight is one.
+For a long-horizon, time-dependent ODE system, residual loss alone may not be sufficient. That is why we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times~\cite{wang2024causal}. Here $S_{k,i}$ is the sum of the point losses at all earlier times of the same window. The first point has no earlier point, so $S_{k,1}=0$ and its causal weight is one.
 \begin{equation}
 w_{k,i}
 =\exp\left(-\epsilon S_{k,i}\right)
@@ -230,7 +230,7 @@ On long intervals, a small residual can coexist with a large trajectory error. C
 
 \subsection{Training Procedure}
 
-The causal loss defined above is minimized separately in each window. Fig.~\ref{fig:pipeline} summarizes the sequence across the windows. Fig.~\ref{fig:training} gives the training steps. In each window an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. After every Adam update the code recalculates the causal weights at all collocation points of the window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records that the stage was capped.
+The causal loss defined above is minimized separately in each window. Fig.~\ref{fig:pipeline} summarizes the sequence across the windows. Fig.~\ref{fig:training} gives the training steps. In each window, an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. After every Adam update the code recalculates the causal weights at all collocation points of the window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records that the stage was capped.
 
 When all four stages are completed, L-BFGS minimizes the unweighted residual mean for up to 1,000 iterations. For L-BFGS, we remove the causal weights and use the plain mean of the point losses.
 \[
@@ -330,7 +330,7 @@ For the combined RMSE, we take the mean of the squared error norms over all eval
 \end{equation}
 For each state $c\in\{x,y,z\}$ we also report mean absolute error (MAE), RMSE and the maximum absolute error. $E_{\mathrm{mean}}$ and $E_{\mathrm{max}}$ are the mean and the maximum of the error norm.
 
-The dense-grid residual mean square error (MSE) is the average of the three residual components squared, taken over the times of the evaluation. So it has a factor of $1/(3n_{\mathrm{eval}})$, but the combined state RMSE is not divided by three.
+The dense-grid residual mean square error (MSE) is the average of the three residual components squared, averaged over the evaluation times. So it has a factor of $1/(3n_{\mathrm{eval}})$, but the combined state RMSE is not divided by three.
 \[
 \operatorname{MSE}_{r,\mathrm{eval}}
 =\frac{1}{3n_{\mathrm{eval}}}\sum_{j=1}^{n_{\mathrm{eval}}}\|r(t_j)\|_2^2.
@@ -375,9 +375,9 @@ State norm & $5.12\times10^{-5}$ & $6.97\times10^{-5}$ & $3.09\times10^{-4}$\\
 \label{fig:trajectory}
 \end{figure}
 
-For seed 0, the residual MSE is $1.872\times10^{-7}$ on the evaluation grid and $1.874\times10^{-7}$ on the collocation grid. To check conservation, let $b_1,b_2$ be the columns of SciPy's orthonormal null-space basis of $a^{\mathsf T}$. The two invariants are $I_i(t)=b_i^{\mathsf T}[x(t)^2,y(t)^2,z(t)^2]^{\mathsf T}$, $i=1,2$. For each, we report $\max_t|I_i(t)-I_i(0)|/|I_i(0)|$; both initial values are nonzero here. The maximum drift over the pair is below $4\times10^{-10}$ for DOP853 and $2.6\times10^{-4}$ for WPINN.
+For seed 0, the residual MSE is $1.872\times10^{-7}$ on the evaluation grid and $1.874\times10^{-7}$ on the collocation grid. To check conservation in~\eqref{eq:ode}, let $b_1,b_2$ be the columns of SciPy's orthonormal null-space basis of $a^{\mathsf T}$. The two invariants are $I_i(t)=b_i^{\mathsf T}[x(t)^2,y(t)^2,z(t)^2]^{\mathsf T}$, $i=1,2$. For each, we report $\max_t|I_i(t)-I_i(0)|/|I_i(0)|$; both initial values are nonzero here. The maximum drift over the pair is below $4\times10^{-10}$ for DOP853 and $2.6\times10^{-4}$ for WPINN.
 
-Lastly, the hard trial solution ensures that the values of the state are exactly continuous at the inner 26 interfaces connecting the windows.
+Lastly, the hard trial solution ensures that the state values are continuous at the inner 26 interfaces connecting the windows.
 
 
 \subsection{Run Comparison}
