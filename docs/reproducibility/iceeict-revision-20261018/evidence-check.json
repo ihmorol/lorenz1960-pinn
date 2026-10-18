@@ -1,0 +1,74 @@
+{
+  "method_environments": {
+    "equation": {
+      "count": 9,
+      "unchanged": true
+    },
+    "algorithmic": {
+      "count": 1,
+      "unchanged": true
+    },
+    "tabular": {
+      "count": 3,
+      "unchanged": true
+    }
+  },
+  "display_math_unchanged": true,
+  "template_and_ablation_table_unchanged": true,
+  "paper_run_count": 16,
+  "no_causal_rmse": [
+    0.000175485348,
+    0.000188943222,
+    0.000516006975
+  ],
+  "candidate_rmse": [
+    6.96696531e-05,
+    8.12941083e-05,
+    0.000260122036,
+    0.00019878775,
+    7.50459838e-05
+  ],
+  "mann_whitney": {
+    "U": 11.0,
+    "p": 0.19642857142857142,
+    "alternative": "greater",
+    "method": "exact"
+  },
+  "invariant_basis": [
+    [
+      0.9040125150098826,
+      -0.4237558664108824
+    ],
+    [
+      0.22646661405975388,
+      0.3625937746594904
+    ],
+    [
+      0.3625937746594904,
+      0.8300341681283638
+    ]
+  ],
+  "initial_invariants": [
+    0.7159843738205726,
+    0.9280541997716065
+  ],
+  "saved_invariant_drifts": {
+    "invariant_1_max_drift": "0.000259526619",
+    "invariant_1_max_drift_reference": "2.77524289e-10",
+    "invariant_2_max_drift": "0.000167620927",
+    "invariant_2_max_drift_reference": "3.55629126e-10"
+  },
+  "seed0_counts": {
+    "adam_steps": "34765",
+    "lbfgs_evals": "33143",
+    "capped_stages": "2"
+  },
+  "new_experiments": false,
+  "training_rerun": false,
+  "snapshot_config": {
+    "path": "runs/causal-window/candidate-1536pt/4x60_f64_unit_win27_causal_warm_f1cbeebd/history/config.json",
+    "snapshot_every": 2000,
+    "seed": 0,
+    "n_windows": 27
+  }
+}

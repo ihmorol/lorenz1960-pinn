@@ -48,7 +48,7 @@ I.~E. Lagaris, A.~Likas, and D.~I. Fotiadis, ``Artificial neural networks for
   Transactions on Neural Networks}, vol.~9, no.~5, pp. 987--1000, 1998.
 
 \bibitem{matthews2024pinnde}
-J.~Matthews and A.~Bihlo, ``Pinnde: physics-informed neural networks for
+J.~Matthews and A.~Bihlo, ``{PinnDE}: {Physics-Informed Neural Networks} for
   solving differential equations,'' \emph{arXiv preprint arXiv:2408.10011},
   2024.
 
@@ -65,14 +65,14 @@ S.~Wang, Y.~Teng, and P.~Perdikaris, ``Understanding and mitigating gradient
   Scientific Computing}, vol.~43, no.~5, pp. A3055--A3081, 2021.
 
 \bibitem{wang2022ntk}
-S.~Wang, X.~Yu, and P.~Perdikaris, ``When and why physics-informed neural
-  networks fail to train: a neural tangent kernel perspective,'' \emph{Journal
-  of Computational Physics}, vol. 449, p. 110768, 2022.
+S.~Wang, X.~Yu, and P.~Perdikaris, ``When and why {PINNs} fail to train: A
+  neural tangent kernel perspective,'' \emph{Journal of Computational Physics},
+  vol. 449, p. 110768, 2022.
 
 \bibitem{rohrhofer2023}
-J.~R. Rohrhofer, S.~Posch, and B.~C. Geiger, ``On the role of fixed points of
-  dynamical systems in training physics-informed neural networks,''
-  \emph{Transactions on Machine Learning Research}, 2023.
+F.~M. Rohrhofer, S.~Posch, C.~G{\"o}{\ss}nitzer, and B.~C. Geiger, ``On the
+  role of fixed points of dynamical systems in training physics-informed neural
+  networks,'' \emph{Transactions on Machine Learning Research}, 2023.
 
 \bibitem{rathore2024}
 P.~Rathore, W.~Lei, Z.~Frangella, L.~Lu, and M.~Udell, ``Challenges in training
@@ -80,8 +80,8 @@ P.~Rathore, W.~Lei, Z.~Frangella, L.~Lu, and M.~Udell, ``Challenges in training
   Machine Learning}, 2024.
 
 \bibitem{mattey2022bcpinn}
-R.~K. Mattey and S.~Ghosh, ``A physics informed neural network for
-  time-dependent nonlinear and higher order partial differential equations,''
+R.~Mattey and S.~Ghosh, ``A novel sequential method to train physics informed
+  neural networks for {Allen Cahn} and {Cahn Hilliard} equations,''
   \emph{Computer Methods in Applied Mechanics and Engineering}, vol. 390, p.
   114474, 2022.
 

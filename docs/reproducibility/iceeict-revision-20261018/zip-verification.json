@@ -1,0 +1,17 @@
+[
+  {
+    "name": "conference-paper-overleaf.zip",
+    "sha256": "9e9534611bffc2a233d688185de0d3b73e5102622a3838f1709e95edd6b3f159",
+    "tex_files": [
+      "main.tex",
+      "ablation-table.tex"
+    ]
+  },
+  {
+    "name": "template-mist-ICEEICT.zip",
+    "sha256": "35440facca549be108d36a253da4fbf56884a06af7a0d9c429d3a1dac194c6be",
+    "tex_files": [
+      "template-mist-ICEEICT/conference-latex-template/IEEE-conference-template-062824/IEEE-conference-template-062824.tex"
+    ]
+  }
+]
