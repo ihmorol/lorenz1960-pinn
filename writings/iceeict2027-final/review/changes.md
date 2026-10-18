@@ -11,8 +11,8 @@ Previous version: writings/iceeict2027-submission, delivery commit c30964c4d1a8f
 
 All existing numbered equations, algorithm contents, tables, bibliography entries and IEEEtran class/style are unchanged. Numeric inference agrees with archived RMSEs (full interval 2.2370605122; windowed 6.96696530566e-5). No new training or experiment was run.
 
-Final PDF: six A4 pages, 2,725,485 bytes, all fonts embedded, no Type 3 fonts, no overfull boxes or unresolved citations/references. Final figure labels measure at least 8.5 pt in the actual manuscript PDF.
+Final PDF: six A4 pages, 2,845,787 bytes, all fonts embedded, no Type 3 fonts, no overfull boxes or unresolved citations/references. Final figure labels measure at least 8.5 pt in the actual manuscript PDF.
 
-PDF SHA-256: 2716949a56776b846f80cdca9e41e599c68d627c1e1afd52cd9fc975ffd321c4
+PDF SHA-256: 2a3ac3710bb8d34b48aa61571007cacb3b9e2f4720d79918f6b98cbc533b29f9
 
 manuscript.diff contains the exact text/caption changes from the preceding version. figure-sources/ contains the new generators, data and provenance; the new PNGs show the changed geometry directly.

@@ -1,6 +1,6 @@
 # Final point-by-point submission requirements
 
-Paper source commit: 70618fe6ca7766abe0bff5ee6086b69708a5bb9d. PDF SHA-256: 2716949a56776b846f80cdca9e41e599c68d627c1e1afd52cd9fc975ffd321c4.
+Paper source commit: 80c6266a3c9524ca437e7c130181ea8c26ced4d3. PDF SHA-256: 2a3ac3710bb8d34b48aa61571007cacb3b9e2f4720d79918f6b98cbc533b29f9.
 
 All previously failed figure typography checks are corrected. Author attestations and later submission checks retain their original evidence categories.
 
@@ -8,7 +8,7 @@ All previously failed figure typography checks are corrected. Author attestation
 | --- | --- | --- | --- |
 | S01 | IEEE double-column template | Pass | IEEEtran conference A4, two columns; class/style unchanged. |
 | S02 | PDF format | Pass | Compiled main.pdf opens and every page was rendered. |
-| S03 | File size at most 3 MB | Pass | 2,725,485 bytes, below 3 MB. |
+| S03 | File size at most 3 MB | Pass | 2,845,787 bytes, below 3 MB. |
 | S04 | A4 paper | Pass | All six pages are 595.28 x 841.89 PDF points. |
 | S05 | Maximum six pages including everything | Pass | Six pages including figures, tables and 13 references; no font/margin compression. |
 | S06 | No Type 3 fonts | Pass | Zero Type 3 fonts among 27 final fonts. |

@@ -6,7 +6,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "writings/iceeict2027-final"
-TEXT = {".tex", ".bib", ".bbl", ".cls", ".bst", ".py", ".json", ".txt", ".md", ".csv", ".svg", ".diff"}
+TEXT = {".tex", ".bib", ".bbl", ".cls", ".bst", ".py", ".json", ".txt", ".md", ".csv", ".svg", ".diff", ".html", ".js"}
 UPLOAD = {
     "main.tex", "main.pdf", "manuscript.txt", "references.bib", "main.bbl",
     "IEEEtran.cls", "IEEEtran.bst", "ablation-table.tex", "figures/method.pdf",
