@@ -1,0 +1,14 @@
+{
+  "scope": "manuscript figure revision",
+  "reference": "preserved previous figures and archived result arrays",
+  "verdict": "pass",
+  "numeric_meaning_preserved": true,
+  "plot_points_per_curve": 13265,
+  "label_readability": "Times New Roman at least 8.5 pt, verified after placement",
+  "layout": "all three figures inspected directly; six-page contact sheet inspected; independent audit follows",
+  "intentional_visual_changes": [
+    "taller numeric panels and larger text",
+    "compact pipeline with consistent window indexing",
+    "clear reference/prediction line styles"
+  ]
+}
