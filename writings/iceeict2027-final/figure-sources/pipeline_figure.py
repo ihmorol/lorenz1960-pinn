@@ -1,92 +1,157 @@
-"""Restore the recovered nine-step pipeline at readable single-column size."""
 from pathlib import Path
-import hashlib,json
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib._mathtext as math_layout
-# Keep mathematical subscripts readable at the final printed size.
-math_layout.SHRINK_FACTOR=1.0
-from matplotlib import font_manager
-from matplotlib.patches import FancyBboxPatch,FancyArrowPatch,Polygon,Circle
-ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/'figures'
-WIDTH,HEIGHT=251.06,543.0; FONT='Times New Roman'
-FONT_FILE=Path(font_manager.findfont(FONT,fallback_to_default=False))
-plt.rcParams.update({'font.family':FONT,'font.size':8.5,'pdf.fonttype':42,'ps.fonttype':42,'svg.fonttype':'none','mathtext.fontset':'custom','mathtext.rm':FONT,'mathtext.it':FONT+':italic','mathtext.bf':FONT+':bold','mathtext.fallback':None})
-fig=plt.figure(figsize=(WIDTH/72,HEIGHT/72),facecolor='white');ax=fig.add_axes([0,0,1,1]);ax.set(xlim=(0,WIDTH),ylim=(HEIGHT,0));ax.axis('off')
-INK,LINE='#334155','#475569';ORANGE,BLUE,PURPLE,TEAL,GREEN='#c2410c','#1e40af','#6d28d9','#0d9488','#065f46'
-texts=[]
-def label(x,y,text,size=8.5,weight='normal',color=INK,region=None):
- a=ax.text(x,y,text,ha='center',va='center',fontsize=size,fontweight=weight,color=color,zorder=5);texts.append((a,region));return a
-def box(x,y,w,h,title,lines=(),fill='#fff',edge=LINE,number=None,title_y=None,line_y=None,title_size=9.3):
- p=FancyBboxPatch((x,y),w,h,boxstyle='round,pad=0,rounding_size=3',linewidth=.7,edgecolor=edge,facecolor=fill,zorder=2);ax.add_patch(p)
- if title:label(x+w/2,title_y if title_y is not None else y+8,title,title_size,'bold',region=p)
- for s,ty in zip(lines,line_y if line_y is not None else [y+20+10*i for i in range(len(lines))]):label(x+w/2,ty,s,region=p)
- if number is not None:
-  cx,cy=x+8,y+8;ax.add_patch(Circle((cx,cy),5.8,facecolor=edge,edgecolor='none',zorder=4));label(cx,cy,str(number),8.5,'bold','#fff',p)
- return p
-def arrow(points,color=LINE,dash=False):
- xs,ys=zip(*points)
- if len(points)>2:ax.plot(xs[:-1],ys[:-1],color=color,linewidth=.75,linestyle=(0,(3,2)) if dash else '-',zorder=3)
- ax.add_patch(FancyArrowPatch(points[-2],points[-1],arrowstyle='-|>',mutation_scale=5.8,linewidth=.75,color=color,linestyle=(0,(3,2)) if dash else '-',shrinkA=0,shrinkB=.5,zorder=3))
-def down(x,y0,y1):arrow([(x,y0),(x,y1)])
-def diamond(cx,cy,hw,hh,lines,offsets):
- p=Polygon([(cx,cy-hh),(cx+hw,cy),(cx,cy+hh),(cx-hw,cy)],closed=True,facecolor='#fefce8',edgecolor='#a16207',linewidth=.8,zorder=2);ax.add_patch(p)
- for i,(s,dy) in enumerate(zip(lines,offsets)):label(cx,cy+dy,s,8.5,'bold' if i==0 else 'normal',region=p)
- return p
-box(2,2,247,58,'Problem setup',[r'$\dot x=-0.1yz,\quad\dot y=1.6xz,\quad\dot z=-0.75xy$',r'$u_0=(0.5,\,0.75,\,1.0)$; 0 ≤ t ≤ 13.26446','27 windows · 1,536 points/window · float64'],'#fff7ed',ORANGE,1,line_y=[25,38,51])
-ax.add_patch(FancyBboxPatch((2,66),247,378,boxstyle='round,pad=0,rounding_size=4',facecolor='white',edgecolor=GREEN,linewidth=.7,linestyle=(0,(3,2)),zorder=0))
-ax.add_patch(FancyBboxPatch((10,61),190,12,boxstyle='round,pad=0,rounding_size=5',facecolor=GREEN,edgecolor='none',zorder=4))
-label(105,67,'REPEAT FOR EACH WINDOW  k = 0, …, 26',8.5,'bold','#fff');down(125.5,60,76)
-box(15,76,220,62,'PINN for window k',fill='#eff6ff',edge=BLUE,number=2)
-# Preserve the original Input → Hidden → Output → Hard IC subblocks.
-for x,w,t,lines in [(20,27,'Input',[r'$t$']),(54,39,'Hidden',['4 × 60','tanh']),(100,38,'Output',[r'$N_k(t)$','3 states']),(145,87,'Hard IC',[r'$\hat u_k=u_{0,k}$',r'$+(t-t_k)N_k(t)$'])]:
- box(x,94,w,42,t,lines,'#fff','#93c5fd',title_size=8.5,title_y=100,line_y=[112,128][:len(lines)])
-for a,b in [(47,54),(93,100),(138,145)]:arrow([(a,111),(b,111)])
-down(125.5,138,140)
-box(15,140,220,27,'ODE residual',[r'$r_k=d\hat u_k/dt-f(\hat u_k)$; derivatives by autodiff'],'#f5f3ff',PURPLE,3,line_y=[159]);down(125.5,167,174)
-box(15,174,220,54,'Causal residual loss',[r'$L_i=\mathrm{mean}(r_i^2),\quad w_i=\exp(-\varepsilon\Sigma_{j<i}L_j)$',r'$L=\mathrm{mean}(w_iL_i)$; detach weights for gradients','ε: 0.01 → 0.1 → 1 → 10'],'#f5f3ff',PURPLE,4,line_y=[196,212,223.5]);down(125.5,228,234)
-box(15,234,220,27,'Adam optimization',['Learning rate × 0.9 every 1,000 updates'],'#f0fdfa',TEAL,5,line_y=[253]);down(77,261,263)
-diamond(77,290,62,27,['Stage complete?',r'Verified $\min\,w>0.99$','or 4,000 steps'],[-10,0,11])
-diamond(189,290,43,24,['All ε values','used?'],[-5,5])
-arrow([(139,290),(146,290)]);label(142,279,'YES',8.5,'bold')
-arrow([(15,290),(8,290),(8,201),(15,201)]);label(18,303,'NO',8.5,'bold')
-arrow([(189,314),(189,324)]);label(213,318,'NO',8.5,'bold')
-arrow([(168,302),(168,318),(77,318),(77,324)]);label(114,311,'YES',8.5,'bold')
-box(149,324,82,27,'Next ε',['Keep parameters'],'#fff7ed',ORANGE,line_y=[343],title_size=9.0)
-arrow([(231,337),(241,337),(241,201),(235,201)],ORANGE,True)
-box(15,324,125,33,'L-BFGS',['≤ 1,000 iterations','Unweighted residual MSE'],'#f0fdfa',TEAL,6,line_y=[343,352],title_size=9.0);down(77,357,365)
-box(15,365,125,25,'Save window',['Checkpoint · history · prediction'],'#f8fafc',LINE,7,line_y=[383],title_size=9.0);down(77,390,392)
-diamond(77,415,58,23,['Last window?',r'$k=26$'],[-5,6])
-box(149,397,82,46,'Next window',[r'$u_{0,k+1}=\hat u_k(t_{k+1})$','Copy parameters',r'$k\leftarrow k+1$'],'#ecfdf5',GREEN,line_y=[416,427.5,437],title_size=9.0)
-arrow([(135,415),(149,415)]);label(142,404,'NO',8.5,'bold')
-arrow([(231,415),(247,415),(247,104),(235,104)],GREEN,True)
-arrow([(77,438),(77,451)]);label(103,439,'YES',8.5,'bold')
-box(2,451,247,42,'Reference evaluation',[r'DOP853 · 13,265 points · rtol $10^{-10}$ · atol $10^{-12}$','Evaluation only; not used for optimization'],'#eff6ff',BLUE,8,line_y=[474,487]);down(125.5,493,500)
-box(2,500,247,39,'Evaluation outputs',['MAE · RMSE · maximum error · residual MSE','Invariant drift · training cost'],'#f8fafc',LINE,9,line_y=[520,532])
-fig.canvas.draw();renderer=fig.canvas.get_renderer()
-for artist,region in texts:
- assert artist.get_fontsize()>=8.5
- bb=artist.get_window_extent(renderer)
- corners=[[bb.x0,bb.y0],[bb.x0,bb.y1],[bb.x1,bb.y0],[bb.x1,bb.y1]]
- assert all(0<=x<=WIDTH and 0<=y<=HEIGHT for x,y in ax.transData.inverted().transform(corners)),artist.get_text()
- if region is not None:
-  path=region.get_path().transformed(region.get_transform())
-  assert all(path.contains_point(point) for point in corners),(artist.get_text(),ax.transData.inverted().transform(corners),region.get_extents())
-for i,(first,region) in enumerate(texts):
- if region is None:continue
- for second,other_region in texts[i+1:]:
-  if region is other_region:
-   assert not first.get_window_extent(renderer).overlaps(second.get_window_extent(renderer)),(first.get_text(),ax.transData.inverted().transform(first.get_window_extent(renderer).get_points()),second.get_text(),ax.transData.inverted().transform(second.get_window_extent(renderer).get_points()))
-OUT.mkdir(exist_ok=True)
-fig.savefig(OUT/'method.pdf',metadata={'Title':'Sequential windowed PINN training','Author':'','Subject':'Nine-step method pipeline','Keywords':''})
-fig.savefig(OUT/'method.png',dpi=300);fig.savefig(Path(__file__).with_name('pipeline.svg'));plt.close(fig)
-import fitz
-pdf=fitz.open(OUT/'method.pdf')
-sizes=[s['size'] for b in pdf[0].get_text('dict')['blocks'] if 'lines' in b for line in b['lines'] for s in line['spans']]
-fonts=[{'name':f[3],'embedded':len(pdf.extract_font(f[0])[3])>0,'type':f[2]} for f in pdf[0].get_fonts(full=True)]
-assert min(sizes)>=8.49,min(sizes)
-assert all(f['embedded'] and f['type']!='Type3' and 'TimesNewRoman' in f['name'] for f in fonts),fonts
-assert abs(pdf[0].rect.width-WIDTH)<.01
-metadata={'source':Path(__file__).name,'derived_from':'Recovered pipeline_figure_original.py and pipeline-original.html','width_pt':WIDTH,'height_pt':HEIGHT,'minimum_pdf_text_size_pt':min(sizes),'fonts':fonts,'font_file':FONT_FILE.name,'font_file_sha256':hashlib.sha256(FONT_FILE.read_bytes()).hexdigest(),'structure':'Original nine numbered sections, four network subblocks, three decision diamonds and labelled return paths','protocol':{'windows':27,'window_indices':[0,26],'network':'four hidden layers of 60 tanh units; separate network per window','hard_initial_state':True,'points_per_window':1536,'causal_adam_epsilon':[.01,.1,1,10],'causal_weights_detached_for_gradient':True,'stage_threshold':'verified post-update minimum causal weight > 0.99','stage_cap_adam_updates':4000,'lbfgs_objective':'unweighted residual mean square','lbfgs_iterations_per_window_at_most':1000,'handoff':'predicted endpoint and copied trained parameters','reference':'DOP853, 13265 evaluation times; not used for optimization'},'validation':{'labels_inside_node_shapes':True,'text_inside_page':True,'no_text_overlap_within_nodes':True},'pdf_sha256':hashlib.sha256((OUT/'method.pdf').read_bytes()).hexdigest()}
-Path(__file__).with_name('pipeline-metadata.json').write_text(json.dumps(metadata,indent=2)+'\n',encoding='utf-8');print(json.dumps(metadata,indent=2))
+
+W = 816
+OY = 0
+nodes, wires = [], []
+
+CSS = """
+.pipe { position: relative; width: 816pt; color: #334155; line-height: 1; font-family: "Times New Roman", Times, serif; }
+.pipe .wire { position: absolute; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.pipe .wire text { font-family: "Times New Roman", Times, serif; font-size: 27.75px; font-weight: 700; }
+.pipe .n { position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2pt;
+  text-align: center; font-size: 27.75pt; border: 2pt solid; border-radius: 10pt; padding: 0 14pt; }
+.pipe .n.bare { z-index: 2; border: 0; padding: 0; }
+.pipe .n b { font-size: 31pt; color: #0f172a; }
+.pipe .n.mini { z-index: 2; font-size: 27.75pt; padding: 0 8pt; }
+.pipe .n.mini b { font-size: 29.5pt; }
+.pipe .n.dia b { font-size: 30pt; }
+.pipe .n.dia { font-size: 27.75pt; }
+.pipe .num { position: absolute; left: 10pt; top: 10pt; width: 34pt; height: 34pt; border-radius: 50%; color: #fff;
+  font-size: 27.75pt; font-weight: 700; line-height: 34pt; text-align: center; }
+.pipe .frame { position: absolute; border: 2pt dashed #065f46; border-radius: 14pt; background: #fff; }
+.pipe .tag { position: absolute; z-index: 2; height: 38pt; line-height: 38pt; padding: 0 14pt; border-radius: 19pt; background: #065f46; color: #fff;
+  font-size: 27.75pt; font-weight: 700; letter-spacing: .02em; }
+.pipe mjx-container { margin: 0 !important; font-size: .98em; }
+"""
+
+
+def node(x, y, w, h, title, lines=(), fill="#fff", stroke="#334155", num=None, cls=""):
+    body = (f"<b>{title}</b>" if title else "") + "".join(f"<div>{ln}</div>" for ln in lines)
+    badge = f'<span class="num" style="background:{stroke}">{num}</span>' if num else ""
+    nodes.append(f'<div class="n {cls}" style="left:{x}pt;top:{y + OY}pt;width:{w}pt;height:{h}pt;'
+                 f'background:{fill};border-color:{stroke}">{badge}{body}</div>')
+    return y + h
+
+
+def box(x, y, w, h, title, lines=(), fill="#fff", stroke="#334155", num=None):
+    return node(x, y, w, h, title, lines, fill, stroke, num)
+
+
+def diamond(cx, cy, hw, hh, title, lines=()):
+    c = cy + OY
+    wires.append(f'<polygon points="{cx},{c - hh} {cx + hw},{c} {cx},{c + hh} {cx - hw},{c}" fill="#fefce8" stroke="#a16207" stroke-width="2"/>')
+    node(cx - hw * .6, cy - hh, hw * 1.2, 2 * hh, title, lines, "transparent", "transparent", cls="bare dia")
+
+
+MK = {"#475569": "pa", "#c2410c": "pe", "#065f46": "pw"}
+
+
+def arrow(pts, color="#475569", dash=False, label=None, lx=0, ly=0, rot=False):
+    points = " ".join(f"{x},{y + OY}" for x, y in pts)
+    ly += OY
+    dashed = ' stroke-dasharray="9 6"' if dash else ""
+    wires.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="2.5"{dashed} stroke-linejoin="round" marker-end="url(#{MK[color]})"/>')
+    if label:
+        transform = f' transform="rotate(-90 {lx} {ly})"' if rot else ""
+        wires.append(f'<text x="{lx}" y="{ly}" fill="{color}" text-anchor="middle"{transform}>{label}</text>')
+
+
+def down(x, y0, y1):
+    arrow([(x, y0), (x, y1 - 2)])
+
+
+L, R, MID, LC = 40, 776, 408, 230
+
+y = box(4, 4, 808, 148, "Problem setup", [
+    r"$\dot x=-0.1\,yz,\quad \dot y=1.6\,xz,\quad \dot z=-0.75\,xy$",
+    r"$u_0=(0.5,\,0.75,\,1.0),\qquad t\in[0,\,13.26446]$",
+    "27 windows · 1,536 points/window · float64"], "#fff7ed", "#c2410c", 1)
+frame_top = 185
+down(MID, y, 224)
+OY = 48
+
+y2 = 176
+y = node(L, y2, R - L, 180, "", (), "#eff6ff", "#1e40af", 2)
+nodes.append(f'<div class="n bare" style="left:{L}pt;top:{y2 + 14 + OY}pt;width:{R - L}pt;height:38pt"><b>PINN for window $k$</b></div>')
+x = 58
+subblocks = [
+    (92, "Input", ["$t$"]),
+    (132, "Hidden", ["4 × 60", "tanh"]),
+    (140, "Output", ["$N_k(t)$", r"$\in\mathbb{R}^3$"]),
+    (264, "Hard IC", [r"$\hat u_k=u_{0,k}$", r"$+(t-t_k)\,N_k(t)$"]),
+]
+for i, (w, title, lines) in enumerate(subblocks):
+    node(x, y2 + 66, w, 98, title, lines, "#fff", "#93c5fd", cls="mini")
+    if i < 3:
+        arrow([(x + w + 3, y2 + 113), (x + w + 23, y2 + 113)])
+    x += w + 26
+mid2 = y2 + 90
+
+down(MID, y, 384)
+y = box(L, 384, R - L, 100, "ODE residual", [
+    r"$r_k=d\hat u_k/dt-f(\hat u_k)$; derivatives by autodiff"], "#f5f3ff", "#6d28d9", 3)
+down(MID, y, 514)
+y4 = 514
+y = box(L, y4, R - L, 152, "Causal residual loss", [
+    r"$\mathcal L_i=\mathrm{mean}(r_i^2),\quad w_i=\exp\left(-\varepsilon\textstyle\sum_{j\lt i}\mathcal L_j\right)$",
+    r"$\mathcal L=\mathrm{mean}(w_i\mathcal L_i)$; detach weights for gradients",
+    r"$\varepsilon:\ 0.01\to 0.1\to 1\to 10$"], "#f5f3ff", "#6d28d9", 4)
+mid4 = y4 + 74
+down(MID, y, 692)
+y = box(L, 692, R - L, 94, "Adam optimization", [
+    "learning rate × 0.9 every 1,000 steps"], "#f0fdfa", "#0d9488", 5)
+arrow([(LC, y), (LC, 806)])
+
+cy, hh = 918, 110
+diamond(LC, cy, 190, hh, "Stage complete?", [r"$\min w>0.99$", "or 4,000 steps"])
+diamond(615, cy, 145, hh, r"All $\varepsilon$ values used?")
+arrow([(420, cy), (468, cy)], label="YES", lx=444, ly=cy - 13)
+arrow([(40, cy), (22, cy), (22, mid4), (38, mid4)], label="NO", lx=47, ly=cy + 34)
+row = 1062
+arrow([(615, cy + hh), (615, row - 2)], label="NO", lx=650, ly=row - 10)
+arrow([(542, cy + hh / 2), (542, row - 22), (LC, row - 22), (LC, row - 2)], label="YES", lx=390, ly=row - 27)
+box(480, row, 270, 100, r"Next $\varepsilon$", ["keep parameters"], "#fff7ed", "#c2410c")
+arrow([(750, row + 50), (792, row + 50), (792, mid4), (778, mid4)], "#c2410c", True, "next ε", 787, 840, True)
+
+y = box(L, row, 380, 118, "L-BFGS", ["≤ 1,000 iterations", "unweighted residual MSE"], "#f0fdfa", "#0d9488", 6)
+down(LC, y, 1210)
+y = box(L, 1210, 380, 98, "Save window", ["checkpoint · history · prediction"], "#f8fafc", "#475569", 7)
+arrow([(LC, y), (LC, 1318)])
+
+cy, hh = 1390, 70
+diamond(LC, cy, 180, hh, "Last window?", ["$k=26$"])
+box(470, 1328, 306, 130, "Next window", [
+    r"$u_{0,k+1}=\hat u_k(t_{k+1})$", "copy parameters", r"$k\leftarrow k+1$"], "#ecfdf5", "#065f46")
+arrow([(410, cy), (468, cy)], label="NO", lx=439, ly=cy - 13)
+arrow([(776, cy), (806, cy), (806, mid2), (778, mid2)], "#065f46", True, "next window", 800, (mid2 + mid4) / 2, True)
+frame_bot = 1478 + OY
+arrow([(LC, cy + hh), (LC, 1515)], label="YES", lx=274, ly=1504)
+
+y = box(4, 1517, 808, 120, "Reference evaluation", [
+    r"DOP853 · 13,265 points · rtol $10^{-10}$ · atol $10^{-12}$",
+    "evaluation only; not used for optimization"], "#eff6ff", "#1e40af", 8)
+down(MID, y, 1667)
+y = box(4, 1667, 808, 96, "Evaluation outputs", [
+    "MAE · RMSE · maximum error · residual MSE",
+    "invariant drift · training cost"], "#f8fafc", "#475569", 9)
+H = y + 4 + OY
+
+markers = "".join(
+    f'<marker id="{marker}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">'
+    f'<path d="M0,0 L10,5 L0,10 z" fill="{color}"/></marker>'
+    for color, marker in MK.items())
+frame = (f'<div class="frame" style="left:4pt;top:{frame_top}pt;width:808pt;height:{frame_bot - frame_top}pt"></div>'
+         f'<div class="tag" style="left:24pt;top:{frame_top - 19}pt">REPEAT FOR EACH WINDOW <i>k</i> = 0 … 26</div>')
+pipe = (f'<style>{CSS}</style><div class="pipe" style="height:{H}pt">{frame}'
+        f'<svg class="wire" viewBox="0 0 {W} {H}"><defs>{markers}</defs>{"".join(wires)}</svg>{"".join(nodes)}</div>')
+
+source = Path(__file__).with_name("pipeline.html")
+source.write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>Sequential windowed PINN training</title>
+<!-- Derived from original-pipeline.html; layout preserved, typography enlarged for print. -->
+<script>window.MathJax={{tex:{{inlineMath:[["$","$"]]}},svg:{{fontCache:"global"}}}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>@page {{ size: {W}pt {H}pt; margin: 0; }} * {{ box-sizing: border-box; margin: 0; }}
+html, body {{ width: {W}pt; height: {H}pt; overflow: hidden; }}
+body {{ font-family: "Times New Roman", Times, serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }}</style>
+</head><body>{pipe}</body></html>""", encoding="utf-8")
+print(f"wrote {source} ({W} x {H} pt)")

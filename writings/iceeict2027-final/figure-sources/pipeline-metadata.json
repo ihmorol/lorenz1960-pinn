@@ -1,29 +1,49 @@
 {
   "source": "pipeline_figure.py",
-  "derived_from": "Recovered pipeline_figure_original.py and pipeline-original.html",
-  "width_pt": 251.06,
-  "height_pt": 543.0,
-  "minimum_pdf_text_size_pt": 8.5,
+  "derived_from": [
+    "original-pipeline-generator.py",
+    "original-pipeline.html"
+  ],
+  "source_width_pt": 816.0,
+  "source_height_pt": 1814.88,
+  "manuscript_width_pt": 251.06,
+  "manuscript_height_pt": 558.387,
+  "minimum_regular_label_pt_at_manuscript_width": 8.5379,
+  "math_base_scale_relative_to_regular_labels": 0.98,
+  "math_scripts": "Natural MathJax script scaling retained; scripts are smaller than the 8 pt regular-label target.",
   "fonts": [
     {
-      "name": "BYJABP+TimesNewRomanPSMT",
+      "name": "TimesNewRomanPS-BoldMT",
       "embedded": true,
       "type": "Type0"
     },
     {
-      "name": "BYJABP+TimesNewRomanPS-BoldMT",
+      "name": "TimesNewRomanPS-BoldItalicMT",
       "embedded": true,
       "type": "Type0"
     },
     {
-      "name": "OAWOZH+TimesNewRomanPS-ItalicMT",
+      "name": "TimesNewRomanPSMT",
       "embedded": true,
       "type": "Type0"
     }
   ],
-  "font_file": "times.ttf",
-  "font_file_sha256": "43a890795ad133d73568d169a35924f40416be8a6950a1a03263052ec8e95b8a",
-  "structure": "Original nine numbered sections, four network subblocks, three decision diamonds and labelled return paths",
+  "structure": "Recovered original HTML/SVG design: nine numbered sections, four horizontal network subblocks, three decision diamonds, and labelled next-epsilon and next-window return paths.",
+  "preserved": [
+    "palette",
+    "badges",
+    "horizontal positions and widths",
+    "formulas and labels",
+    "wires and arrow routing"
+  ],
+  "typography_changes": [
+    "Times New Roman regular labels",
+    "larger source font sizes",
+    "line breaks within existing labels",
+    "taller nodes and vertical spacing",
+    "next-window and next-epsilon return paths on separate lanes",
+    "window tag clear of the problem-setup box; YES label clear of the frame"
+  ],
   "protocol": {
     "windows": 27,
     "window_indices": [
@@ -48,9 +68,13 @@
     "reference": "DOP853, 13265 evaluation times; not used for optimization"
   },
   "validation": {
-    "labels_inside_node_shapes": true,
-    "text_inside_page": true,
-    "no_text_overlap_within_nodes": true
+    "browser_font_available": true,
+    "clipped_nodes": 0,
+    "regular_text_editable_in_svg": true,
+    "formulas_vector_in_svg": true,
+    "pdf_fonts_embedded": true,
+    "pdf_type3_fonts": 0
   },
-  "pdf_sha256": "c988babbcdae499c146cc86b810ee6104967c992d5da4c0895697c8ad24d89ea"
+  "pdf_sha256": "e011d71b6713fa6b8c10f0bbb763ff915509557c342a7c66f0da987fb67d95a3",
+  "svg_sha256": "525405cbcd7181e9d3819edec86d3ff3b1dcdd2ee8662f2b0c1b197a3deb2901"
 }

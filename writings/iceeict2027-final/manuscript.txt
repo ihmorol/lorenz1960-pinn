@@ -123,89 +123,81 @@ width ∆t = T /27 and its own network parameters θk.                          
        tk = kT /27, k = 0, . . . , 27, Wk = [tk, tk+1],                 The endpoint transfer in (4) and the trial solution make the
       ∆t = T /27 ≈ 0.4912763, Nk( t; θk) : Wk → R3.                  predicted values continuous at the window boundaries. But
                                                                      the derivatives can still change suddenly at the boundaries.
-1                 Problem setup                                           C. Training Loss
+1                         Problem setup                                                C. Training Loss
 
-               ẋ = −0.1yz, ẏ = 1.6xz, ż = −0.75xy                         To train the network of each window, we split the time range
-              u0 = (0.5, 0.75, 1.0); 0 ≤ t ≤ 13.26446                     into nk = 1536 uniform collocation points tk,i, i = 1, . . . , nk,
-          27 windows · 1,536 points/window · float64                      including both endpoints.
+             27 windows · 1,536 points/window · float64                                   To train the network of each window, we split the time range
+REPEAT FOR EACH WINDOW k = 0 … 26                                                      into nk = 1536 uniform collocation points tk,i, i = 1, . . . , nk,
+                                                                                       including both endpoints.
 
-   REPEAT FOR EACH WINDOW k = 0, …, 26                                                        i−1
-                                                                              tk,i = tk + nk − 1 (tk+1 − tk),
-   2      PINN for window k                                               nunique = 27(1536 − 1) + 1 = 41,446,
+   2      PINN for window                                                                                  i−1
+   Input                                                                                   tk,i = tk + nk − 1 (tk+1 − tk),
+          Hidden                Output     Hard IC                                     nunique = 27(1536 − 1) + 1 = 41,446,              27 · 1536 = 41,472.
+           4 × 60
+            tanh                                                                          Two windows next to each other share their boundary time.
+                                                                                       So there are 41,446 unique collocation points in total, but
+   3                      ODE residual                                    next window  41,472 collocation points are used in training. On the global
+                                                                                       grid, each boundary point belongs to the next window, and we
+                                ; derivatives by autodiff                              also add it when we train the current window. The last window
+                                                                                       has the final endpoint. While training, all the points in a single
+   4      Causal residual loss                                                         window are passed to the network at once, which gives an
+                                                                                       output of shape (1536, 3). Then we apply the trial solution
+                          ; detach weights for gradients                               to enforce the initial value. PyTorch automatic differentiation
+                                                                                       gives the rate of change of x, y and z with respect to time for
+   5      Adam optimization                                                            all the collocation points. As u0,k is fixed while training, the
+                                                                                       product rule gives the derivative of (3):
+          learning rate × 0.9 every 1,000 steps
 
-   Input  Hidden          Output             Hard IC                                                                        27 · 1536 = 41,472.
-      t   4 × 60           Nk(t)             û k = u0, k
-                                                                             Two windows next to each other share their boundary time.
-            tanh          3 states         +(t − tk)Nk(t)                 So there are 41,446 unique collocation points in total, but
-                                                                          41,472 collocation points are used in training. On the global
-   3              ODE residual                                            grid, each boundary point belongs to the next window, and we
-                                                                          also add it when we train the current window. The last window
-          rk = dû k/dt − f(û k); derivatives by autodiff                has the final endpoint. While training, all the points in a single
-                                                                          window are passed to the network at once, which gives an
-   4      Causal residual loss                                            output of shape (1536, 3). Then we apply the trial solution
-                                                                          to enforce the initial value. PyTorch automatic differentiation
-          Li = mean(ri2), wi = exp(−εΣj < iLj)                            gives the rate of change of x, y and z with respect to time for
-                                                                          all the collocation points. As u0,k is fixed while training, the
-          L = mean(wiLi); detach weights for gradients                    product rule gives the derivative of (3):
+                                                                          next ε                         duˆk  =  Nk    +  (t  −  tk  )  ∂Nk  .
+                                                                                                          dt                              ∂t
 
-          ε: 0.01 → 0.1 → 1 → 10
+      Stage complete?                YES All values                                       The ODE residual function compares this derivative with
+                                                     used?                             f (uˆk(t)), which is the original ODE right-hand side at the
+NO        or 4,000 steps                                                               predicted state. Both terms are vectors with three components,
+                                                                                       and their difference is the residual rk(t).
+                                YES                 NO
 
-   5      Adam optimization
+   6      L-BFGS                             Next                                                 rk (t)  =    duˆk(t)  −  f   uˆk (t)   ∈ R3.            (5)
+                                         keep parameters                                                         dt
+      ≤ 1,000 iterations
 
-          Learning rate × 0.9 every 1,000 updates
+      unweighted residual MSE
 
-                                      YES                                                   duˆk  =  Nk    +  (t  −  tk  )  ∂Nk  .
-                                                                                             dt                              ∂t
-          Stage complete?                  All ε values
-                                              used?
-      Verified min w > 0.99                                                  The ODE residual function compares this derivative with
-                                                        NO                f (uˆk(t)), which is the original ODE right-hand side at the
-NO        or 4,000 steps                                                  predicted state. Both terms are vectors with three components,
-                                                                          and their difference is the residual rk(t).
-                          YES
+   7 Save window                                                                       So the three components are rk,x = dxˆk/dt+0.1 yˆkzˆk, rk,y =
+        checkpoint · history ·                                                         dyˆk/dt − 1.6 xˆkzˆk and rk,z = dzˆk/dt + 0.75 xˆkyˆk.
+               prediction
+                                                                                          For a batch of nk times, each row is one collocation point
+          Last window?                          Next window                            and the three columns are x, y and z. Here Nk, uˆk, uˆ˙ k, fk
+                                     NO                                                and rk mean the network outputs, trial states, time derivatives,
+                                                                                       ODE right-hand sides and residuals. Each of them is in Rnk×3,
+                                                 copy parameters                       and the time batch tk is in Rnk×1.
 
-   6      L-BFGS                                Next ε
-                                           Keep parameters
-           ≤ 1,000 iterations
-      Unweighted residual MSE                                                        rk (t)  =    duˆk(t)  −  f   uˆk (t)   ∈ R3.            (5)
-                                                                                                    dt
-   7      Save window
-
-   Checkpoint · history · prediction                                      So the three components are rk,x = dxˆk/dt+0.1 yˆkzˆk, rk,y =
-                                                                          dyˆk/dt − 1.6 xˆkzˆk and rk,z = dzˆk/dt + 0.75 xˆkyˆk.
-          Last window?                NO Next window
-               k = 26                        u0, k + 1 = û k(tk + 1)        For a batch of nk times, each row is one collocation point
-                                                                          and the three columns are x, y and z. Here Nk, uˆk, uˆ˙ k, fk
-                         YES                   Copy parameters            and rk mean the network outputs, trial states, time derivatives,
-                                                    k←k+1                 ODE right-hand sides and residuals. Each of them is in Rnk×3,
-                                                                          and the time batch tk is in Rnk×1.
+          YES                                                                             For each ordered collocation time tk,i, we take the mean
+                                                                                       of the three squared residual components. This gives one
 8         Reference evaluation
-                                                                             For each ordered collocation time tk,i, we take the mean
-      DOP853 · 13,265 points · rtol 10−10 · atol 10−12                    of the three squared residual components. This gives one
+                                                                                       non-negative loss value Lk,i for each point instead of three
+      DOP853 · 13,265 points · rtol      · atol                                        components:
 
-          Evaluation only; not used for optimization                      non-negative loss value Lk,i for each point instead of three
-                                                                          components:
-9                 Evaluation outputs
+          evaluation only; not used for optimization
 
-          MAE · RMSE · maximum error · residual MSE                       Lk,i =  1  ∥rk (tk,i )∥22  =  1  rk2,x + rk2,y + rk2,z    (tk,i).  (6)
-                                                                                  3                     3
-          Invariant drift · training cost
+          Evaluation outputs                                                           Lk,i =  1  ∥rk (tk,i )∥22  =  1  rk2,x + rk2,y + rk2,z    (tk,i).  (6)
+                                                                                               3                     3
+9
+          MAE · RMSE · maximum error · residual MSE
+                                                                                          For a long-horizon, time-dependent ODE system, residual
+          invariant drift · training cost                                              loss alone may not be sufficient. That is why we used causal
+                                                                                       weights and causal weighted loss. The causal weight at a time
+   Fig. 2. Sequential training with endpoint handoff (k = 0, . . . , 26)               depends on the accumulated residual loss at earlier times [3].
+                                                                                       Here Sk,i is the sum of the point losses at all earlier times
+Window k + 1 starts from a copy of the weights of window                               of the same window. The first point has no earlier point, so
+k, θk+1 ← θk for k = 0, . . . , 25, and then trains its own                            Sk,1 = 0 and its causal weight is one.
+parameters. As the starting point of the later windows is
+predicted, it can carry error from earlier windows.                                                                                             
 
-   Fig. 2. Sequential training with endpoint handoff (k = 0, . . . , 26)     For a long-horizon, time-dependent ODE system, residual
-                                                                          loss alone may not be sufficient. That is why we used causal
-Window k + 1 starts from a copy of the weights of window                  weights and causal weighted loss. The causal weight at a time
-k, θk+1 ← θk for k = 0, . . . , 25, and then trains its own               depends on the accumulated residual loss at earlier times [3].
-parameters. As the starting point of the later windows is                 Here Sk,i is the sum of the point losses at all earlier times
-predicted, it can carry error from earlier windows.                       of the same window. The first point has no earlier point, so
-                                                                          Sk,1 = 0 and its causal weight is one.
-   Fig. 2 shows the implementation pipeline.
-                                                                                                                                   
+   Fig. 2 shows the implementation pipeline.                                                                                             i−1
 
-                                                                                                                            i−1
+                                                                                       wk,i = exp (−ϵSk,i) = exp −ϵ Lk,j . (7)
 
-                                                                          wk,i = exp (−ϵSk,i) = exp −ϵ Lk,j . (7)
-
-                                                                                                                            j=1
+                                                                                                                                         j=1
 So 0 < wk,i ≤ 1. Then we multiply each point loss with its          Require: Ordered windows W0, . . . , W26 and their uniform
 causal weight and take the mean over all nk points. This gives
 one loss value for the window in the current ϵ stage:                    time points
