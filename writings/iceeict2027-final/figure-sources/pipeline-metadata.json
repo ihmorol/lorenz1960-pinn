@@ -1,0 +1,45 @@
+{
+  "source": "pipeline_figure.py",
+  "derived_from": "pipeline_figure_original.py and manuscript sequential training algorithm (Fig. 3)",
+  "width_pt": 251.06,
+  "height_pt": 225.0,
+  "minimum_pdf_text_size_pt": 8.5,
+  "fonts": [
+    {
+      "name": "BYJABP+TimesNewRomanPSMT",
+      "embedded": true,
+      "type": "Type0"
+    },
+    {
+      "name": "BYJABP+TimesNewRomanPS-BoldMT",
+      "embedded": true,
+      "type": "Type0"
+    }
+  ],
+  "font_file": "times.ttf",
+  "font_file_sha256": "43a890795ad133d73568d169a35924f40416be8a6950a1a03263052ec8e95b8a",
+  "protocol": {
+    "windows": 27,
+    "window_indices": [
+      0,
+      26
+    ],
+    "network": "four hidden layers of 60 tanh units; one network per window",
+    "hard_initial_state": true,
+    "points_per_window": 1536,
+    "causal_adam_epsilon": [
+      0.01,
+      0.1,
+      1,
+      10
+    ],
+    "causal_weights_detached_for_gradient": true,
+    "stage_threshold": "minimum causal weight > 0.99",
+    "stage_cap_adam_updates": 4000,
+    "lbfgs_objective": "unweighted residual mean square",
+    "lbfgs_iterations_per_window_at_most": 1000,
+    "handoff": "predicted endpoint and copied trained parameters",
+    "reference": "DOP853, 13265 evaluation times; not an optimization target"
+  },
+  "pdf_sha256": "29977388291ab1a9ae224e7ef8fe582fa6badd690400938e42847b248def76ed"
+}
