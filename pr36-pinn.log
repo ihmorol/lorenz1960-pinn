@@ -1,0 +1,67 @@
+.............F...........................                                [100%]
+================================== FAILURES ===================================
+____________________ test_sweep_writes_runs_and_comparison ____________________
+
+tmp_path = WindowsPath('C:/Users/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0')
+
+    def test_sweep_writes_runs_and_comparison(tmp_path):
+        from pinn import sweep as sweep_module
+    
+        base = Config(epochs=12, n_collocation=16, log_every=6, eval_every=6, print_every=0,
+                      runs_dir=str(tmp_path))
+        original, sweep_module.SNAPSHOT_EVERY = sweep_module.SNAPSHOT_EVERY, 6
+        try:
+            comparison = sweep_module.sweep(base, depths=(1,), widths=(4, 6))
+        finally:
+            sweep_module.SNAPSHOT_EVERY = original
+    
+        assert list(comparison["arch"]) == ["1x4", "1x6"]
+        assert (tmp_path / "comparison.csv").exists()
+        for arch in ("1x4", "1x6"):
+            run = tmp_path / arch
+            assert (run / "metrics.csv").exists()
+            assert (run / "run_summary.csv").exists()
+            assert (run / "point_summary.csv").exists()
+            assert (run / "history" / "pinn.pt").exists()
+>           assert len(list((run / "breakdown").glob("epoch_*.csv"))) == 3
+E           AssertionError: assert 4 == 3
+E            +  where 4 = len([WindowsPath('C:/Users/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0/1x4/breakdown...ers/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0/1x4/breakdown/epoch_000012.csv')])
+E            +    where [WindowsPath('C:/Users/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0/1x4/breakdown...ers/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0/1x4/breakdown/epoch_000012.csv')] = list(<map object at 0x0000027D86290520>)
+E            +      where <map object at 0x0000027D86290520> = glob('epoch_*.csv')
+E            +        where glob = (WindowsPath('C:/Users/User/AppData/Local/Temp/pytest-of-User/pytest-402/test_sweep_writes_runs_and_com0/1x4') / 'breakdown').glob
+
+src\pinn\test_pinn.py:233: AssertionError
+---------------------------- Captured stdout call -----------------------------
+
+=== [1/2] 1x4 seed 0 (0.0 min elapsed) -> C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-402\test_sweep_writes_runs_and_com0\1x4 ===
+      state      mae     rmse  max_abs_error
+          x 0.228059 0.305957       0.657971
+          y 0.288301 0.319683       0.466954
+          z 0.137620 0.159719       0.281980
+combined_l2 0.402553 0.470443       0.854685
+
+=== [2/2] 1x6 seed 0 (0.3 min elapsed) -> C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-402\test_sweep_writes_runs_and_com0\1x6 ===
+      state      mae     rmse  max_abs_error
+          x 0.176857 0.244914       0.557388
+          y 0.371113 0.422589       0.684818
+          z 0.204025 0.294018       0.697820
+combined_l2 0.473174 0.570097       1.125437
+
+[sweep] 2 runs in 0.6 min
+[sweep] comparison table -> C:\Users\User\AppData\Local\Temp\pytest-of-User\pytest-402\test_sweep_writes_runs_and_com0\comparison.csv
+arch  n_params  rmse_combined_l2  final_loss  residual_generalisation_gap  wall_clock_s
+ 1x4        23          0.470443    0.280712                     1.002866      0.051686
+ 1x6        33          0.570097    0.693651                     1.002772      0.054622
+============================== warnings summary ===============================
+src/pinn/test_pinn.py: 44 warnings
+  C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\site-packages\seaborn\categorical.py:700: PendingDeprecationWarning: vert: bool will be deprecated in a future version. Use orientation: {'vertical', 'horizontal'} instead.
+    artists = ax.bxp(**boxplot_kws)
+
+src/pinn/test_pinn.py::test_causal_extras_are_written
+  C:\Users\User\.codex\worktrees\a601\lorenz1960-pinn\.review\pr36\src\pinn\viz\evaluation.py:53: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:837.)
+    left_res.append(float(residual_parts(model.windows[k], te[1:2].clone().requires_grad_(True)).r.norm()))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED src/pinn/test_pinn.py::test_sweep_writes_runs_and_comparison - Asserti...
