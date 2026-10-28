@@ -1,0 +1,8 @@
+      state      mae     rmse  max_abs_error
+          x 0.000327 0.000361       0.000525
+          y 0.000159 0.000200       0.000336
+          z 0.000170 0.000205       0.000350
+combined_l2 0.000444 0.000461       0.000558
+2000 epochs in 46s -> full 20k estimate ~8 min
+arch  final_loss  rmse_combined_l2
+4x60    0.000002          0.000461

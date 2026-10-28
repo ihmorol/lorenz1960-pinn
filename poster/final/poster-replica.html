@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FYDP-2 Defense Poster — Windowed Causal PINN</title>
+<script>window.MathJax={tex:{inlineMath:[["$","$"]]},svg:{fontCache:"global"}};</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+@page { size: 841mm 1189mm; margin: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 841mm; height: 1189mm; }
+body { position: relative; overflow: hidden; background: #f7f9fc; font-family: "Segoe UI", sans-serif; color: #1e293b; line-height: 1.35;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+header { position: absolute; left: 0; top: 0; width: 100%; height: 314pt; background: #fff; box-shadow: 0 1pt 4pt rgba(15,23,42,.08); }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5pt; height: 5pt;
+  background: linear-gradient(90deg, #ea7a1e, #5d4ad2 55%, #0d9488); }
+.logo { position: absolute; left: 30pt; top: 70pt; width: 160pt; }
+.head { position: absolute; left: 175pt; width: 1835pt; text-align: center; }
+h1 { top: 24pt; font-size: 67pt; font-weight: 900; line-height: 71pt; color: #0f172a; }
+.authors { top: 179pt; font-size: 25pt; font-weight: 700; color: #293548; line-height: 1.33; }
+.dept { top: 219pt; font-size: 20.5pt; color: #64748b; line-height: 1.33; }
+.badge-wrap { top: 255pt; }
+.badge { display: inline-block; height: 38pt; line-height: 35pt; padding: 0 21pt; border: 1.5pt solid #ea7a1e; border-radius: 19pt;
+  background: #fff7ed; color: #c2410c; font-size: 19pt; font-weight: 700; }
+.qr { position: absolute; left: 2010pt; top: 71pt; width: 147pt; height: 147pt; padding: 4.25pt; background: #fff; border: .75pt solid #e2e8f0; border-radius: 8pt; }
+.qr img { width: 100%; display: block; }
+.qr-cap { position: absolute; left: 1983pt; top: 226pt; width: 200pt; text-align: center; font-size: 17pt; font-weight: 700; color: #475569; line-height: 1.33; }
+
+main { position: absolute; left: 45pt; top: 346pt; display: grid; grid-template-columns: 682pt 868pt 681pt; column-gap: 31pt; }
+.col { display: flex; flex-direction: column; gap: 31pt; }
+.card { background: #fff; border: .75pt solid #e2e8f0; border-top: 3pt solid var(--c); border-radius: 12pt; padding: 16pt 18pt 0 19.5pt;
+  box-shadow: 0 4pt 12pt rgba(15,23,42,.07); overflow: hidden; }
+.col:last-child .card { padding-right: 17pt; }
+h2 { font-size: 38pt; font-weight: 900; line-height: 1.33; color: var(--c); margin-bottom: 8pt; }
+.lead { font-size: 26pt; font-weight: 700; color: #0f172a; }
+ul { list-style: none; font-size: 26pt; margin-top: 12pt; }
+li { position: relative; padding-left: 30pt; }
+li + li { margin-top: 11pt; }
+li::before { content: ""; position: absolute; left: 6pt; top: .52em; width: 9pt; height: 9pt; border-radius: 50%; background: #1e293b; }
+p.body { font-size: 26pt; }
+.label { font-size: 20pt; font-weight: 700; color: #5b6b80; text-transform: uppercase; letter-spacing: .02em; line-height: 1.33; margin-top: 12pt; }
+.math { margin-top: 5pt; height: 53pt; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: .75pt solid #e2e8f0; border-radius: 8pt; color: #0f172a; }
+.math { font-size: 27pt; }
+.math mjx-container { font-size: 1em !important; }
+.math.spread { justify-content: space-around; }
+.label + .math + .label { margin-top: 11pt; }
+figure { margin-top: 8pt; padding: 6pt; background: #f8fafc; border: .75pt solid #e2e8f0; border-radius: 8pt; }
+figure img { display: block; width: 100%; }
+figcaption, .cap { margin-top: 5pt; font-size: 20pt; color: #5b6b80; }
+figcaption b, .cap b { color: #5b6b80; }
+table { width: 100%; border-collapse: collapse; }
+.kv { margin-top: 10pt; font-size: 21pt; }
+.kv td { padding: 5.5pt 2pt; border-bottom: .75pt solid #e8eef5; vertical-align: middle; }
+.kv tr:last-child td { border-bottom: 0; }
+.kv td:first-child { width: 283pt; font-weight: 600; color: #64748b; }
+.cmp { font-size: 22pt; }
+.cmp th { background: #eef2ff; color: #3730a3; font-weight: 700; text-align: right; padding: 5.5pt 7pt; }
+.cmp td { padding: 6pt 7pt; text-align: right; border-bottom: .75pt solid #e8eef5; }
+.cmp th:first-child, .cmp td:first-child { text-align: left; }
+.cmp .hi, .cmp tr.hi td { background: #f0fdfa; color: #0f766e; font-weight: 700; }
+.chips { display: flex; flex-wrap: wrap; gap: 8pt; margin-top: 12pt; }
+.chip { height: 39pt; line-height: 37pt; padding: 0 16pt; background: #f1f5f9; border: .75pt solid #e2e8f0; border-radius: 20pt; font-size: 20pt; font-weight: 600; color: #33415c; }
+.refs { margin-top: 12pt; font-size: 13.5pt; line-height: 1.48; color: #8194aa; }
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="img/logo.png" alt="UIU">
+  <h1 class="head">Sequential Causal Training of Windowed PINNs for<br>the Lorenz ODE System</h1>
+  <div class="head authors">Ikramul Hasan Moral · Md. Abu Bakar · Samiur Rahman Omlan · Md. Touhidul Islam · Fariha Islam · Dr. Muhammad Nomani Kabir</div>
+  <div class="head dept">Department of Computer Science and Engineering · United International University · Dhaka, Bangladesh</div>
+  <div class="head badge-wrap"><span class="badge">Final Year Design Project (FYDP-2) Defense</span></div>
+  <div class="qr"><img src="img/qr.png" alt="QR code"></div>
+  <div class="qr-cap">Code &amp; saved run</div>
+</header>
+
+<main>
+<div class="col">
+  <section class="card" style="--c:#b45309;height:718pt">
+    <h2>The Long-Horizon Problem</h2>
+    <p class="lead">One network per time window with causal weighting cuts the combined RMSE from 2.237 to 6.97×10<sup>−5</sup>, trained only on the ODE residual.</p>
+    <ul>
+      <li>A full-interval PINN couples early and late times; later states depend on earlier ones.</li>
+      <li>Errors accumulate and backtracking is impossible: our saved single-network run stalls at RMSE 2.237.</li>
+      <li>Wang et al. (2024) fit early times first; we add time windowing.</li>
+    </ul>
+    <figure style="margin-top:12pt"><img src="img/single_network.png" alt=""></figure>
+    <figcaption><b>Single network on the full interval.</b> The trajectory drifts from the DOP853 reference; the loss plateaus. Saved-run RMSE: 2.237.</figcaption>
+  </section>
+
+  <section class="card" style="--c:#1e40af;height:568pt">
+    <h2>Lorenz-1960 IVP</h2>
+    <div class="label" style="margin-top:0">Governing equations</div>
+    <div class="math spread"><span>$\dot{x} = -0.1\,yz,$</span><span>$\dot{y} = 1.6\,xz,$</span><span>$\dot{z} = -0.75\,xy$</span></div>
+    <table class="kv">
+      <tr><td>Initial state <i>u</i><sub>0</sub></td><td>(0.5, 0.75, 1.0)</td></tr>
+      <tr><td>Coefficients (<i>k</i> = 2, <i>l</i> = 1)</td><td>(−0.10, 1.60, −0.75)</td></tr>
+      <tr><td>Horizon</td><td>[0, 13.26446] · nearly closed orbit</td></tr>
+      <tr><td>Reference</td><td>DOP853 · rtol 10<sup>−10</sup> · atol 10<sup>−12</sup></td></tr>
+      <tr><td>Evaluation</td><td>13,265 uniform times</td></tr>
+      <tr><td>Role of reference</td><td>monitoring only: never in the loss</td></tr>
+    </table>
+    <ul style="margin-top:10pt">
+      <li>At the rounded endpoint the reference nearly returns to its start: a <b>nearly closed orbit</b>, not an exact period.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="--c:#1e40af;height:540pt">
+    <h2>Windowed PINN</h2>
+    <ul style="margin-top:0">
+      <li>Each window <i>k</i> has its own 4×60 tanh network: windows share boundaries, not parameters.</li>
+      <li>A hard trial solution fixes every initial state <b>by construction</b>: no IC penalty, no weight to tune.</li>
+      <li>Each window starts from the previous predicted endpoint; weights are copied as a warm start.</li>
+    </ul>
+    <div class="label">Hard trial solution: exact IC</div>
+    <div class="math">$\hat{u}_k(t) = u_{0,k} + (t - t_k)\,N_k(t;\theta_k)$</div>
+    <div class="label">Window handoff + warm start</div>
+    <div class="math">$u_{0,k+1} = \hat{u}_k(t_{k+1}), \qquad \theta_k \leftarrow \theta_{k-1}$</div>
+  </section>
+
+  <section class="card" style="--c:#475569;height:445pt">
+    <h2>Run Configuration</h2>
+    <table class="kv" style="margin-top:0">
+      <tr><td>Interval / windows</td><td>[0, 13.26446] / 27 equal windows</td></tr>
+      <tr><td>Parameters</td><td>11,283 per window · 304,641 total</td></tr>
+      <tr><td>Collocation</td><td>1,536 uniform per window · 41,446 unique points</td></tr>
+      <tr><td>Optimizer</td><td>Adam 10<sup>−3</sup> rate, ×0.9 every 1,000 steps</td></tr>
+      <tr><td>Causal stages</td><td>ε = 0.01, 0.1, 1, 10 · cap 4,000 steps</td></tr>
+      <tr><td>L-BFGS</td><td>≤ 1,000 closures per window</td></tr>
+      <tr><td>Precision / seed</td><td>float64 / seed 0</td></tr>
+    </table>
+  </section>
+
+  <section class="card" style="--c:#0f766e;height:584pt">
+    <h2>One Network vs 27 Windows</h2>
+    <table class="cmp">
+      <tr><th>Measure</th><th>One network</th><th>27 windows</th></tr>
+      <tr><td>Trainable parameters</td><td>11,283</td><td class="hi">304,641</td></tr>
+      <tr><td>Training points</td><td>39,793 LHS</td><td class="hi">41,446 uniform</td></tr>
+      <tr><td>Combined state RMSE</td><td>2.237</td><td class="hi">6.97×10<sup>−5</sup></td></tr>
+      <tr><td>Max state-error norm</td><td>3.346</td><td class="hi">3.09×10<sup>−4</sup></td></tr>
+      <tr><td>Collocation residual MSE</td><td>2.80×10<sup>−4</sup></td><td class="hi">1.87×10<sup>−7</sup></td></tr>
+      <tr><td>Recorded wall time (s)</td><td>4,529</td><td class="hi">881</td></tr>
+    </table>
+    <p class="cap" style="margin-top:10pt;font-size:22pt">Descriptive comparison: several options change together, so no single factor is isolated.</p>
+    <div class="chips"><span class="chip">34,765 Adam updates</span><span class="chip">≤ 1,000 L-BFGS closures</span><span class="chip">2 of 108 stages capped</span></div>
+  </section>
+</div>
+
+<div class="col">
+  <section class="card" style="--c:#1e40af;height:1243pt">
+    <h2>Training Pipeline</h2>
+    <figure><img src="img/pipeline.png" alt=""></figure>
+    <figcaption><b>Complete implementation pipeline.</b> Per-window PINN with hard IC, four causal ε stages, L-BFGS polish, then handoff. The DOP853 reference never enters training.</figcaption>
+  </section>
+
+  <section class="card" style="--c:#0d9488;height:1102pt">
+    <h2>Causal Weighting</h2>
+    <ul style="margin-top:0">
+      <li>Residual losses are ordered in time: each weight depends on the accumulated loss of all earlier points, so the network must fit early times before late times.</li>
+      <li>Weights are recomputed every epoch and stay fixed (detached) while Adam takes the gradient.</li>
+    </ul>
+    <div class="label">Causal weight</div>
+    <div class="math" style="height:62pt;font-size:23pt">$w_{k,i} = \exp\!\Big(-\varepsilon \sum\limits_{j&lt;i} \mathcal{L}_{k,j}\Big)$</div>
+    <div class="label">Causal loss</div>
+    <div class="math" style="height:72pt;font-size:23pt">$\mathcal{L}_{k,\varepsilon} = \frac{1}{n_k} \sum\limits_{i=1}^{n_k} w_{k,i}\,\mathcal{L}_{k,i}$</div>
+    <div class="chips"><span class="chip">advance when min w &gt; 0.99</span><span class="chip">then L-BFGS · unweighted residual mean</span></div>
+    <figure><img src="img/causal_weights.png" alt=""></figure>
+    <figcaption><b>Causal weights at sampled training states.</b> Only the window start is trusted early; weights flatten toward 1 as earlier losses shrink.</figcaption>
+  </section>
+
+  <section class="card" style="--c:#0d9488;height:572pt">
+    <h2>Optimizer Sequence</h2>
+    <figure><img src="img/optimizer.png" alt=""></figure>
+    <figcaption><b>Adam and L-BFGS phases across all 27 windows.</b> Adam uses causal weights; L-BFGS the raw residual mean. Each window's objective falls by orders of magnitude before the handoff.</figcaption>
+  </section>
+</div>
+
+<div class="col">
+  <section class="card" style="--c:#0f766e;height:887pt">
+    <h2>Trajectory Accuracy</h2>
+    <figure><img src="img/trajectory.png" alt=""></figure>
+    <figcaption><b>Windowed PINN vs DOP853 reference on 13,265 uniform evaluation times.</b> Trajectories overlap; signed errors per state (×10<sup>−4</sup>) peak near <i>t</i> ≈ 5.</figcaption>
+    <table class="cmp" style="margin-top:12pt">
+      <tr><th>State</th><th>MAE</th><th>RMSE</th><th>Max</th></tr>
+      <tr><td><i>x</i></td><td>1.89×10<sup>−5</sup></td><td>2.74×10<sup>−5</sup></td><td>1.13×10<sup>−4</sup></td></tr>
+      <tr><td><i>y</i></td><td>2.94×10<sup>−5</sup></td><td>4.96×10<sup>−5</sup></td><td>2.88×10<sup>−4</sup></td></tr>
+      <tr><td><i>z</i></td><td>2.78×10<sup>−5</sup></td><td>4.05×10<sup>−5</sup></td><td>1.30×10<sup>−4</sup></td></tr>
+      <tr class="hi"><td>State norm</td><td>5.12×10<sup>−5</sup></td><td>6.97×10<sup>−5</sup></td><td>3.09×10<sup>−4</sup></td></tr>
+    </table>
+  </section>
+
+  <section class="card" style="--c:#0f766e;height:443pt">
+    <h2>Physics Checks</h2>
+    <ul style="margin-top:0">
+      <li>Residual MSE 1.874×10<sup>−7</sup> (collocation) vs 1.872×10<sup>−7</sup> (evaluation): generalisation gap ≈ 1.000.</li>
+      <li>State error and ODE residual stay in the 10<sup>−5</sup>–10<sup>−3</sup> band along the whole orbit.</li>
+      <li>Values are exactly continuous at all 26 inner interfaces, by construction of the hard trial solution.</li>
+      <li>The DOP853 reference itself drifted less than 4×10<sup>−10</sup>.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="--c:#b45309;height:631pt">
+    <h2>Phase Portraits</h2>
+    <figure><img src="img/phase.png" alt=""></figure>
+    <figcaption><b>Phase portraits of the learned trajectory.</b> The PINN (blue) tracks the reference (grey); the red dot marks <i>u</i><sub>0</sub> = (0.5, 0.75, 1.0).</figcaption>
+  </section>
+
+  <section class="card" style="--c:#475569;height:448pt">
+    <h2>Limitations &amp; Future Work</h2>
+    <ul style="margin-top:0">
+      <li>Each window after the first starts from a <b>predicted</b> state: earlier error is carried forward, and derivatives can still jump at the interfaces.</li>
+      <li>One seed, one initial state, one coefficient set. The two-run comparison changes several options at once, and no windowed run without causal weights was saved.</li>
+      <li>Next: one-change-at-a-time runs with several seeds, and problems with boundary conditions at each end.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="--c:#065f46;height:446pt">
+    <h2>Conclusion</h2>
+    <p class="lead">The 27-window causal PINN tracks the nearly closed Lorenz-1960 orbit at a combined state RMSE of 6.97×10<sup>−5</sup> against DOP853; a single full-interval network recorded 2.237.</p>
+    <p class="body" style="margin-top:11pt">Trained from the ODE residual alone; the reference is used only for evaluation. Code, config and saved run: github.com/ihmorol/lorenz1960-pinn</p>
+    <p class="refs">Lorenz (196) Tellus · Raissi, Perdikaris &amp; Karniadakis (2019) J. Comput. Phys. · Lagaris, Likas &amp; Fotiadis (1998) IEEE Trans. Neural Netw. · Wang, Sankaran &amp; Perdikaris (2024) Comput. Methods Appl. Mech. Eng. · Penwarden et al. (2023) J. Comput. Phys. · Matthews &amp; Bihlo (2024) PinnDE · Virtanen et al. (2020) SciPy 1.0</p>
+  </section>
+</div>
+</main>
+</body>
+</html>
