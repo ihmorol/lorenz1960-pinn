@@ -1,0 +1,461 @@
+Sequential Causal Training of Windowed PINNs for
+                The Lorenz ODE System
+
+       Ikramul Hasan Moral                  Md. Abu Bakar                            Samiur Rahman Omlan
+Computer Science And Engineering  Computer Science And Engineering             Computer Science And Engineering
+
+   imoral223489@bscse.uiu.ac.bd      mbakar223200@bscse.uiu.ac.bd                 somlan223195@bscse.uiu.ac.bd
+               0112230489                        0112230200                                   0112230195
+
+        Md. Touhidul Islam                    Fariha Islam                 Dr. Muhammad Nomani Kabir
+Computer Science And Engineering  Computer Science And Engineering               Professor, Dept of CSE
+
+  mislam223435@bscse.uiu.ac.bd       fislam223431@bscse.uiu.ac.bd           United International University
+               0112230435                        0112230431                        kabir@cse.uiu.ac.bd
+
+   Abstract--We study a physics-informed neural network (PINN)         We use both concepts, we split the time period in equal 27
+approximation of a single full-cycle orbit of the Lorenz three-state   windows and a separate network for every windows. The initial
+system on t  [0, 13.26446]. We trained a single network on the         state is fixed with the endpoint predicted in one window of
+full interval that produce a combined state root-mean-square           the next. The parameters of a trained window is copied to the
+error (RMSE) of 2.237. To address this long horizon problem,           next trainable window. This paper provides an implementation
+we divide the interval in total 27 windows. Each window has a          and its saved results. An interval that completes a full-cycle
+separate network and an initial state that is fixed to the predicted   loop for the chosen initial state is [0, 13.26446]. We report one
+endpoint of the previous window. In each window, Adam reduces          implementation and its saved result on [0, 13.26446] which
+the residual in four stages. In each stage, we use causal weights      is essentially an closed orbit. The actual training goal and
+and causal weighted loss to reduce the loss of all earlier points.     window handoff is then given and compared to a saved single-
+Then, L-BFGS minimizes the loss using the unweighted residual          network training of the same initial-value problem. The state
+mean. A numerical reference is used to monitor the training but        error, ODE residual, causal weights residual are also checked.
+is not used for optimization or stopping. In the lowest-error of five  The comparison is descriptive because multiple configuration
+candidate seeds the windowed model gives a combined RMSE of            options are changing simultaneously.
+6.97 × 10-5 on 13,265 evaluation times and a dense-grid residual
+mean square of 1.87×10-7. Across five seeds, the median RMSE                           II. PROBLEM AND BACKGROUND
+is 8.13 × 10-5 (range 6.97 × 10-5­2.60 × 10-4). The full-interval
+and windowed runs also vary in terms of number of parameters,          A. Lorenz Equations
+sampling and optimizer schedule. In contrast, these are described
+with the word configurations, not isolation of the effect of causal       Our main object is a three-state nonlinear ordinary differen-
+weighting.                                                             tial equation (ODE) that we need to solve. The Lorenz system
+                                                                       general form [5] is:
+   Index Terms--physics-informed neural network, Lorenz sys-
+tem, causal training, time windows, ordinary differential equa-
+tion, windowed PINN
+
+                          I. INTRODUCTION                              dx         1     1
+                                                                           =   2 + 2 - 2   yz,
+   The Lorenz-system model is a three-state, nonlinear or-             dt
+dinary differential equation (ODE) that was obtained from
+a reduced flow model [1]. It has an initial-value problem              dy      1     1     xz,
+which provides a simple test of the convergence of a learned               =   2 - 2 + 2                     (1)
+continuous-time function from a specified trajectory over a            dt
+long interval. A reference trajectory is provided by numerical
+integration. A PINN is trained with the residual of the ODE            dz  1 1
+instead of the solution samples [2]. To train a a long horizon             =   2 - 2 xy.
+problem using traditional PINN is not suggested by previous            dt 2
+works [3]. It couples early and late times, but the state at a later
+time is determined by the previous trajectory. To overcome                Here  and  are physical wavenumbers; k below indexes
+this ordering, Wang et al. suggested the use of time-dependent         windows. We write the state as u = [x, y, z]T. Substituting
+residual weights PINN training [3]. An initial condition can
+also be met by construction using a hard trial solution [4].            = 2 and  = 1 into (1) gives the three coefficients.
+
+                                                                         = 2,  = 1,
+                                                                       ax = 2(1/5 - 1/4) = -1/10 = -0.1,
+                                                                       ay = 2(1 - 1/5) = 8/5 = 1.6,
+                                                                       az = (2/2)(1/4 - 1) = -3/4 = -0.75.
+                                                                            tk = kT /27, k = 0, . . . , 27,
+                                                                           Wk = [tk, tk+1], k = 0, . . . , 26,
+                                                                           t = T /27  0.4912763,
+                                                                   Nk( · ; k) : Wk  R3.
+
+Fig. 1. Training result of a single network , entire time at once     Each aprroximately 0.491 time units wide. Shorter window
+                                                                   gives each network an easier piece to learn, therefore we tried
+x = -0.1 yz, y = 1.6 xz, z = -0.75 xy, (2)                         to keep the window size closer to 0.5.
+
+Collecting these right-hand sides gives the prescribed vector         Each window has its own network Nk(t; k) with one time
+field f , which maps a three-component state to its three rates    input, four hidden layers of 60 tanh units, and three output
+of change:                                                         components. These outputs form a correction vector; (3) gives
+                                                                   the predicted state. Including biases, the input, hidden-to-
+u = [x, y, z]T  R3,                                                hidden, and output connections give the following parameter
+                                                                   counts.
+
+a = [ax, ay, az]T = [-0.1, 1.6, -0.75]T,                                      Pwindow = 120 + 3(3660) + 183 = 11,283,
+                                                                                 Ptotal = 27Pwindow = 304,641.
+du            f : R3  R3,
+    = f (u),                                                          For the model parameter initialization we used xavier-
+                                                                   uniform weights and zero biases. The 27 networks don't
+dt                                                                 share parameters but the windows has shared boundary. The
+                                                                   completed windows predicted endpoint for the boundary is
+ax yz  -0.1 yz                                                     used for the initial state of the next window.
+
+f (u) = ay xz =  1.6 xz  .
+
+az xy         -0.75 xy
+
+   For our experiment we used the coefficients a =                 A. Window Handoff
+[ax, ay, az]T = [-0.1, 1.6, -0.75]T. We track the system
+starting from an initial state [5] of u(0) = [0.5, 0.75, 1.0]T        For window k = 0, . . . , 26, tk is its starting time and u0,k 
+until a final time of T = 13.26446. On this particular rounded     R3 its fixed starting state. As the Lorenz system is an initial
+                                                                   value problem, we enforce this state through a trial solution.
+endpoint, the reference trajectory nearly returns to its starting
+
+state. It is very similar but not exactly closed so we call this
+
+interval a nearly closed orbit and not an exact period.
+
+B. Related Work                                                    u^k(t) = u0,k + (t - tk)Nk(t; k),            (3)
+
+   In this study we are making an experimental investigation       t  Wk, k = 0, . . . , 26.
+of a series of well known concepts. The approach adopted
+is a PINN that embeds the physics residual into the training                   u0,k, Nk(t; k), u^k(t)  R3, t - tk  R,
+objective [2]. We use a hard trial-function design [4] to ensure                  u^k(tk) = u0,k + 0 Nk(tk; k) = u0,k,
+our starting state precisely at the point we want to implement                            u0,0 = [0.5, 0.75, 1.0]T.
+it . Learning long trajectories is a well-known challenge due
+to the ordering of the time axis so we take inspiration from the      At t = tk, the scalar factor t - tk is zero, so u^k(tk) = u0,k
+causal residual weighting technique [3]. Lastly segmenting the     regardless of the parameters [4]. The first window uses the
+timeline is based on ideas of causal sweeping and temporal         prescribed initial state; every later window uses the predicted
+decomposition [6]. Our implementation is an investigation of       endpoint of the previous window.
+the performance of the individual components in this particular
+closed orbit of lorenz system.
+
+                       III. WINDOWED PINN                          u0,k+1 = u^k(tk+1), k = 0, . . . , 25.       (4)
+
+   We tried to keep the split window closer to 0.5, as small                       u^k+1(tk+1) = u0,k+1 = u^k(tk+1).
+windows are better [3]. In first experiment, we used one
+network with 27 segmented time period to train the model              The endpoint transfer in (4) makes the predicted values
+sequentially. We noticed that, whenever the window is moved        continuous at window boundaries, though derivatives can
+to the new one, the previous learning is lost or degraded.         change there. Separately, we copy k+1  k and train the
+The shared-network runs give RMSE 0.350­0.648 in Table II;         next network independently. As later windows start from pre-
+2.237 belongs to the full-interval run. To address these issues,   dictions, errors from earlier windows can propagate forward.
+we introduced WPINN (Windowed PINN). We split the total
+time [0, T ] equally into 27 windows and gave each window
+its own network.
+1                                        Problem setup                                                                      The ODE residual function compares this derivative with
+                                                                                                                         the original vector field f (u^k(t)) evaluated at the predicted
+                                                       · 27 windows · 1,536 points/window · float64                      state. Both terms are three-component vectors:
+   REPEAT FOR EACH WINDOW k = 1 ... 27
+
+   2                                PINN for window                                                                      rk (t)   =  du^k(t)  -   f  u^k (t)   R3.    (5)
+                                                                                                                                       dt
+         Input  Hidden                       Output                           Hard IC
+                4×60 tanh
+                                                                                                                                            dx^k
+                                                                                                            next window        rk,x(t)   =   dt   +  0.1 y^kz^k,
+
+   3                                        ODE residual                                                                                    dy^k
+                                                                                                                                            dt
+                                                , derivatives by autodiff                                                      rk,y (t)  =        -  1.6 x^kz^k,
+
+   4                                Causal residual loss                                                                                    dz^k
+                                                                                                                                            dt
+                                                                                                                               rk,z (t)  =        +  0.75 x^ky^k.
+
+   5                                Adam optimization                                                                       For a batch, rows represent times and columns follow the
+                                                                                                                         x, y, z order. Network corrections, trial states, derivatives,
+                           learning rate × 0.9 every 1,000 steps                                                         vector-field values, and residuals are denoted by Nk, U^ k, U^ k,
+                                                                                                                         Fk, and Rk:
+                                                                                                     next 
+
+NO                 Stage complete?                      YES          All values used?                                    tk = [tk,1, . . . , tk,nk ]T  Rnk×1.
+      6                 or 4,000 steps       YES
+      7                                                                                NO
+                        L-BFGS                                                                                           Nk, U^ k, U^ k, Fk, Rk  Rnk×3.
+                                                                           Next
+                      1,000 iterations
+                unweighted residual MSE                                   keep weights
+
+                Save window                                                                                                 For each ordered time tk,i, averaging the three squared
+                                                                                                                         residual components gives one nonnegative scalar point loss:
+         checkpoint · history · prediction
+
+                Last window?                    NO                   Next window                                                  1  rk (tk,i )22
+                                                                                                                                  3
+                               YES                                                                                       Lk,i  =
+
+                                                                     copy weights,
+
+                                                                                                                                  1  rk,x(tk,i)2 + rk,y(tk,i)2        (6)
+                                                                                                                               =
+8                                   Reference evaluation
+                                                                                                                                  3
+
+                DOP853 · 13,265 points · rtol                · atol                                                                         + rk,z(tk,i)2  R0.
+
+                used only for evaluation, never in training
+
+9                                        Evaluation outputs                                                                 To give earlier times priority during training, we use causal
+                                                                                                                         weights [3]. The prefix Sk,i sums the point losses before time
+                MAE · RMSE · max error · residual MSE · invariant drift · training cost                                  i in window k. At the first point this sum is empty, so its
+                                                                                                                         weight is one:
+Fig. 2. Sequential training and endpoint transfer. The figure numbers windows
+1­27; equations use 0­26. Reference values monitor error but do not enter                                                             i-1
+optimization or stopping.
+                                                                                                                         Sk,i = Lk,j ,
+                                                                                                                                                     Sk,1 = 0.
+                                                                                                                                     j=1
+B. Training Loss
+                                                                                                                                                                    
+   We train each window on nk = 1536 uniform collocation
+times tk,i, ordered by i = 1, . . . , nk and including both                                                                                                   i-1
+endpoints.
+                                                                                                                         wk,i = exp (-Sk,i) = exp - Lk,j . (7)
+
+                                                                                                                                                              j=1
+
+                      nk = 1536, i = 1, . . . , nk,                                                                      wk,1 = 1, 0 < wk,i  1,
+                                      i-1                                                                                      {0.01, 0.1, 1, 10}.
+
+                      tk,i = tk + nk - 1 (tk+1 - tk),                                                                    We multiply each point loss by its weight and divide by the
+                 nunique = 27(1536 - 1) + 1 = 41,446,                                                                    number of points. This gives one scalar objective for window
+                                                                                                                         k at the current  stage:
+          nwindow uses = 27 · 1536 = 41,472.
+                                                                                                                                     1 nk
+   Adjacent windows share boundary times. This gives 41,446                                                              Lk,      =             wk,iLk,i   R0.        (8)
+unique points and 41,472 point uses during training. Each                                                                            nk
+batch has shape (1536, 1); the network correction and trial                                                                                 i=1
+state have shape (1536, 3). We apply the trial solution and
+use PyTorch automatic differentiation to compute its derivative                                                          Lk = [Lk,1, . . . , Lk,nk ]T  Rnk ,
+component by component. With u0,k fixed, the product rule                                                                wk = [wk,1, . . . , wk,nk ]T  Rnk .
+gives
+                                                                                                                            Here j < i indexes earlier points. Each of Lk and wk
+                du^k                =    Nk  +  (t   -       tk )  Nk      .                                             contains 1536 scalar values. The parameter  controls how
+                 dt                                                 t                                                    strongly earlier losses suppress later weights. As earlier losses
+                                                                                                                         decrease, later weights rise toward one. We recompute weights
+during training and detach them when calculating parameter          Algorithm 1 Sequential causal window training
+gradients.
+                                                                    Require: Ordered windows W0, . . . , W26 and their uniform
+   Later states depend on earlier states, and the windowed
+model cannot backtrack after a window is frozen. Reducing                time points
+earlier error can therefore help later predictions. Equations (6)­   1: Set u0,0  [0.5, 0.75, 1.0]T
+(8) implement this ordering; the ablations below test its effect     2: for k = 0, . . . , 26 do
+for this orbit.
+                                                                    3: if k > 0 then
+
+                                                                    4:   Set u0,k  u^k-1(tk)
+
+                                                                    5:   Initialize k  k-1
+
+C. Training Procedure                                               6: end if
+
+   The causal loss is minimized separately in each window.          7: Add tk+1 to the residual points if k < 26
+Figure 2 and Algorithm 1 show the sequence. Each window
+starts a new Adam optimizer and StepLR scheduler. The               8: for   (0.01, 0.1, 1, 10) do
+learning rate starts at 10-3 and is multiplied by 0.9 every
+1,000 updates, across the four  stages. Each stage has a            9:   for at most 4,000 Adam steps do
+4,000-step limit. The code verifies the post-update minimum
+over all 1536 weights; if it exceeds 0.99, training advances        10:         Use ordered times tk,i, i = 1, . . . , nk
+to the next stage. Otherwise the stage ends at its cap and
+this is recorded. A capped stage does not by itself mean the        11:         Evaluate Nk(tk,i; k)  R3
+trajectory failed. After all four stages, L-BFGS minimizes the
+unweighted residual mean for at most 1,000 iterations:              12:         Form u^k(tk,i) using (3)
+
+                                                                    13:         Compute du^k/dt by automatic differentiation
+
+                                                                    14:         Evaluate f (u^k) and form rk using (5)
+
+                                                                    15:         Compute Lk,i using (6)
+
+                                                                    16:         Compute wk,i using (7); detach weights
+
+                                                                    17:         Backpropagate (8); Adam then StepLR
+
+                                                                    18:         if verified post-update mini wk,i > 0.99 then
+
+                                                                    19:             break
+
+Lkraw          =  1                 1     rk (tk,i )22 .            20:         end if
+                  nk  i Lk,i = 3nk
+                                       i                            21:  end for
+
+                                                                    22:  Record whether the threshold was met or capped
+
+   To keep track of training we use a snapshot at every 50          23: end for
+epoch to keep training history.
+                                                                    24: Run L-BFGS on the unweighted residual loss
+   The code saves each window's parameters, transfers its
+endpoint state, and copies parameters to the next trainable win-    25: Save window model, endpoint state, and config record
+dow. Checkpoints store configuration, optimizer state, training     26: end for
+history, and random states for resuming training. Incompatible
+configurations are rejected. DOP853 values monitor error but                                     TABLE I
+do not enter the loss, gradient, or stopping test. After training,               WINDOWED-RUN CONFIGURATION
+the piecewise model is evaluated on collocation and evalua-
+tion grids, and the saved arrays provide error and invariant             Setting                       Value
+measures.
+                                                                         Interval; windows             [0, 13.26446]; 27 equal windows
+                                                                         Network per window
+                                                                         Parameters                    1­60­60­60­60­3, tanh
+                                                                         Initial condition; precision
+                                                                         Uniform collocation grid      11,283/window; 304,641 total
+                                                                         Adam  stages
+                    IV. EXPERIMENTAL SETUP                               Stage threshold; steps/stage  [0.5, 0.75, 1.0]T; float64
+                                                                         Adam rate; scheduler
+A. Reference Solution                                                    L-BFGS budget                 41,446 unique points
+                                                                         Warm start; seed
+   Table I shows the parameters used for the reported win-               Reference grid                0.01, 0.1, 1, 10
+dowed run. We use SciPy's DOP853 [7] as the numerical refer-
+ence, a relative tolerance of 10-10 and an absolute tolerance of                                       m10i-n13; ×i0n.k9  wk,i > 0.99; 4,000
+10-12. It is sampled at 13,265 equally-spaced time points, on a                                                           per 1,000 steps
+separate evaluation grid that shares endpoints with the training
+grid. This is a numerical reference at specified tolerances.                                           at most 1,000 iterations/window
+
+                                                                                                       Initialize k  k-1; 0
+
+                                                                                                       13,265 uniform times
+
+B. Evaluation                                                       The combined RMSE averages squared error norms over
+                                                                    times, then takes the square root:
+
+   At evaluation time tj, we subtract the reference state from                                                1/2
+the prediction. This state error differs from the ODE residual:
+                                                                         RMSE2   =       1    neval    e(tj )22                               (9)
+              e(tj) = u^(tj) - uref (tj)                                                      j=1
+                     = [ex(tj), ey(tj), ez(tj)]T  R3,
+                          j = 1, . . . , neval.                                        neval
+
+                                                                                 = RMSE2x + RMSEy2 + RMSE2z 1/2 .
+                                                                                 PINN solution vs reference 4x60 tanh, hard IC, 41446 uniform points, 27 windows, causal
+
+               1                                                                       Solution                                        1e 4  Signed error
+MAEc = neval j |ec(tj )|,                                                                                                          1.0
+
+                                                                        0.50                                                       0.5
+
+                                                                  x(t)  0.45                     reference (DOP853)      PINN  ex  0.0
+
+                                   1/2                                  0.40                                                       0.5
+
+                   1               ec(tj )2  ,                          0.35                                                       1.0
+RMSEc =  neval
+                           j                                                                                                       2 1e 4
+
+                                                                        1                                                          1
+
+Maxc = max |ec(tj)|, c  {x, y, z},                                y(t)  0                                                          0
+
+                    j                                                                                                          ey  1
+
+              1                                                         1                                                          2
+Emean = neval j e(tj )2,
+                                                                        1.0                                                         3
+                                                                                                                                       1e 4
+Emax = max e(tj)2.                                                      0.5
+                                                                                                                                   1.0
+                  j                                               z(t)  0.0                                                    ez  0.5
+                                                                                                                                   0.0
+   Here c identifies a state component. The state-norm row of           0.5                                                        0.5
+Table III reports Emean, RMSE2, and Emax. Unlike squared                                                                           1.0
+combined RMSE, residual MSE also divides by the three                   1.0
+components:                                                                                                                             0 2 4 6 t 8 10 12
+                                                                              0  2  4  6t 8      10                  12
+
+                                   neval                                         Fig. 3. PINN solution vs reference with signed errors.
+
+MSEr,eval               =     1         r(tj )22 .
+                           3neval
+                                   j=1                                                          V. RESULTS
+
+The comparison run is with the same network depth and width       A. Prediction Accuracy
+for the entire interval [0, T]. The windowed run simultaneously
+changes the number of networks, the grid, loss, warm start           We compare the windowed PINN with an extremely ac-
+and the optimizer schedule. We measuere their final output        curate numerical reference which is SciPy's DOP853. As
+and compare them.                                                 shown in Table III, our model achieved a combined RMSE of
+                                                                  6.97 × 10-5 across the 13,265 uniform times in our evaluation
+C. Ablation Protocol                                              grid. The highest state error norm was 3.09 × 10-4. Figure
+                                                                  3 plots these predictions against the reference over time. The
+   We use the completed suite in Table II. All cases use          trajectories are shown to overlap completely but the error show
+the same initial state, coefficients, precision, interval, and    small peaks in the errors particularly at t  5.
+reference grid. The candidate has five seeds, including the
+earlier seed-0 run with identical settings. Removing causal          We also measured how closely the model obeyed the
+weighting uses 1,300 Adam steps per window (35,100 total),        underlying equations. The MSE of the ODE residual was very
+close to the candidate mean of 34,768. Removing warm start        small on the evaluation grid at 1.872×10-7. Also the residual
+keeps the candidate schedule. The shared-network case uses        MSE of windowed run on collocation grid is nearly same
+the no-causal schedule but repeatedly updates one network.        (1.874 × 10-7). For the conserved quantity E = 16x2 + y2,
+The causal single-network case uses the full-interval grid and    dE/dt = 32x(-0.1yz) + 2y(1.6xz) = 0. The saved physics
+budget: 39,793 LHS points, 40,000 Adam steps, and at most         check gives maximum absolute drift 4.05 × 10-4 for seed 0
+5,000 L-BFGS iterations. Runs mix CPU and GPU execution,          and 1.76 × 10-10 for DOP853.
+so we compare Adam steps rather than wall time.
+                                                                     Lastly, the hard trial solution ensures that the values of
+D. Failure Cases                                                  the state are exactly continuous at the inner 26 interfaces
+                                                                  connecting the windows.
+   We test whether one shared network retains earlier windows
+and whether causal weighting alone resolves full-interval error.  B. Run Comparison
+All reported runs completed; poor final prediction is distinct
+from interrupted training or a capped stage. Table II reports        The differences with respect to the two saved configurations
+the full range, including the two candidate seeds above 10-4.     are shown in Table IV. The RMSE value of the entire interval
+No success cutoff was used to select runs.                        network is 2.237, which is much larger than the windowed
+                                                                  run network's RMSE value of 6.97 × 10-5. It is a notable
+   The candidate median RMSE is 8.13 × 10-5, with three of        result for the recorded settings of this initial value problem.
+five seeds below 10-4. Without causal weighting the median        This full-interval comparison changes several settings together;
+is 2.3 times larger, but that configuration is better for seed    Table II separates selected changes. In particular the model
+2. Without warm start, all three matched seeds have larger        with the window is much more complicated with 27 times as
+RMSE and the mean Adam count rises to 102,989. Reusing            many parameters and a different collocation grid. Reducing
+one network gives RMSE 0.350­0.648, versus 1.75 × 10-4­           the parameter count of each network might result in similar
+5.16 × 10-4 for separate networks with the same no-causal         error.
+schedule. Causal single-network training gives 0.275 in its one
+run. These observations support the tested combination; they         The seed-0 run had 34,765 Adam updates and 33,143 L-
+do not establish a universal causal-weighting gain.               BFGS closure evaluations across 27 windows. Closure eval-
+                                                                  uations are function calls made by L-BFGS, not iterations.
+                                                                                        TABLE II
+ABLATION AND FAILURE-CASE RESULTS ON 13,265 EVALUATION TIMES. RMSE IS THE COMBINED STATE NORM; RESIDUAL MSE IS THE MEDIAN
+DENSE-GRID VALUE. CANDIDATE SEEDS ARE 0­4; NO-CAUSAL, NO-WARM-START, AND SHARED-NETWORK SEEDS ARE 1­3. BOTH FULL-INTERVAL
+
+                          CASES USE SEED 0. CANDIDATE SEED 0 IS THE EARLIER RUN OF RECORD; F1 IS A SEPARATE REFERENCE.
+
+            Configuration              Seeds  Median RMSE                             RMSE range   Residual MSE
+
+            Candidate                    5     8.13×10-5                      6.97×10-5­2.60×10-4   1.87×10-7
+            No causal                    3     1.89×10-4                      1.75×10-4­5.16×10-4   8.81×10-7
+            No warm start                3     2.85×10-4                      1.76×10-4­2.88×10-4   8.35×10-7
+            Shared network               3
+            Causal single                1         0.486                              0.350­0.648       0.965
+            Full interval                1         0.275                                     ­      5.23×10-6
+                                                   2.237                                     ­
+                                                                                                           ­
+
+                                        TABLE III                             [2] M. Raissi, P. Perdikaris, and G. E. Karniadakis, "Physics-informed neural
+     SEED-0 ERROR AGAINST DOP853 ON 13,265 TIMES. THIS IS THE                      networks: A deep learning framework for solving forward and inverse
+LOWEST-RMSE CANDIDATE SEED AND THE RUN SHOWN IN THE FIGURES.                       problems involving nonlinear partial differential equations," Journal of
+                                                                                   Computational Physics, vol. 378, pp. 686­707, 2019.
+State           MAE           RMSE       Maximum
+                                                                              [3] S. Wang, S. Sankaran, and P. Perdikaris, "Respecting causality for train-
+x           1.89 × 10-5   2.74 × 10-5  1.13 × 10-4                                 ing physics-informed neural networks," Computer Methods in Applied
+y           2.94 × 10-5   4.96 × 10-5  2.88 × 10-4                                 Mechanics and Engineering, vol. 421, p. 116813, 2024.
+z           2.78 × 10-5   4.05 × 10-5  1.30 × 10-4
+State norm  5.12 × 10-5   6.97 × 10-5  3.09 × 10-4                            [4] I. E. Lagaris, A. Likas, and D. I. Fotiadis, "Artificial neural networks for
+                                                                                   solving ordinary and partial differential equations," IEEE Transactions on
+                                   TABLE IV                                        Neural Networks, vol. 9, no. 5, pp. 987­1000, 1998.
+SAVED FULL-INTERVAL AND WINDOWED RUNS ON THE SAME IVP
+                                                                              [5] J. Matthews and A. Bihlo, "Pinnde: physics-informed neural networks for
+Measure                   One network    27 windows                                solving differential equations," arXiv preprint arXiv:2408.10011, 2024.
+
+Trainable parameters          11,283       304,641                            [6] M. Penwarden, A. D. Jagtap, S. Zhe, G. E. Karniadakis, and R. M. Kirby,
+Training points           39,793 LHS   41,446 uniform                              "A unified scalable framework for causal sweeping strategies for physics-
+Combined state RMSE                     6.97 × 10-5                                informed neural networks (PINNs) and their temporal decompositions,"
+Maximum state-error norm      2.237     3.09 × 10-4                                Journal of Computational Physics, vol. 493, p. 112464, 2023.
+Collocation residual MSE      3.346     1.87 × 10-7
+Recorded Adam steps       2.80 × 10-4                                         [7] P. Virtanen et al., "SciPy 1.0: Fundamental algorithms for scientific
+                              40,000        34,765                                 computing in python," Nature Methods, vol. 17, no. 3, pp. 261­272, 2020.
+
+Only two of the 108 causal stages ended at the 4,000-step cap
+without meeting the 0.99 weight threshold. The experiments
+cover one initial state and one coefficient set. The candidate
+stores 27 times as many parameters as the single-network
+cases, and a capacity-matched full-interval network has not
+been tested. Causal weights also depend on collocation count
+and spacing, which remain fixed in the windowed ablations.
+Other states, coefficients, and grids may behave differently.
+
+                          VI. CONCLUSION
+
+   Each of our 27 window PINN passes each of the tests on
+the nearly closed Lorenz-system interval [0, 13.26446]. The
+next window was predicted to be at the end. The saved run
+had a combined state RMSE of 6.97 × 10-5 in comparison
+to DOP853. A network designed separately to full intervals
+recorded an RMSE of 2.237. Future research will focus on
+capacity-matched configurations and additional initial states
+and generalise to problems with specified boundary conditions
+at each end.
+
+                             REFERENCES
+
+[1] E. N. Lorenz, "Maximum simplification of the dynamic equations," Tellus,
+     vol. 12, no. 3, pp. 243­254, 1960.
+

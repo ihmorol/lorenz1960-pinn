@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Revision Diff</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false}],throwOnError:false})"></script>
+<style>
+:root { --bg:#f7f6f2; --fg:#202020; --muted:#6d6b66; --card:#ffffff; --line:#e3e0d7;
+  --del:#fbe3e1; --delfg:#9b1c1c; --ins:#dff3e4; --insfg:#14532d; --accent:#2f4fbf; --why:#eef2ff; --base:#f3e8c4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#151619; --fg:#e7e5e0; --muted:#9a978f;
+  --card:#1e1f23; --line:#34353b; --del:#4a1f22; --delfg:#ffb7b2; --ins:#163a24; --insfg:#a9ebbe; --accent:#93a6ff; --why:#232a45; --base:#4a4126; } }
+:root[data-theme="dark"] { --bg:#151619; --fg:#e7e5e0; --muted:#9a978f; --card:#1e1f23; --line:#34353b;
+  --del:#4a1f22; --delfg:#ffb7b2; --ins:#163a24; --insfg:#a9ebbe; --accent:#93a6ff; --why:#232a45; --base:#4a4126; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 Georgia,"Times New Roman",serif; }
+main { max-width:860px; margin:0 auto; padding:32px 16px 80px; }
+h1 { font:700 26px/1.3 system-ui,"Segoe UI",sans-serif; margin:0 0 8px; }
+.lead { color:var(--muted); margin:0 0 20px; font-family:system-ui,"Segoe UI",sans-serif; font-size:15px; }
+.legend { font:14px system-ui,sans-serif; margin:0 0 20px; display:flex; gap:14px; flex-wrap:wrap; }
+nav { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin-bottom:28px; font-family:system-ui,sans-serif; }
+nav b { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+nav ol { margin:8px 0 0; padding-left:20px; columns:2; column-gap:28px; font-size:15px; }
+nav li span { color:var(--muted); font-size:13px; }
+nav a { color:var(--accent); text-decoration:none; }
+h2 { font:700 20px system-ui,sans-serif; margin:40px 0 14px; padding-bottom:6px; border-bottom:2px solid var(--line); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:0 0 18px; }
+.head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-family:system-ui,sans-serif; }
+.head h3 { margin:0; font-size:16px; flex:1 1 260px; }
+.n { font-weight:700; color:var(--accent); min-width:26px; }
+.pill { font:12px system-ui,sans-serif; padding:2px 9px; border-radius:99px; }
+.pill.changed { background:var(--line); }
+.pill.added { background:var(--ins); color:var(--insfg); }
+.pill.removed { background:var(--del); color:var(--delfg); }
+.pill.base { background:var(--base); }
+.why { background:var(--why); border-radius:8px; padding:10px 12px; margin:12px 0; font:15px/1.6 system-ui,sans-serif; }
+.side { border-left:4px solid var(--line); padding:4px 0 4px 14px; margin:10px 0; }
+.side.del { border-color:#e08a85; }
+.side.ins { border-color:#5fb97c; }
+.tag { font:600 12px system-ui,sans-serif; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+.tag span { text-transform:none; font-weight:400; letter-spacing:0; }
+.side p { margin:4px 0 0; overflow-wrap:anywhere; }
+del { background:var(--del); color:var(--delfg); text-decoration:line-through; padding:0 2px; border-radius:3px; }
+ins { background:var(--ins); color:var(--insfg); text-decoration:none; padding:0 2px; border-radius:3px; }
+.eq { overflow-x:auto; padding:2px 0; }
+.empty, .note { color:var(--muted); font-style:italic; margin:4px 0 0; }
+.src { font:13px/1.5 ui-monospace,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; margin:6px 0 0; }
+@media (max-width:640px) { nav ol { columns:1; } }
+</style></head>
+<body><main>
+<h1>What changed in the paper, and why</h1>
+<p class="lead">Your <b>main_prev.tex</b> compared with the final <b>main.tex</b> in PR #38. The changes run in paper order, grouped by section. Each one shows the reason first, then the old text and the new text. Line numbers refer to each file.</p>
+<div class="legend"><span><del>struck red</del> = removed</span><span><ins>green</ins> = added</span><span>94 changes: 71 edited, 12 added, 11 removed</span></div>
+<nav><b>Sections</b><ol><li><a href="#s0">Title and authors</a> <span>2</span></li><li><a href="#s1">Abstract</a> <span>1</span></li><li><a href="#s2">Introduction</a> <span>2</span></li><li><a href="#s3">Problem and Background</a> <span>13</span></li><li><a href="#s4">Windowed PINN</a> <span>45</span></li><li><a href="#s5">Experimental Setup</a> <span>18</span></li><li><a href="#s6">Results</a> <span>12</span></li><li><a href="#s7">Conclusion</a> <span>1</span></li></ol></nav>
+<section id="s0"><h2>Title and authors</h2>
+<article class="card" id="c1">
+  <div class="head"><span class="n">1</span><h3>Title</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Lower-case &quot;the&quot; in a title-case title, and a stray double space removed. &quot;Causal&quot; was already gone from your previous version.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 13)</span></div><p>TITLE: Sequential Training of Windowed PINNs for <del>The</del> Lorenz ODE System</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 13)</span></div><p>TITLE: Sequential Training of Windowed PINNs for <ins>the</ins> Lorenz ODE System</p></div>
+  
+</article>
+<article class="card" id="c2">
+  <div class="head"><span class="n">2</span><h3>Author block</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Student IDs removed and every student author now shows &quot;Dept. of CSE, United International University&quot;. IEEE author blocks list department, institution and email; five authors had no institution line (review, major).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 25–46)</span></div><p>Affiliation: <del>Computer</del> <del>Science</del> <del>And</del> <del>Engineering</del> / imoral223489@bscse.uiu.ac.bd / <del>0112230489</del> <del>/</del> <del>Affiliation:</del> <del>Computer</del> <del>Science</del> <del>And</del> <del>Engineering</del> / mbakar223200@bscse.uiu.ac.bd / <del>0112230200</del> <del>Affiliation:</del> <del>Computer</del> <del>Science</del> <del>And</del> <del>Engineering</del> / somlan223195@bscse.uiu.ac.bd / <del>0112230195</del> <del>Affiliation:</del> <del>Computer</del> <del>Science</del> <del>And</del> <del>Engineering</del> / mislam223435@bscse.uiu.ac.bd / <del>0112230435</del> <del>Affiliation:</del> <del>Computer</del> <del>Science</del> <del>And</del> <del>Engineering</del> / fislam223431@bscse.uiu.ac.bd <del>/</del> <del>0112230431</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 25–48)</span></div><p>Affiliation: <ins>Dept.</ins> <ins>of</ins> <ins>CSE</ins> <ins>/</ins> <ins>United</ins> <ins>International</ins> <ins>University</ins> / imoral223489@bscse.uiu.ac.bd Affiliation: <ins>Dept.</ins> <ins>of</ins> <ins>CSE</ins> <ins>/</ins> <ins>United</ins> <ins>International</ins> <ins>University</ins> / mbakar223200@bscse.uiu.ac.bd Affiliation: <ins>Dept.</ins> <ins>of</ins> <ins>CSE</ins> <ins>/</ins> <ins>United</ins> <ins>International</ins> <ins>University</ins> / somlan223195@bscse.uiu.ac.bd Affiliation: <ins>Dept.</ins> <ins>of</ins> <ins>CSE</ins> <ins>/</ins> <ins>United</ins> <ins>International</ins> <ins>University</ins> / mislam223435@bscse.uiu.ac.bd Affiliation: <ins>Dept.</ins> <ins>of</ins> <ins>CSE</ins> <ins>/</ins> <ins>United</ins> <ins>International</ins> <ins>University</ins> / fislam223431@bscse.uiu.ac.bd</p></div>
+  
+</article></section><section id="s1"><h2>Abstract</h2>
+<article class="card" id="c3">
+  <div class="head"><span class="n">3</span><h3>Abstract</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar fixes (&quot;produces&quot;, &quot;into 27 windows&quot;) and &quot;nearly closed orbit&quot; to match the rest of the paper. The abstract now names the seed-0 run, adds the five-seed median, and states the ablation finding honestly: windows and warm start matter, causal gain not significant.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 58)</span></div><p>We study a physics-informed neural network (PINN) approximation of a single <del>full-cycle</del> orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that <del>produce</del> a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval <del>in</del> <del>total</del> 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. <del>We</del> <del>reported,</del> <del>in</del> <del>a</del> <del>single-seed</del> <del>run</del> the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$. The full-interval and windowed runs also vary in <del>terms</del> <del>of</del> number of parameters, sampling and optimizer <del>schedule.</del> <del>In</del> <del>contrast,</del> <del>these</del> are <del>described</del> with <del>the</del> <del>word</del> <del>configurations,</del> not <del>isolation</del> <del>of</del> <del>the</del> <del>effect</del> <del>of</del> <del>causal</del> <del>weighting.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 60)</span></div><p>We study a physics-informed neural network (PINN) approximation of a single <ins>nearly</ins> <ins>closed</ins> orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that <ins>produces</ins> a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval <ins>into</ins> 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. <ins>In</ins> <ins>the</ins> <ins>seed-0</ins> <ins>run,</ins> the windowed model gives a combined RMSE of $6.97\times10^{-5}$ on 13,265 evaluation times and a dense-grid residual mean square of $1.87\times10^{-7}$. <ins>Across</ins> <ins>five</ins> <ins>seeds,</ins> <ins>the</ins> <ins>median</ins> <ins>RMSE</ins> <ins>is</ins> <ins>$8.13\times10^{-5}$.</ins> The full-interval and windowed runs also vary in number of parameters, sampling and optimizer <ins>schedule,</ins> <ins>so</ins> <ins>we</ins> <ins>describe</ins> <ins>them</ins> <ins>as</ins> <ins>different</ins> <ins>configurations.</ins> <ins>Ablations</ins> <ins>show</ins> <ins>that</ins> <ins>separate</ins> <ins>window</ins> <ins>networks</ins> <ins>and</ins> <ins>warm</ins> <ins>start</ins> are <ins>needed.</ins> <ins>Without</ins> causal <ins>weighting</ins> <ins>the</ins> <ins>median</ins> <ins>RMSE</ins> <ins>is</ins> <ins>2.3</ins> <ins>times</ins> <ins>larger,</ins> <ins>but</ins> <ins>with</ins> <ins>three</ins> <ins>to</ins> <ins>five</ins> <ins>seeds</ins> <ins>this</ins> <ins>difference</ins> <ins>is</ins> <ins>not</ins> <ins>significant.</ins></p></div>
+  
+</article></section><section id="s2"><h2>Introduction</h2>
+<article class="card" id="c4">
+  <div class="head"><span class="n">4</span><h3>Introduction, paragraph 1</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Fixed &quot;a a&quot; and the awkward &quot;is not suggested by previous works&quot; sentence. Citations now use ~ so they never break from the word before. The ~20-line paragraph is split at &quot;We use both concepts&quot; (review: paragraphs too long).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 67)</span></div><p>The Lorenz-system model is a three-state, nonlinear ordinary differential equation (ODE) that was obtained from a reduced flow model [lorenz1960]. It has an initial-value problem which provides a simple test of the convergence of a learned continuous-time function from a specified trajectory over a long interval. A reference trajectory is provided by numerical integration. A PINN is trained with the residual of the ODE instead of the solution samples [raissi2019]. <del>To</del> <del>train</del> <del>a</del> a long horizon problem <del>using</del> traditional PINN <del>is</del> <del>not</del> <del>suggested</del> <del>by</del> <del>previous</del> <del>works[wang2024causal].</del> It couples early and late times, but the state at a later time is determined by the previous trajectory. To overcome this ordering, Wang et al. suggested <del>the</del> <del>use</del> <del>of</del> time-dependent residual weights PINN training [wang2024causal]. An initial condition can also be met by construction using a hard trial solution [lagaris1998]. <del>We</del> <del>use</del> <del>both</del> <del>concepts,</del> <del>we</del> <del>split</del> <del>the</del> <del>time</del> <del>period</del> <del>in</del> <del>equal</del> <del>27</del> <del>windows</del> <del>and</del> <del>a</del> <del>separate</del> <del>network</del> <del>for</del> <del>every</del> <del>windows.</del> <del>The</del> <del>initial</del> <del>state</del> <del>is</del> <del>fixed</del> <del>with</del> <del>the</del> <del>endpoint</del> <del>predicted</del> <del>in</del> <del>one</del> <del>window</del> <del>of</del> <del>the</del> <del>next.</del> <del>The</del> <del>parameters</del> <del>of</del> <del>a</del> <del>trained</del> <del>window</del> <del>is</del> <del>copied</del> <del>to</del> <del>the</del> <del>next</del> <del>trainable</del> <del>window.</del> <del>This</del> <del>paper</del> <del>provides</del> <del>an</del> <del>implementation</del> <del>and</del> <del>its</del> <del>saved</del> <del>results.</del> <del>An</del> <del>interval</del> <del>that</del> <del>completes</del> <del>a</del> <del>full-cycle</del> <del>loop</del> <del>for</del> <del>the</del> <del>chosen</del> <del>initial</del> <del>state</del> <del>is</del> <del>$[0,13.26446]$.</del> <del>We</del> <del>report</del> <del>one</del> <del>implementation</del> <del>and</del> <del>its</del> <del>saved</del> <del>result</del> <del>on</del> <del>$[0, 13.26446]$</del> <del>which</del> <del>is</del> <del>essentially</del> <del>an</del> <del>closed</del> <del>orbit.</del> <del>The</del> <del>actual</del> <del>training</del> <del>goal</del> <del>and</del> <del>window</del> <del>handoff</del> <del>is</del> <del>then</del> <del>given</del> <del>and</del> <del>compared</del> <del>to</del> <del>a</del> <del>saved</del> <del>single-network</del> <del>training</del> <del>of</del> <del>the</del> <del>same</del> <del>initial-value</del> <del>problem.</del> <del>The</del> <del>state</del> <del>error,</del> <del>ODE</del> <del>residual,</del> <del>causal</del> <del>weights</del> <del>residual</del> <del>are</del> <del>also</del> <del>checked.</del> <del>The</del> <del>comparison</del> <del>is</del> <del>descriptive</del> <del>because</del> <del>multiple</del> <del>configuration</del> <del>options</del> <del>are</del> <del>changing</del> <del>simultaneously.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 69)</span></div><p>The Lorenz-system model is a three-state, nonlinear ordinary differential equation (ODE) that was obtained from a reduced flow model [lorenz1960]. It has an initial-value problem which provides a simple test of the convergence of a learned continuous-time function from a specified trajectory over a long interval. A reference trajectory is provided by numerical integration. A PINN is trained with the residual of the ODE instead of the solution samples [raissi2019]. <ins>Previous</ins> <ins>works</ins> <ins>do</ins> <ins>not</ins> <ins>suggest</ins> <ins>training</ins> a long horizon problem <ins>with</ins> <ins>a</ins> traditional PINN <ins>[wang2024causal].</ins> It couples early and late times, but the state at a later time is determined by the previous trajectory. To overcome this ordering, Wang et al. suggested time-dependent residual weights <ins>for</ins> PINN training [wang2024causal]. An initial condition can also be met by construction using a hard trial solution [lagaris1998].</p></div>
+  
+</article>
+<article class="card" id="c5">
+  <div class="head"><span class="n">5</span><h3>Introduction, paragraph 2 (split + contributions)</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Second half of the old paragraph with comma-splice and agreement fixes. The interval was described twice, so one copy went. &quot;This paper provides an implementation…&quot; is replaced by an explicit contributions list mapped to sections (review, major).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 71)</span></div><p><ins>We</ins> <ins>use</ins> <ins>both</ins> <ins>concepts.</ins> <ins>We</ins> <ins>split</ins> <ins>the</ins> <ins>time</ins> <ins>period</ins> <ins>into</ins> <ins>27</ins> <ins>equal</ins> <ins>windows</ins> <ins>and</ins> <ins>use</ins> <ins>a</ins> <ins>separate</ins> <ins>network</ins> <ins>for</ins> <ins>every</ins> <ins>window.</ins> <ins>The</ins> <ins>initial</ins> <ins>state</ins> <ins>of</ins> <ins>each</ins> <ins>window</ins> <ins>is</ins> <ins>fixed</ins> <ins>to</ins> <ins>the</ins> <ins>endpoint</ins> <ins>predicted</ins> <ins>by</ins> <ins>the</ins> <ins>previous</ins> <ins>window.</ins> <ins>The</ins> <ins>parameters</ins> <ins>of</ins> <ins>a</ins> <ins>trained</ins> <ins>window</ins> <ins>are</ins> <ins>copied</ins> <ins>to</ins> <ins>the</ins> <ins>next</ins> <ins>trainable</ins> <ins>window.</ins> <ins>We</ins> <ins>report</ins> <ins>one</ins> <ins>implementation</ins> <ins>and</ins> <ins>its</ins> <ins>saved</ins> <ins>result</ins> <ins>on</ins> <ins>$[0,13.26446]$,</ins> <ins>which</ins> <ins>is</ins> <ins>a</ins> <ins>nearly</ins> <ins>closed</ins> <ins>orbit</ins> <ins>for</ins> <ins>the</ins> <ins>chosen</ins> <ins>initial</ins> <ins>state.</ins> <ins>The</ins> <ins>actual</ins> <ins>training</ins> <ins>goal</ins> <ins>and</ins> <ins>window</ins> <ins>handoff</ins> <ins>are</ins> <ins>then</ins> <ins>given</ins> <ins>and</ins> <ins>compared</ins> <ins>to</ins> <ins>a</ins> <ins>saved</ins> <ins>single-network</ins> <ins>training</ins> <ins>of</ins> <ins>the</ins> <ins>same</ins> <ins>initial-value</ins> <ins>problem.</ins> <ins>The</ins> <ins>comparison</ins> <ins>is</ins> <ins>descriptive</ins> <ins>because</ins> <ins>multiple</ins> <ins>configuration</ins> <ins>options</ins> <ins>are</ins> <ins>changing</ins> <ins>simultaneously.</ins> <ins>Our</ins> <ins>contributions</ins> <ins>are:</ins> <ins>(1)</ins> <ins>a</ins> <ins>windowed</ins> <ins>PINN</ins> <ins>for</ins> <ins>one</ins> <ins>nearly</ins> <ins>closed</ins> <ins>Lorenz</ins> <ins>orbit,</ins> <ins>where</ins> <ins>27</ins> <ins>networks</ins> <ins>are</ins> <ins>trained</ins> <ins>in</ins> <ins>sequence</ins> <ins>with</ins> <ins>a</ins> <ins>hard</ins> <ins>endpoint</ins> <ins>handoff,</ins> <ins>warm</ins> <ins>start</ins> <ins>and</ins> <ins>staged</ins> <ins>causal</ins> <ins>weights</ins> <ins>(Section</ins> <ins>III);</ins> <ins>(2)</ins> <ins>a</ins> <ins>seed-0</ins> <ins>combined</ins> <ins>RMSE</ins> <ins>of</ins> <ins>$6.97\times10^{-5}$</ins> <ins>against</ins> <ins>DOP853</ins> <ins>and</ins> <ins>a</ins> <ins>five-seed</ins> <ins>median</ins> <ins>of</ins> <ins>$8.13\times10^{-5}$</ins> <ins>(Section</ins> <ins>V);</ins> <ins>(3)</ins> <ins>ablation</ins> <ins>and</ins> <ins>failure</ins> <ins>cases</ins> <ins>showing</ins> <ins>that</ins> <ins>separate</ins> <ins>window</ins> <ins>networks</ins> <ins>and</ins> <ins>warm</ins> <ins>start</ins> <ins>are</ins> <ins>needed,</ins> <ins>while</ins> <ins>the</ins> <ins>gain</ins> <ins>from</ins> <ins>causal</ins> <ins>weighting</ins> <ins>is</ins> <ins>not</ins> <ins>significant</ins> <ins>with</ins> <ins>three</ins> <ins>to</ins> <ins>five</ins> <ins>seeds</ins> <ins>(Section</ins> <ins>V-C).</ins></p></div>
+  
+</article></section><section id="s3"><h2>Problem and Background</h2>
+<article class="card" id="c6">
+  <div class="head"><span class="n">6</span><h3>Section heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the revision plan&#x27;s heading table. This change was already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 71)</span></div><p>SECTION HEADING: Problem and <del>Related</del> <del>Work</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 75)</span></div><p>SECTION HEADING: Problem and <ins>Background</ins></p></div>
+  
+</article>
+<article class="card" id="c7">
+  <div class="head"><span class="n">7</span><h3>Removed section announcement</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">Announcement-only paragraph (&quot;In this section we introduce…&quot;). The plan removes these; the heading already says what the section does.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 72)</span></div><p><del>In</del> <del>this</del> <del>section</del> <del>we</del> <del>introduce</del> <del>the</del> <del>mathematical</del> <del>goal</del> <del>of</del> <del>our</del> <del>study</del> <del>and</del> <del>place</del> <del>our</del> <del>configuration</del> <del>within</del> <del>the</del> <del>framework</del> <del>of</del> <del>existing</del> <del>neural-network</del> <del>techniques.</del> <del>We</del> <del>first</del> <del>describe</del> <del>the</del> <del>exact</del> <del>equations</del> <del>and</del> <del>the</del> <del>initial</del> <del>value</del> <del>problem</del> <del>of</del> <del>the</del> <del>Lorenz</del> <del>trajectory</del> <del>that</del> <del>we</del> <del>want</del> <del>the</del> <del>model</del> <del>to</del> <del>learn.</del> <del>Then</del> <del>we</del> <del>explain</del> <del>the</del> <del>existing</del> <del>methods</del> <del>that</del> <del>we</del> <del>used</del> <del>and</del> <del>then</del> <del>we</del> <del>merged</del> <del>them.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c8">
+  <div class="head"><span class="n">8</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the revision plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 74)</span></div><p>SUBSECTION HEADING: Lorenz <del>System</del> <del>Initial-Value</del> <del>Problem</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 77)</span></div><p>SUBSECTION HEADING: Lorenz <ins>Equations</ins></p></div>
+  
+</article>
+<article class="card" id="c9">
+  <div class="head"><span class="n">9</span><h3>Lorenz Equations, opening</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Defines x, y, z, kappa and ell before Eq. (1), and says k is reserved for windows (Part 3 guide). Citation changed from the PinnDE preprint to Lorenz (1960), the actual source of the equations (review, major).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 75)</span></div><p>Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. The Lorenz system general form <del>[matthews2024pinnde]</del> is:</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 78)</span></div><p>Our main object is a three-state nonlinear ordinary differential equation (ODE) that we need to solve. <ins>Here</ins> <ins>$x(t)$,</ins> <ins>$y(t)$</ins> <ins>and</ins> <ins>$z(t)$</ins> <ins>are</ins> <ins>the</ins> <ins>three</ins> <ins>states,</ins> <ins>and</ins> <ins>$\kappa$</ins> <ins>and</ins> <ins>$\ell$</ins> <ins>are</ins> <ins>the</ins> <ins>physical</ins> <ins>wavenumbers.</ins> <ins>We</ins> <ins>use</ins> <ins>$k$</ins> <ins>only</ins> <ins>for</ins> <ins>the</ins> <ins>window</ins> <ins>index,</ins> <ins>which</ins> <ins>comes</ins> <ins>later.</ins> The Lorenz system general form <ins>[lorenz1960]</ins> is:</p></div>
+  
+</article>
+<article class="card" id="c10">
+  <div class="head"><span class="n">10</span><h3>State vector sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Square brackets for vectors (plan notation rule) and u written as a function of t. The new second sentence leads into the coefficient derivation.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 95)</span></div><p>Suppose the state vector is given by <del>$u=(x,y,z)^\mathsf{T}$.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 97)</span></div><p>Suppose the state vector is given by <ins>$u(t)=[x(t),y(t),z(t)]^\mathsf{T}$.</ins> <ins>We</ins> <ins>put</ins> <ins>$\kappa=2$</ins> <ins>and</ins> <ins>$\ell=1$</ins> <ins>in</ins> <ins>Eq.(lorenz1960)</ins> <ins>and</ins> <ins>get</ins> <ins>the</ins> <ins>three</ins> <ins>coefficients.</ins></p></div>
+  
+</article>
+<article class="card" id="c11">
+  <div class="head"><span class="n">11</span><h3>Coefficient display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The separate kappa=2, ell=1 display is gone because the values are now in the sentence above. Fractions written inline so the display takes 3 short rows instead of 9 lines (6-page limit). Arithmetic unchanged.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 101–113)</span></div><div class="eq">\[\kappa=2,\qquad \ell=1.\]</div><div class="eq">\[\begin{aligned}a_x
+&amp;= 2\left(\frac{1}{5}-\frac{1}{4}\right)
+= -\frac{1}{10}=-0.1,\\
+a_y
+&amp;= 2\left(1-\frac{1}{5}\right)
+= \frac{8}{5}=1.6,\\
+a_z
+&amp;= \frac{2}{2}\left(\frac{1}{4}-1\right)
+= -\frac{3}{4}=-0.75.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 104–106)</span></div><div class="eq">\[\begin{aligned}a_x&amp;=2(1/5-1/4)=-1/10=-0.1,\\
+a_y&amp;=2(1-1/5)=8/5=1.6,\\
+a_z&amp;=(2/2)(1/4-1)=-3/4=-0.75.\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c12">
+  <div class="head"><span class="n">12</span><h3>New: coefficients to reduced system</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3 guide: links the three coefficients to the reduced system in Eq. (2).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 110)</span></div><p><ins>These</ins> <ins>coefficients</ins> <ins>multiply</ins> <ins>$yz$,</ins> <ins>$xz$</ins> <ins>and</ins> <ins>$xy$,</ins> <ins>and</ins> <ins>this</ins> <ins>gives</ins> <ins>the</ins> <ins>reduced</ins> <ins>system</ins> <ins>we</ins> <ins>used</ins> <ins>in</ins> <ins>this</ins> <ins>experiment.</ins></p></div>
+  
+</article>
+<article class="card" id="c13">
+  <div class="head"><span class="n">13</span><h3>New: vector form</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3 guide: introduces f before its display, so the reader knows what du/dt = f(u) means.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 116)</span></div><p><ins>If</ins> <ins>we</ins> <ins>collect</ins> <ins>the</ins> <ins>three</ins> <ins>right-hand</ins> <ins>sides,</ins> <ins>we</ins> <ins>get</ins> <ins>the</ins> <ins>vector</ins> <ins>form</ins> <ins>$du/dt=f(u)$.</ins> <ins>Here</ins> <ins>$f$</ins> <ins>is</ins> <ins>the</ins> <ins>known</ins> <ins>ODE</ins> <ins>vector</ins> <ins>field.</ins></p></div>
+  
+</article>
+<article class="card" id="c14">
+  <div class="head"><span class="n">14</span><h3>u and a column vectors</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">u and a are already defined in the text, so the two tall column vectors became one line that gives f directly. Saves about 8 lines for the 6-page limit.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 124–137)</span></div><div class="eq">\[u(t)=
+\begin{bmatrix}
+x(t)\\ y(t)\\ z(t)
+\end{bmatrix}
+\in\mathbb{R}^{3},
+\qquad
+a=
+\begin{bmatrix}
+a_x\\ a_y\\ a_z
+\end{bmatrix}
+=
+\begin{bmatrix}
+-0.1\\ 1.6\\ -0.75
+\end{bmatrix}.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 118)</span></div><div class="eq">\[f(u)=[a_x yz,\,a_y xz,\,a_z xy]^\mathsf{T},\qquad f:\mathbb{R}^{3}\to\mathbb{R}^{3}.\]</div></div>
+  
+</article>
+<article class="card" id="c15">
+  <div class="head"><span class="n">15</span><h3>f displays and diagonal-matrix form</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">du/dt = f(u) moved into the sentence above. The diagonal-matrix form was marked optional in the plan (&quot;only if space remains&quot;) and was dropped for the page limit. Replaced with the Part 3 sentence saying what f takes and returns.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 139–171)</span></div><div class="eq">\[\frac{du}{dt}=f(u),
+\qquad
+f:\mathbb{R}^{3}\longrightarrow\mathbb{R}^{3}.\]</div><div class="eq">\[f(u)=
+\begin{bmatrix}
+a_x\,yz\\
+a_y\,xz\\
+a_z\,xy
+\end{bmatrix}
+=
+\begin{bmatrix}
+-0.1\,yz\\
+1.6\,xz\\
+-0.75\,xy
+\end{bmatrix}.\]</div><div class="eq">\[f(u)=
+\underbrace{
+\begin{bmatrix}
+-0.1 &amp; 0 &amp; 0\\
+0 &amp; 1.6 &amp; 0\\
+0 &amp; 0 &amp; -0.75
+\end{bmatrix}
+}_{A\in\mathbb{R}^{3\times3}}
+\begin{bmatrix}
+yz\\ xz\\ xy
+\end{bmatrix}.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 121)</span></div><p><ins>The</ins> <ins>input</ins> <ins>of</ins> <ins>$f$</ins> <ins>is</ins> <ins>a</ins> <ins>state</ins> <ins>vector</ins> <ins>with</ins> <ins>three</ins> <ins>components</ins> <ins>and</ins> <ins>the</ins> <ins>output</ins> <ins>is</ins> <ins>the</ins> <ins>rate</ins> <ins>of</ins> <ins>change</ins> <ins>of</ins> <ins>$x$,</ins> <ins>$y$</ins> <ins>and</ins> <ins>$z$</ins> <ins>in</ins> <ins>the</ins> <ins>same</ins> <ins>order.</ins> <ins>While</ins> <ins>training,</ins> <ins>we</ins> <ins>use</ins> <ins>this</ins> <ins>same</ins> <ins>function</ins> <ins>on</ins> <ins>the</ins> <ins>predicted</ins> <ins>state</ins> <ins>$\hat{u}_k(t)$.</ins></p></div>
+  
+</article>
+<article class="card" id="c16">
+  <div class="head"><span class="n">16</span><h3>Experiment setup sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Only a ~ before the citation (non-breaking space).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 174)</span></div><p>For our experiment we used the coefficients $a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}$. We track the system starting from an initial state [matthews2024pinnde] of $u(0)=[0.5,0.75,1.0]^\mathsf{T}$ until a final time of $T=13.26446$. On this particular rounded endpoint, the reference trajectory nearly returns to its starting state. It is very similar but not exactly closed so we call this interval a nearly closed orbit and not an exact period.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 123)</span></div><p>For our experiment we used the coefficients $a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}$. We track the system starting from an initial state [matthews2024pinnde] of $u(0)=[0.5,0.75,1.0]^\mathsf{T}$ until a final time of $T=13.26446$. On this particular rounded endpoint, the reference trajectory nearly returns to its starting state. It is very similar but not exactly closed so we call this interval a nearly closed orbit and not an exact period.</p></div>
+  <p class="note">Only LaTeX spacing or markup changed here; the visible text is the same.</p>
+</article>
+<article class="card" id="c17">
+  <div class="head"><span class="n">17</span><h3>Related Work, paragraph 1</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar: &quot;to ensure our starting state precisely at the point we want to implement it .&quot; had a stray space and unclear wording. &quot;lorenz&quot; capitalised and &quot;closed&quot; made &quot;nearly closed&quot; to match Section II-A.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 178)</span></div><p>In this study we are making an experimental investigation of a series of well known concepts. The approach adopted is a PINN that embeds the physics residual into the training objective [raissi2019]. We use a hard trial-function design [lagaris1998] to <del>ensure</del> our starting state <del>precisely</del> at the point we <del>want</del> <del>to</del> <del>implement</del> <del>it.</del> Learning long trajectories is a well-known challenge due to the ordering of the time axis so we take inspiration from the causal residual weighting technique [wang2024causal]. Lastly segmenting the timeline is based on ideas of causal sweeping and temporal decomposition [penwarden2023]. Our implementation is an investigation of the performance of the individual components in this <del>particular</del> closed orbit of <del>lorenz</del> system.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 127)</span></div><p>In this study we are making an experimental investigation of a series of well known concepts. The approach adopted is a PINN that embeds the physics residual into the training objective [raissi2019]. We use a hard trial-function design [lagaris1998] to <ins>fix</ins> our starting state <ins>exactly</ins> at the point we <ins>want.</ins> Learning long trajectories is a well-known challenge due to the ordering of the time axis so we take inspiration from the causal residual weighting technique [wang2024causal]. Lastly segmenting the timeline is based on ideas of causal sweeping and temporal decomposition [penwarden2023]. Our implementation is an investigation of the performance of the individual components in this <ins>nearly</ins> closed orbit of <ins>the</ins> <ins>Lorenz</ins> system.</p></div>
+  
+</article>
+<article class="card" id="c18">
+  <div class="head"><span class="n">18</span><h3>New: Related Work, paragraph 2</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Review (major): Related Work cited only 4 papers. Adds the failure-mode, gradient, NTK, fixed-point and loss-landscape papers already in references.bib, each cited only for what it shows. Mattey &amp; Ghosh is the closest sequential-training work and connects to your shared-network failure case.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 129)</span></div><p><ins>Several</ins> <ins>works</ins> <ins>explain</ins> <ins>why</ins> <ins>PINN</ins> <ins>training</ins> <ins>fails.</ins> <ins>Krishnapriyan</ins> <ins>et</ins> <ins>al.</ins> <ins>showed</ins> <ins>that</ins> <ins>PINNs</ins> <ins>can</ins> <ins>fail</ins> <ins>on</ins> <ins>simple</ins> <ins>problems</ins> <ins>and</ins> <ins>that</ins> <ins>learning</ins> <ins>the</ins> <ins>solution</ins> <ins>in</ins> <ins>short</ins> <ins>time</ins> <ins>segments</ins> <ins>helps</ins> <ins>[krishnapriyan2021].</ins> <ins>Wang</ins> <ins>et</ins> <ins>al.</ins> <ins>linked</ins> <ins>the</ins> <ins>failure</ins> <ins>to</ins> <ins>imbalanced</ins> <ins>gradients</ins> <ins>and</ins> <ins>to</ins> <ins>the</ins> <ins>neural</ins> <ins>tangent</ins> <ins>kernel</ins> <ins>of</ins> <ins>the</ins> <ins>loss</ins> <ins>terms</ins> <ins>[wang2021gradient,</ins> <ins>wang2022ntk].</ins> <ins>For</ins> <ins>dynamical</ins> <ins>systems,</ins> <ins>fixed</ins> <ins>points</ins> <ins>can</ins> <ins>trap</ins> <ins>training</ins> <ins>in</ins> <ins>a</ins> <ins>wrong</ins> <ins>solution</ins> <ins>[rohrhofer2023],</ins> <ins>and</ins> <ins>the</ins> <ins>loss</ins> <ins>landscape</ins> <ins>is</ins> <ins>ill-conditioned,</ins> <ins>so</ins> <ins>Adam</ins> <ins>followed</ins> <ins>by</ins> <ins>L-BFGS</ins> <ins>trains</ins> <ins>better</ins> <ins>than</ins> <ins>Adam</ins> <ins>alone</ins> <ins>[rathore2024].</ins> <ins>Mattey</ins> <ins>and</ins> <ins>Ghosh</ins> <ins>also</ins> <ins>trained</ins> <ins>time</ins> <ins>segments</ins> <ins>in</ins> <ins>sequence,</ins> <ins>but</ins> <ins>with</ins> <ins>one</ins> <ins>network</ins> <ins>that</ins> <ins>is</ins> <ins>retrained</ins> <ins>on</ins> <ins>each</ins> <ins>new</ins> <ins>segment</ins> <ins>[mattey2022bcpinn].</ins></p></div>
+  
+</article></section><section id="s4"><h2>Windowed PINN</h2>
+<article class="card" id="c19">
+  <div class="head"><span class="n">19</span><h3>Section heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 180)</span></div><p>SECTION HEADING: Windowed PINN <del>Method</del> <del>and</del> <del>Implementation</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 131)</span></div><p>SECTION HEADING: Windowed PINN</p></div>
+  
+</article>
+<article class="card" id="c20">
+  <div class="head"><span class="n">20</span><h3>Removed section announcement</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">Announcement-only paragraph; also had the typo &quot;weigths&quot;. Removed per plan.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 181)</span></div><p><del>This</del> <del>section</del> <del>explains</del> <del>the</del> <del>implementation</del> <del>of</del> <del>windowed</del> <del>PINN</del> <del>with</del> <del>causal</del> <del>weigths.</del> <del>This</del> <del>section</del> <del>also</del> <del>contains</del> <del>the</del> <del>model</del> <del>construction,</del> <del>physics</del> <del>enforcement,</del> <del>window</del> <del>segmentation,</del> <del>its</del> <del>handoff</del> <del>and</del> <del>the</del> <del>sequence</del> <del>in</del> <del>how</del> <del>the</del> <del>optimizer</del> <del>works</del> <del>for</del> <del>this</del> <del>particular</del> <del>case.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c21">
+  <div class="head"><span class="n">21</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 182)</span></div><p>SUBSECTION HEADING: <del>Model</del> <del>Construction</del> <del>and</del> <del>Time</del> <del>Routing</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 132)</span></div><p>SUBSECTION HEADING: <ins>Network</ins> <ins>Structure</ins></p></div>
+  
+</article>
+<article class="card" id="c22">
+  <div class="head"><span class="n">22</span><h3>Network Structure, opening</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar: &quot;As it failed by stucking in a platue so&quot; became &quot;As it got stuck in a plateau,&quot;. &quot;modelling&quot; made American to match the rest. &quot;closed loop&quot; made &quot;nearly closed loop&quot;.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 183)</span></div><p>We used several <del>modelling</del> strategies to approximate the solution for Lorenz system trajectory over $[0,T]$, where $T=13.26446$ is one closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. As it <del>failed</del> <del>by</del> <del>stucking</del> in a <del>platue</del> <del>so</del> we tried to split the time interval in equal segments.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 133)</span></div><p>We used several <ins>modeling</ins> strategies to approximate the solution for Lorenz system trajectory over $[0,T]$, where $T=13.26446$ is one <ins>nearly</ins> closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. As it <ins>got</ins> <ins>stuck</ins> in a <ins>plateau,</ins> we tried to split the time interval in equal segments.</p></div>
+  
+</article>
+<article class="card" id="c23">
+  <div class="head"><span class="n">23</span><h3>Figure 1</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">[H] needs the float package, which isn&#x27;t loaded, so [t] is used. The raster PNG is replaced by a vector PDF redrawn from the same run (RMSE 2.237 reproduced). Short caption. The label fig:method was also used by the pipeline figure, so it&#x27;s now fig:plateau.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 185–189)</span></div><p>[figure, placement <del>H]</del> [image: <del>figures/platue-results.png]</del> CAPTION: <del>Training</del> <del>result</del> <del>of</del> <del>a</del> <del>single</del> <del>network,</del> <del>entire</del> <del>time</del> <del>at</del> <del>once</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 135–139)</span></div><p>[figure, placement <ins>t]</ins> [image: <ins>figures/plateau-results.pdf]</ins> CAPTION: <ins>Single</ins> <ins>network</ins> <ins>on</ins> <ins>the</ins> <ins>full</ins> <ins>interval</ins></p></div>
+  
+</article>
+<article class="card" id="c24">
+  <div class="head"><span class="n">24</span><h3>Window choice and shared-network result</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The cited paper doesn&#x27;t show 0.5 is better, so the width is stated as a choice. 2.237 belonged to the full-interval run; the shared-network runs from PR 37 give 0.350–0.648. Adds the window index and boundary definitions before the display (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 192)</span></div><p>We <del>tried</del> to <del>keep</del> the <del>split</del> <del>window</del> <del>closer</del> <del>to</del> <del>0.5,</del> <del>as</del> <del>small</del> <del>windows</del> <del>are</del> <del>better</del> <del>[wang2024causal].</del> <del>In</del> first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in significant increase in <del>loss</del> with RMSE of <del>2.237.</del> To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 142)</span></div><p>We <ins>chose</ins> <ins>a</ins> window <ins>width</ins> <ins>close</ins> to <ins>0.5.</ins> In <ins>the</ins> first experiment, we used one network with 27 segmented time period to train the model sequentially. We noticed that, whenever the window is moved to the new one, the previous learning is lost or degraded. This results in <ins>a</ins> significant increase in <ins>error</ins> with RMSE of <ins>0.350</ins> <ins>to</ins> <ins>0.648</ins> <ins>over</ins> <ins>three</ins> <ins>seeds</ins> <ins>(Table</ins> <ins>‹ablations›).</ins> To address these issues, we introduced WPINN (Windowed PINN). We split the total time $[0,T]$ equally into 27 windows and gave each window its own network. <ins>Here</ins> <ins>$k=0,\ldots,26$</ins> <ins>is</ins> <ins>the</ins> <ins>index</ins> <ins>of</ins> <ins>the</ins> <ins>27</ins> <ins>windows</ins> <ins>and</ins> <ins>$t_0,\ldots,t_{27}$</ins> <ins>are</ins> <ins>the</ins> <ins>28</ins> <ins>boundary</ins> <ins>times.</ins> <ins>Each</ins> <ins>window</ins> <ins>$W_k$</ins> <ins>has</ins> <ins>width</ins> <ins>$\Delta t=T/27$</ins> <ins>and</ins> <ins>its</ins> <ins>own</ins> <ins>network</ins> <ins>parameters</ins> <ins>$\theta_k$.</ins></p></div>
+  
+</article>
+<article class="card" id="c25">
+  <div class="head"><span class="n">25</span><h3>Partition display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Same definitions in 2 rows instead of 4, with the N_k mapping folded in. Space for the 6-page limit.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 197–202)</span></div><div class="eq">\[\begin{aligned}t_k &amp;= \frac{kT}{27},
+&amp;&amp; k=0,\ldots,27,\\
+W_k &amp;= [t_k,t_{k+1}],
+&amp;&amp; k=0,\ldots,26,\\
+\Delta t &amp;= \frac{T}{27}
+\approx 0.4912763.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 145–146)</span></div><div class="eq">\[\begin{aligned}t_k&amp;=kT/27,\quad k=0,\ldots,27,\quad W_k=[t_k,t_{k+1}],\\
+\Delta t&amp;=T/27\approx0.4912763,\quad N_k(\,\cdot\,;\theta_k):W_k\to\mathbb{R}^{3}.\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c26">
+  <div class="head"><span class="n">26</span><h3>Architecture paragraph</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Your sentence kept (layers, neurons, tanh). Adds that the output is a correction vector, not the state itself (plan), and explains where the parameter counts come from.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 151)</span></div><p><ins>Each</ins> <ins>window</ins> <ins>has</ins> <ins>its</ins> <ins>own</ins> <ins>network</ins> <ins>$N_k(t;\theta_k)$</ins> <ins>with</ins> <ins>1</ins> <ins>input</ins> <ins>layer</ins> <ins>(t),</ins> <ins>4</ins> <ins>hidden</ins> <ins>layers</ins> <ins>of</ins> <ins>60</ins> <ins>neurons</ins> <ins>with</ins> <ins>tanh</ins> <ins>unit,</ins> <ins>and</ins> <ins>an</ins> <ins>output</ins> <ins>layer</ins> <ins>with</ins> <ins>3</ins> <ins>outputs.</ins> <ins>The</ins> <ins>output</ins> <ins>is</ins> <ins>not</ins> <ins>the</ins> <ins>state</ins> <ins>$(x,y,z)$</ins> <ins>directly.</ins> <ins>It</ins> <ins>is</ins> <ins>a</ins> <ins>correction</ins> <ins>vector,</ins> <ins>and</ins> <ins>we</ins> <ins>get</ins> <ins>the</ins> <ins>predicted</ins> <ins>state</ins> <ins>$\hat{u}_k(t)$</ins> <ins>from</ins> <ins>the</ins> <ins>trial</ins> <ins>solution</ins> <ins>in</ins> <ins>Eq.(trial).</ins> <ins>With</ins> <ins>biases,</ins> <ins>the</ins> <ins>input</ins> <ins>layer</ins> <ins>has</ins> <ins>120</ins> <ins>parameters,</ins> <ins>the</ins> <ins>three</ins> <ins>hidden-to-hidden</ins> <ins>layers</ins> <ins>have</ins> <ins>$3\times3660$</ins> <ins>and</ins> <ins>the</ins> <ins>output</ins> <ins>layer</ins> <ins>has</ins> <ins>183.</ins> <ins>The</ins> <ins>total</ins> <ins>counts</ins> <ins>all</ins> <ins>27</ins> <ins>networks.</ins></p></div>
+  
+</article>
+<article class="card" id="c27">
+  <div class="head"><span class="n">27</span><h3>Parameter display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The N_k mapping moved into the partition display. The parameter count is one line now; the 120 / 3x3660 / 183 terms are explained in the sentence above.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 206–207)</span></div><p><del>N_k(\,\cdot\,;\theta_k):</del> <del>W_k\longrightarrow\mathbbR^3.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 153)</span></div><div class="eq">\[P_{\mathrm{window}}=120+3(3660)+183=11{,}283,\; P_{\mathrm{total}}=304{,}641.\]</div></div>
+  
+</article>
+<article class="card" id="c28">
+  <div class="head"><span class="n">28</span><h3>Removed: width repeat, old architecture sentence, old count display</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">&quot;Each aprroximately 0.491…&quot; repeated the display value and the window-size justification (plan: remove the repeat). The architecture sentence and parameter display moved to entries 26 and 27.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 210–225)</span></div><p><del>Each</del> <del>aprroximately</del> <del>$0.491$</del> <del>time</del> <del>units</del> <del>wide.</del> <del>Shorter</del> <del>window</del> <del>gives</del> <del>each</del> <del>network</del> <del>an</del> <del>easier</del> <del>piece</del> <del>to</del> <del>learn,</del> <del>therefore</del> <del>we</del> <del>tried</del> <del>to</del> <del>keep</del> <del>the</del> <del>window</del> <del>size</del> <del>closer</del> <del>to</del> <del>0.5.</del> <del>Each</del> <del>window</del> <del>has</del> <del>its</del> <del>own</del> <del>network</del> <del>$N_k(t;\theta_k)$</del> <del>with</del> <del>1</del> <del>input</del> <del>layer</del> <del>(t),</del> <del>4</del> <del>hidden</del> <del>layers</del> <del>of</del> <del>60</del> <del>neurons</del> <del>with</del> <del>tanh</del> <del>unit,</del> <del>and</del> <del>with</del> <del>an</del> <del>output</del> <del>layer</del> <del>with</del> <del>3</del> <del>output</del> <del>$(x,y,z)$.</del> <del>\[</del> <del>\beginaligned</del> <del>P_\mathrmwindow</del> <del>&amp;=</del> <del>(1\cdot60+60)</del> <del>+3(60\cdot60+60)</del> <del>/</del> <del>&amp;\quad</del> <del>+(60\cdot3+3)</del> <del>=11,283,</del> <del>/</del> <del>P_\mathrmtotal</del> <del>&amp;=27P_\mathrmwindow</del> <del>=304,641.</del> <del>\endaligned</del> <del>\]</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c29">
+  <div class="head"><span class="n">29</span><h3>Initialization paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar: &quot;don&#x27;t&quot; to &quot;do not&quot; (formal paper), &quot;the windows has&quot; to &quot;neighboring windows share&quot;, and the endpoint sentence untangled.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 227)</span></div><p>For the model parameter initialization we used xavier-uniform weights and zero biases. The 27 networks <del>don&#x27;t</del> share <del>parameters</del> but <del>the</del> windows <del>has</del> <del>shared</del> boundary. The <del>completed</del> <del>windows</del> predicted endpoint <del>for</del> <del>the</del> <del>boundary</del> is used <del>for</del> the initial state of the next window.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 156)</span></div><p>For the model parameter initialization we used xavier-uniform weights and zero biases. The 27 networks <ins>do</ins> <ins>not</ins> share <ins>parameters,</ins> but <ins>neighboring</ins> windows <ins>share</ins> <ins>a</ins> boundary. The predicted endpoint <ins>of</ins> <ins>a</ins> <ins>completed</ins> <ins>window</ins> is used <ins>as</ins> the initial state of the next window.</p></div>
+  
+</article>
+<article class="card" id="c30">
+  <div class="head"><span class="n">30</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 229)</span></div><p>SUBSECTION HEADING: <del>Hard</del> <del>Initial</del> <del>State</del> <del>and</del> Window Handoff</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 158)</span></div><p>SUBSECTION HEADING: Window Handoff</p></div>
+  
+</article>
+<article class="card" id="c31">
+  <div class="head"><span class="n">31</span><h3>Window Handoff, opening</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Adds &quot;the&quot; and defines t_k, u_0,k and N_k before Eq. (3) instead of after it (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 230)</span></div><p>As Lorenz system is an initial value problem, we enforce the initial state of each window through a trial solution.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 159)</span></div><p>As <ins>the</ins> Lorenz system is an initial value problem, we enforce the initial state of each window through a trial solution. <ins>Here</ins> <ins>$t_k$</ins> <ins>is</ins> <ins>the</ins> <ins>starting</ins> <ins>time</ins> <ins>of</ins> <ins>window</ins> <ins>$k$,</ins> <ins>$u_{0,k}\in\mathbb{R}^3$</ins> <ins>is</ins> <ins>its</ins> <ins>fixed</ins> <ins>starting</ins> <ins>state</ins> <ins>and</ins> <ins>$N_k(t;\theta_k)\in\mathbb{R}^3$</ins> <ins>is</ins> <ins>the</ins> <ins>network</ins> <ins>correction.</ins></p></div>
+  
+</article>
+<article class="card" id="c32">
+  <div class="head"><span class="n">32</span><h3>Trial solution, Eq. (3)</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The k range is in the text above, so the equation fits on one row. Formula unchanged.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 235–236)</span></div><div class="eq">\[\begin{aligned}&amp;=u_{0,k}+(t-t_k)N_k(t;\theta_k),\\
+&amp;\qquad t\in W_k,\quad k=0,\ldots,26.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 163)</span></div><div class="eq">\[\begin{aligned}&amp;=u_{0,k}+(t-t_k)N_k(t;\theta_k),\quad t\in W_k.\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c33">
+  <div class="head"><span class="n">33</span><h3>Removed: dimension and identity displays</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">The dimensions are now in the opening sentence, u_0,0 is in the text, and the identity is stated in the next sentence. Three displays removed for space; the old &quot;where k=…&quot; sentence moved before the equation.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 242–260)</span></div><div class="eq">\[u_{0,k},\;
+N_k(t;\theta_k),\;
+\hat{u}_k(t)\in\mathbb{R}^{3},
+\qquad t-t_k\in\mathbb{R}.\]</div><div class="eq">\[\begin{aligned}
+\hat{u}_k(t_k)
+&amp;=u_{0,k}+(t_k-t_k)N_k(t_k;\theta_k)\\
+&amp;=u_{0,k},\\
+u_{0,0}
+&amp;=[0.5,0.75,1.0]^\mathsf{T}.
+\end{aligned}\]</div><div class="eq">\[where $k=0,\ldots,26$, $t_k$ is the starting time of window $k$, and $u_{0,k}$
+is its fixed starting state. At $t=t_k$, the second term is zero, so
+$\hat{u}_k(t_k)=u_{0,k}$ regardless of the network parameters\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c34">
+  <div class="head"><span class="n">34</span><h3>Initial-state sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Your sentence kept and joined into one paragraph. &quot;trial initial state&quot; was the wrong term (it&#x27;s the given initial condition, plan) and &quot;every later windows uses&quot; fixed.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 261)</span></div><p>[lagaris1998]. The first window uses the <del>trial</del> initial <del>state,</del> every later <del>windows</del> uses the predicted <del>value</del> of the last window as its initial state.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 170)</span></div><p><ins>At</ins> <ins>$t=t_k$,</ins> <ins>the</ins> <ins>second</ins> <ins>term</ins> <ins>is</ins> <ins>zero,</ins> <ins>so</ins> <ins>$\hat{u}_k(t_k)=u_{0,k}$</ins> <ins>regardless</ins> <ins>of</ins> <ins>the</ins> <ins>network</ins> <ins>parameters</ins> [lagaris1998]. The first window uses the <ins>given</ins> initial <ins>state</ins> <ins>$u_{0,0}=u(0)$,</ins> <ins>and</ins> every later <ins>window</ins> uses the predicted <ins>endpoint</ins> of the last window as its initial state.</p></div>
+  
+</article>
+<article class="card" id="c35">
+  <div class="head"><span class="n">35</span><h3>Removed: continuity display</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">It follows directly from Eq. (4); continuity is now stated in words in the next paragraph. Removed for space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 268–275)</span></div><div class="eq">\[\begin{aligned}
+\hat{u}_{k+1}(t_{k+1})
+&amp;=u_{0,k+1}\\
+&amp;=\hat{u}_k(t_{k+1}),
+\qquad k=0,\ldots,25.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c36">
+  <div class="head"><span class="n">36</span><h3>Continuity vs. weight copy</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The old text implied copying weights makes the states continuous. It&#x27;s the endpoint transfer that does that; weight copy is a separate warm start (plan). The derivative caveat moved here from the removed Discussion section.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 277)</span></div><div class="eq">\[$\theta_{k+1}\leftarrow\theta_k, \qquad k=0,\ldots,25$, here window k+1 starts from a copy of the weights of window k then train on its own parameters . This makes the predicted values continuous at the window boundaries. As the starting point of the later windows is predicted, it can carry error from earlier windows.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 176)</span></div><p><ins>The</ins> <ins>endpoint</ins> <ins>transfer</ins> <ins>in</ins> <ins>Eq.(handoff)</ins> <ins>and</ins> <ins>the</ins> <ins>trial</ins> <ins>solution</ins> <ins>make</ins> <ins>the</ins> <ins>predicted</ins> <ins>values</ins> <ins>continuous</ins> <ins>at</ins> <ins>the</ins> window <ins>boundaries.</ins> <ins>But</ins> <ins>the</ins> <ins>derivatives</ins> <ins>can</ins> <ins>still</ins> <ins>change</ins> <ins>suddenly</ins> <ins>at</ins> <ins>the</ins> <ins>boundaries.</ins> <ins>Separately,</ins> <ins>window</ins> <ins>$k+1$</ins> starts from a copy of the weights of window <ins>$k$,</ins> <ins>$\theta_{k+1}\leftarrow\theta_k$</ins> <ins>for</ins> <ins>$k=0,\ldots,25$,</ins> <ins>and</ins> then <ins>trains</ins> its own parameters. As the starting point of the later windows is predicted, it can carry error from earlier windows.</p></div>
+  
+</article>
+<article class="card" id="c37">
+  <div class="head"><span class="n">37</span><h3>Pipeline caption, label, Training Loss heading</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Short caption that also notes the figure numbers windows 1–27 while equations use 0–26. Label fig:pipeline fixes the duplicate fig:method. Shorter subsection heading from the plan.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 282–286)</span></div><p>CAPTION: <del>Complete</del> <del>implementation</del> pipeline SUBSECTION HEADING: <del>Collocation,</del> <del>Residual,</del> <del>and</del> <del>Causal</del> Loss</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 181–185)</span></div><p>CAPTION: <ins>Implementation</ins> pipeline <ins>(windows</ins> <ins>numbered</ins> <ins>1–27)</ins> SUBSECTION HEADING: <ins>Training</ins> Loss</p></div>
+  
+</article>
+<article class="card" id="c38">
+  <div class="head"><span class="n">38</span><h3>Collocation sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Defines n_k and t_k,i in the sentence and says both endpoints are included (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 287)</span></div><p>To <del>predict</del> <del>and</del> train the <del>networks</del> of each window, we split the time range into <del>1536</del> uniform collocation points <del>per</del> <del>window.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 186)</span></div><p>To train the <ins>network</ins> of each window, we split the time range into <ins>$n_k=1536$</ins> uniform collocation points <ins>$t_{k,i}$,</ins> <ins>$i=1,\ldots,n_k$,</ins> <ins>including</ins> <ins>both</ins> <ins>endpoints.</ins></p></div>
+  
+</article>
+<article class="card" id="c39">
+  <div class="head"><span class="n">39</span><h3>Collocation display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">n_k and the i range are now in the text, so two displays became one. Counts unchanged.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 289–302)</span></div><div class="eq">\[n_k=1536,\qquad
+t_{k,i}
+=t_k+\frac{i-1}{n_k-1}(t_{k+1}-t_k),
+\quad i=1,\ldots,n_k.\]</div><div class="eq">\[\begin{aligned}n_{\mathrm{unique}}
+&amp;=27(1536-1)+1
+=41{,}446,\\
+n_{\mathrm{window\ uses}}
+&amp;=27\cdot1536
+=41{,}472.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 189–190)</span></div><div class="eq">\[\begin{aligned}t_{k,i}&amp;=t_k+\frac{i-1}{n_k-1}(t_{k+1}-t_k),\\
+n_{\mathrm{unique}}&amp;=27(1536-1)+1=41{,}446,\quad 27\cdot1536=41{,}472.\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c40">
+  <div class="head"><span class="n">40</span><h3>Shared boundary points</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">&quot;Ideally 1535 points … and 1 handoff point&quot; was inaccurate: each window trains on 1536 points including both ends. Now explains why there are 41,446 unique points but 41,472 uses (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 306)</span></div><p><del>Ideally</del> <del>1535</del> points <del>for</del> each <del>window</del> <del>and</del> <del>1</del> <del>handoff</del> point <del>that</del> <del>becomes</del> <del>the</del> <del>initial</del> <del>state</del> <del>for</del> the next window. While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 195)</span></div><p><ins>Two</ins> <ins>windows</ins> <ins>next</ins> <ins>to</ins> each <ins>other</ins> <ins>share</ins> <ins>their</ins> <ins>boundary</ins> <ins>time.</ins> <ins>So</ins> <ins>there</ins> <ins>are</ins> <ins>41,446</ins> <ins>unique</ins> <ins>points</ins> <ins>in</ins> <ins>total,</ins> <ins>but</ins> <ins>41,472</ins> <ins>points</ins> <ins>are</ins> <ins>used</ins> <ins>in</ins> <ins>training.</ins> <ins>On</ins> the <ins>global</ins> <ins>grid,</ins> <ins>each</ins> <ins>boundary</ins> <ins>point</ins> <ins>belongs</ins> <ins>to</ins> the next <ins>window,</ins> <ins>and</ins> <ins>we</ins> <ins>also</ins> <ins>add</ins> <ins>it</ins> <ins>when</ins> <ins>we</ins> <ins>train</ins> <ins>the</ins> <ins>current</ins> window. <ins>The</ins> <ins>last</ins> <ins>window</ins> <ins>has</ins> <ins>the</ins> <ins>final</ins> <ins>endpoint.</ins> While training, all the points in a single window are passed to the network at once which gives an output of shape $(1536,3)$.</p></div>
+  
+</article>
+<article class="card" id="c41">
+  <div class="head"><span class="n">41</span><h3>Autograd sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Typo &quot;intial&quot;, &quot;pytorch&quot; capitalised. The repeated autograd explanation is shortened, and the sentence now leads into the product-rule display (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 307)</span></div><p>Then we apply the trial solution to enforce the <del>intial</del> value. <del>While</del> <del>calculating</del> <del>ODE</del> <del>residuals,</del> <del>pytorch</del> automatic differentiation <del>uses</del> <del>the</del> <del>vectors</del> <del>of</del> <del>x,y,z</del> <del>and</del> <del>create</del> <del>a</del> <del>graph</del> <del>that</del> <del>is</del> <del>differentiable.</del> <del>Pytorch</del> <del>autograd</del> <del>function</del> gives the rate of change for all the collocation <del>points</del> <del>with</del> <del>respect</del> <del>to</del> <del>time.</del> <del>And</del> <del>we</del> <del>use</del> <del>this</del> <del>value</del> <del>and</del> the <del>mathematical</del> derivative <del>to</del> <del>calculate</del> <del>the</del> <del>ODE</del> <del>residual.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 196)</span></div><p>Then we apply the trial solution to enforce the <ins>initial</ins> value. <ins>PyTorch</ins> automatic differentiation gives the rate of change <ins>of</ins> <ins>$x$,</ins> <ins>$y$</ins> <ins>and</ins> <ins>$z$</ins> <ins>with</ins> <ins>respect</ins> <ins>to</ins> <ins>time</ins> for all the collocation <ins>points.</ins> <ins>As</ins> <ins>$u_{0,k}$</ins> <ins>is</ins> <ins>fixed</ins> <ins>while</ins> <ins>training,</ins> the <ins>product</ins> <ins>rule</ins> <ins>gives</ins> the <ins>derivative</ins> <ins>of</ins> <ins>Eq.(trial):</ins></p></div>
+  
+</article>
+<article class="card" id="c42">
+  <div class="head"><span class="n">42</span><h3>Derivative display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The first row just restated Eq. (3); the result row is kept. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 311–317)</span></div><div class="eq">\[\begin{aligned}
+\frac{d\hat{u}_k(t)}{dt}
+&amp;=\frac{d}{dt}
+\left[u_{0,k}+(t-t_k)N_k(t;\theta_k)\right]\\
+&amp;=N_k(t;\theta_k)
++(t-t_k)\frac{\partial N_k(t;\theta_k)}{\partial t}.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 198–199)</span></div><div class="eq">\[\frac{d\hat{u}_k}{dt}
+=N_k+(t-t_k)\frac{\partial N_k}{\partial t}.\]</div></div>
+  
+</article>
+<article class="card" id="c43">
+  <div class="head"><span class="n">43</span><h3>New: residual function</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3 guide: explains, before Eq. (5), that the residual compares the learned derivative with the true vector field.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 204)</span></div><p><ins>The</ins> <ins>ODE</ins> <ins>residual</ins> <ins>function</ins> <ins>compares</ins> <ins>this</ins> <ins>derivative</ins> <ins>with</ins> <ins>$f(\hat{u}_k(t))$,</ins> <ins>which</ins> <ins>is</ins> <ins>the</ins> <ins>original</ins> <ins>ODE</ins> <ins>right-hand</ins> <ins>side</ins> <ins>at</ins> <ins>the</ins> <ins>predicted</ins> <ins>state.</ins> <ins>Both</ins> <ins>terms</ins> <ins>are</ins> <ins>vectors</ins> <ins>with</ins> <ins>three</ins> <ins>components,</ins> <ins>and</ins> <ins>their</ins> <ins>difference</ins> <ins>is</ins> <ins>the</ins> <ins>residual</ins> <ins>$r_k(t)$.</ins></p></div>
+  
+</article>
+<article class="card" id="c44">
+  <div class="head"><span class="n">44</span><h3>Residual components and batch shapes</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Plan: use the component expansion or a paragraph, not both, so the expansion is inline. The batch symbols were only in % comments; now they&#x27;re visible text with their shapes. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 330–358)</span></div><div class="eq">\[\begin{aligned}
+r_{k,x}(t)
+&amp;=\frac{d\hat{x}_k}{dt}
++0.1\,\hat{y}_k\hat{z}_k,\\
+r_{k,y}(t)
+&amp;=\frac{d\hat{y}_k}{dt}
+-1.6\,\hat{x}_k\hat{z}_k,\\
+r_{k,z}(t)
+&amp;=\frac{d\hat{z}_k}{dt}
++0.75\,\hat{x}_k\hat{y}_k.
+\end{aligned}\]</div><div class="eq">\[\mathbf{t}_k
+=[t_{k,1},\ldots,t_{k,n_k}]^\mathsf{T}
+\in\mathbb{R}^{n_k\times1}.\]</div><div class="eq">\[\begin{aligned}
+\mathbf{N}_k,\;\hat{\mathbf{U}}_k
+&amp;\in\mathbb{R}^{n_k\times3},\\
+\dot{\hat{\mathbf{U}}}_k,\;
+\mathbf{F}_k,\;\mathbf{R}_k
+&amp;\in\mathbb{R}^{n_k\times3}.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 212–214)</span></div><p><ins>So</ins> <ins>the</ins> <ins>three</ins> <ins>components</ins> <ins>are</ins> <ins>$r_{k,x}=d\hat{x}_k/dt+0.1\,\hat{y}_k\hat{z}_k$,</ins> <ins>$r_{k,y}=d\hat{y}_k/dt-1.6\,\hat{x}_k\hat{z}_k$</ins> <ins>and</ins> <ins>$r_{k,z}=d\hat{z}_k/dt+0.75\,\hat{x}_k\hat{y}_k$.</ins> <ins>For</ins> <ins>a</ins> <ins>batch</ins> <ins>of</ins> <ins>$n_k$</ins> <ins>times,</ins> <ins>each</ins> <ins>row</ins> <ins>is</ins> <ins>one</ins> <ins>collocation</ins> <ins>point</ins> <ins>and</ins> <ins>the</ins> <ins>three</ins> <ins>columns</ins> <ins>are</ins> <ins>$x$,</ins> <ins>$y$</ins> <ins>and</ins> <ins>$z$.</ins> <ins>Here</ins> <ins>$\mathbf{N}_k$,</ins> <ins>$\hat{\mathbf{U}}_k$,</ins> <ins>$\dot{\hat{\mathbf{U}}}_k$,</ins> <ins>$\mathbf{F}_k$</ins> <ins>and</ins> <ins>$\mathbf{R}_k$</ins> <ins>mean</ins> <ins>the</ins> <ins>network</ins> <ins>outputs,</ins> <ins>trial</ins> <ins>states,</ins> <ins>time</ins> <ins>derivatives,</ins> <ins>ODE</ins> <ins>right-hand</ins> <ins>sides</ins> <ins>and</ins> <ins>residuals.</ins> <ins>Each</ins> <ins>of</ins> <ins>them</ins> <ins>is</ins> <ins>in</ins> <ins>$\mathbb{R}^{n_k\times3}$,</ins> <ins>and</ins> <ins>the</ins> <ins>time</ins> <ins>batch</ins> <ins>$\mathbf{t}_k$</ins> <ins>is</ins> <ins>in</ins> <ins>$\mathbb{R}^{n_k\times1}$.</ins></p></div>
+  
+</article>
+<article class="card" id="c45">
+  <div class="head"><span class="n">45</span><h3>Point-loss lead-in</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Adds that each point&#x27;s three residual components become one loss value (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 366)</span></div><p>For each ordered collocation time $t_{k,i}$, we take the mean of the three squared residual components:</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 222)</span></div><p>For each ordered collocation time $t_{k,i}$, we take the mean of the three squared residual <ins>components.</ins> <ins>This</ins> <ins>gives</ins> <ins>one</ins> <ins>non-negative</ins> <ins>loss</ins> <ins>value</ins> <ins>$L_{k,i}$</ins> <ins>for</ins> <ins>each</ins> <ins>point</ins> <ins>instead</ins> <ins>of</ins> <ins>three</ins> components:</p></div>
+  
+</article>
+<article class="card" id="c46">
+  <div class="head"><span class="n">46</span><h3>Point loss, Eq. (6)</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Same formula on one row instead of three. &quot;Non-negative&quot; is now in the sentence above.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 371–377)</span></div><div class="eq">\[\begin{aligned}&amp;=\frac{1}{3}\left\|r_k(t_{k,i})\right\|_2^2\\
+&amp;=\frac{1}{3}\Bigl(
+r_{k,x}(t_{k,i})^2
++r_{k,y}(t_{k,i})^2\\
+&amp;\hspace{3.8em}+r_{k,z}(t_{k,i})^2
+\Bigr)
+\in\mathbb{R}_{\geq0}.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 226)</span></div><div class="eq">\[\begin{aligned}&amp;=\tfrac{1}{3}\left\|r_k(t_{k,i})\right\|_2^2=\tfrac{1}{3}\bigl(r_{k,x}^2+r_{k,y}^2+r_{k,z}^2\bigr)(t_{k,i}).\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c47">
+  <div class="head"><span class="n">47</span><h3>Causal weight motivation</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;Thats why use we used&quot;). &quot;Not sufficient&quot; softened to &quot;may not be sufficient&quot; (plan: no universal claims). Defines S_k,i in words, replacing its display.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 382)</span></div><p><del>To</del> <del>solve</del> a long horizon time dependent ODE system, <del>only</del> residual loss is <del>not</del> <del>sufficient.</del> <del>Thats</del> why <del>use</del> we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times <del>[wang2024causal]:</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 231)</span></div><p><ins>For</ins> a long horizon time dependent ODE system, residual loss <ins>alone</ins> <ins>may</ins> not <ins>be</ins> sufficient. <ins>That</ins> <ins>is</ins> why we used causal weights and causal weighted loss. The causal weight at a time depends on the accumulated residual loss at earlier times <ins>[wang2024causal].</ins> <ins>Here</ins> <ins>$S_{k,i}$</ins> <ins>is</ins> <ins>the</ins> <ins>sum</ins> <ins>of</ins> <ins>the</ins> <ins>point</ins> <ins>losses</ins> <ins>at</ins> <ins>all</ins> <ins>earlier</ins> <ins>times</ins> <ins>of</ins> <ins>the</ins> <ins>same</ins> <ins>window.</ins> <ins>The</ins> <ins>first</ins> <ins>point</ins> <ins>has</ins> <ins>no</ins> <ins>earlier</ins> <ins>point,</ins> <ins>so</ins> <ins>$S_{k,1}=0$</ins> <ins>and</ins> <ins>its</ins> <ins>causal</ins> <ins>weight</ins> <ins>is</ins> <ins>one.</ins></p></div>
+  
+</article>
+<article class="card" id="c48">
+  <div class="head"><span class="n">48</span><h3>Removed: S display</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">S is defined in the text and Eq. (7) already shows the sum. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 384–388)</span></div><div class="eq">\[S_{k,i}=\sum_{j=1}^{i-1}L_{k,j},
+\qquad
+S_{k,1}=0.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c49">
+  <div class="head"><span class="n">49</span><h3>Weight bounds and causal-loss lead-in</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">w_k,1 = 1 and the epsilon stages are already stated in the text, so only the bound stays, inline. Adds the Part 3 lead-in to Eq. (8).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 395–401)</span></div><div class="eq">\[w_{k,1}=1,
+\qquad
+0&lt;w_{k,i}\leq1,
+\qquad
+\epsilon\in\{0.01,0.1,1,10\}.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 238)</span></div><p><ins>So</ins> <ins>$0&lt;w_{k,i}\leq1$.</ins> <ins>Then</ins> <ins>we</ins> <ins>multiply</ins> <ins>each</ins> <ins>point</ins> <ins>loss</ins> <ins>with</ins> <ins>its</ins> <ins>causal</ins> <ins>weight</ins> <ins>and</ins> <ins>take</ins> <ins>the</ins> <ins>mean</ins> <ins>over</ins> <ins>all</ins> <ins>$n_k$</ins> <ins>points.</ins> <ins>This</ins> <ins>gives</ins> <ins>one</ins> <ins>loss</ins> <ins>value</ins> <ins>for</ins> <ins>the</ins> <ins>window</ins> <ins>in</ins> <ins>the</ins> <ins>current</ins> <ins>$\epsilon$</ins> <ins>stage:</ins></p></div>
+  
+</article>
+<article class="card" id="c50">
+  <div class="head"><span class="n">50</span><h3>Removed: L_k and w_k vectors</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">Replaced by the inline R^{n_k} in the next paragraph. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 409–418)</span></div><div class="eq">\[\begin{aligned}
+\mathbf{L}_k
+&amp;=[L_{k,1},\ldots,L_{k,n_k}]^\mathsf{T}
+\in\mathbb{R}^{n_k},\\
+\mathbf{w}_k
+&amp;=[w_{k,1},\ldots,w_{k,n_k}]^\mathsf{T}
+\in\mathbb{R}^{n_k}.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c51">
+  <div class="head"><span class="n">51</span><h3>Symbol explanation paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Part 3 replacement. &quot;Epsilon means the penalty&quot; was misleading (plan): it sets how strongly earlier losses suppress later weights. Typo &quot;earliar&quot; fixed. The collocation-dependence note moved here from Discussion; its claim that more points lower the loss was unsupported and dropped.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 424)</span></div><p>Here <del>$n_k=1536$.</del> <del>$L_{k,j}$</del> <del>in</del> <del>Eq.(weights)</del> means the <del>error</del> <del>at</del> <del>earliar</del> points of <del>$i$,</del> <del>where</del> <del>$j &lt; i$</del> and <del>$L_{k,i}$</del> means the <del>loss</del> <del>at</del> <del>collocation</del> <del>point</del> <del>$i$</del> <del>in</del> <del>Eq.(causalloss).</del> <del>$w_{k,i}$</del> <del>denotes</del> the <del>causal</del> <del>weights</del> <del>of</del> <del>the</del> <del>collocation</del> <del>points.</del> <del>Here</del> <del>the</del> <del>causal</del> <del>weights</del> <del>are</del> <del>fixed</del> <del>while</del> <del>Adam</del> <del>optimizer</del> <del>calculated</del> <del>the</del> <del>gradient.</del> We used four $\epsilon$ stages: $0.01$, $0.1$, $1$, and <del>$10$</del> <del>to</del> <del>reduce</del> the earlier points <del>error,</del> <del>and</del> <del>increase</del> <del>the</del> <del>weights.</del> <del>$\epsilon$</del> <del>in</del> <del>the</del> <del>equation</del> <del>means</del> <del>the</del> <del>penalty</del> <del>for</del> <del>the</del> <del>models</del> <del>in</del> <del>each</del> <del>stages.</del> <del>Model</del> <del>must</del> <del>try</del> <del>to</del> <del>reduce</del> <del>the</del> <del>earlier</del> <del>loss</del> <del>to</del> <del>improve</del> <del>each</del> <del>points</del> <del>weights.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 251)</span></div><p>Here <ins>$k$</ins> <ins>is</ins> <ins>the</ins> <ins>window,</ins> <ins>$i$</ins> <ins>is</ins> <ins>the</ins> <ins>current</ins> <ins>point</ins> <ins>and</ins> <ins>$j&lt;i$</ins> means the <ins>earlier</ins> points of <ins>$i$.</ins> <ins>$\mathbf{L}_k,\mathbf{w}_k\in\mathbb{R}^{n_k}$</ins> <ins>have</ins> <ins>one</ins> loss <ins>and</ins> <ins>one</ins> <ins>weight</ins> <ins>for</ins> <ins>each</ins> <ins>point.</ins> <ins>$\epsilon$</ins> in the <ins>equation</ins> <ins>means</ins> <ins>how</ins> <ins>strongly</ins> the <ins>earlier</ins> <ins>losses</ins> <ins>reduce</ins> the <ins>later</ins> <ins>weights.</ins> We used four $\epsilon$ stages: $0.01$, $0.1$, $1$, and <ins>$10$.</ins> <ins>When</ins> the earlier <ins>losses</ins> <ins>go</ins> <ins>down,</ins> the <ins>later</ins> <ins>weights</ins> <ins>go</ins> <ins>up</ins> <ins>towards</ins> <ins>one.</ins> <ins>The</ins> <ins>weights</ins> <ins>are</ins> <ins>recomputed</ins> <ins>during</ins> <ins>training,</ins> <ins>and</ins> <ins>they</ins> <ins>are</ins> <ins>fixed</ins> <ins>(detached)</ins> <ins>while</ins> the <ins>Adam</ins> <ins>optimizer</ins> <ins>calculates</ins> the <ins>gradient.</ins> <ins>The</ins> <ins>causal</ins> <ins>weights</ins> <ins>also</ins> <ins>depend</ins> <ins>on</ins> the <ins>number</ins> <ins>and</ins> <ins>spacing</ins> <ins>of</ins> the <ins>collocation</ins> points <ins>[wang2024causal].</ins></p></div>
+  
+</article>
+<article class="card" id="c52">
+  <div class="head"><span class="n">52</span><h3>Causal motivation paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;isn&#x27;t&quot;, &quot;errors accumulates&quot;, &quot;And specially&quot;). The second half repeated the loss explanation just given, so it now points to Eqs. (6)–(8) (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 426)</span></div><p>Only using ODE residual <del>isn&#x27;t</del> enough for long horizon system like Lorenz system. <del>And</del> <del>specially</del> for the windowed algorithm, early times should be fitted before late times, as the errors <del>accumulates</del> and backtracking <del>isn&#x27;t</del> possible. Therefore, later states depend on the earlier states, if earlier error is reduced, possibly the later error can be reduced as well. <del>To</del> <del>address</del> <del>this,</del> <del>we</del> <del>first</del> <del>calculate</del> <del>the</del> <del>per-collocation</del> <del>point</del> <del>loss,</del> <del>$L_{k,i}$</del> <del>which</del> <del>is</del> <del>the</del> <del>mean</del> <del>of</del> <del>the</del> <del>three</del> <del>squared</del> <del>ode</del> <del>residuals</del> <del>at</del> <del>time</del> <del>$i$.</del> <del>We</del> <del>assign</del> <del>weights</del> <del>for</del> <del>each</del> <del>point</del> <del>in</del> <del>time.</del> <del>Each</del> <del>points</del> <del>weight</del> <del>updates</del> <del>its</del> <del>value</del> with the <del>accumulated</del> <del>loss</del> <del>of</del> <del>all</del> <del>earlier</del> <del>points.</del> The <del>Causal</del> <del>loss</del> <del>Eq.(causalloss)</del> <del>is</del> <del>the</del> <del>weighted</del> <del>mean</del> <del>of</del> <del>the</del> <del>residual</del> <del>loss.</del> <del>Weights</del> <del>are</del> <del>recomputed</del> <del>at</del> <del>every</del> <del>epoch.</del> <del>Later</del> <del>section</del> explains the stopping rules of the stages and unweighted L-BFGS refinement steps.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 253)</span></div><p>Only using <ins>the</ins> ODE residual <ins>is</ins> <ins>not</ins> enough for <ins>a</ins> long horizon system like <ins>the</ins> Lorenz system. <ins>Especially</ins> for the windowed algorithm, early times should be fitted before late times, as the errors <ins>accumulate</ins> and backtracking <ins>is</ins> <ins>not</ins> possible. Therefore, later states depend on the earlier states, if earlier error is reduced, possibly the later error can be reduced as well. <ins>Equations</ins> <ins>Eq.(pointloss)–Eq.(causalloss)</ins> <ins>do</ins> <ins>this</ins> with the <ins>point</ins> <ins>losses</ins> <ins>and</ins> the <ins>causal</ins> <ins>weights.</ins> <ins>The</ins> <ins>next</ins> <ins>subsection</ins> explains the stopping rules of the stages and <ins>the</ins> unweighted L-BFGS refinement steps.</p></div>
+  
+</article>
+<article class="card" id="c53">
+  <div class="head"><span class="n">53</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 428)</span></div><p>SUBSECTION HEADING: <del>Optimizer</del> <del>Sequence</del> <del>and</del> <del>Saved</del> <del>State</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 255)</span></div><p>SUBSECTION HEADING: <ins>Training</ins> <ins>Procedure</ins></p></div>
+  
+</article>
+<article class="card" id="c54">
+  <div class="head"><span class="n">54</span><h3>Training Procedure, first source line</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">In your source this sentence was broken across two lines. Its text now sits at the start of the next entry, with &quot;seperately&quot; and the figure label fixed.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 430)</span></div><p><del>The</del> <del>causal</del> <del>loss</del> <del>defined</del> <del>in</del> <del>above,</del> <del>is</del> <del>minimized</del> <del>seperately</del> <del>in</del> <del>each</del> <del>window.</del> <del>Figure</del> <del>‹method›</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c55">
+  <div class="head"><span class="n">55</span><h3>Training Procedure paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;seperately&quot;, &quot;a Adam&quot;, &quot;summarize&quot;), figure label fixed. The old recompute rule was confusing; the code recomputes weights after every update. The threshold covers all 1536 points, not 1535, and &quot;epoch&quot; became &quot;update limit&quot;. The 4,000-step cap is unchanged.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 431)</span></div><div class="eq">\[summarize the sequence across the windows. Algorithm \ref{alg:training} gives the training steps. In each window a Adam optimizer and StepLR scheduler is created. The rate of the scheduler is $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates. It is maintained for the four stages of $\epsilon=(0.01,0.1,1,10)$ across the window. There is a 4,000 update limit for each stage. When the saved minimum weight is above 0.99 or if there is an Adam update then the code will recalculate the causal weights at all collocation points at that particular window. If the minimum causal weight from the entire window among 1535 points is above 0.99 then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the epoch threshold then it moves to the next stage and records failure. When all four stages are completed then L-BFGS tries to minimize the loss using unweighted residual mean up to 1,000 epoch.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 257)</span></div><p><ins>The</ins> <ins>causal</ins> <ins>loss</ins> <ins>defined</ins> <ins>above</ins> <ins>is</ins> <ins>minimized</ins> <ins>separately</ins> <ins>in</ins> <ins>each</ins> <ins>window.</ins> <ins>Figure</ins> <ins>‹pipeline›</ins> <ins>summarizes</ins> the sequence across the windows. Algorithm ‹training› gives the training steps. In each window <ins>an</ins> Adam optimizer and <ins>a</ins> StepLR scheduler <ins>are</ins> created. The <ins>learning</ins> rate <ins>starts</ins> <ins>at</ins> $10^{-3}$ and it is multiplied by 0.9 for every 1,000 <ins>updates</ins> <ins>across</ins> <ins>all</ins> four <ins>$\epsilon$</ins> stages of the window. There is a 4,000 update limit for each stage. <ins>After</ins> <ins>every</ins> Adam update the code <ins>recalculates</ins> the causal weights at all collocation points <ins>of</ins> <ins>the</ins> window. If the minimum causal weight <ins>of</ins> <ins>all</ins> <ins>1536</ins> points <ins>of</ins> <ins>the</ins> <ins>window</ins> is above 0.99 <ins>after</ins> <ins>an</ins> <ins>update,</ins> then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the <ins>update</ins> <ins>limit</ins> then it moves to the next stage and records failure.</p></div>
+  
+</article>
+<article class="card" id="c56">
+  <div class="head"><span class="n">56</span><h3>New: L-BFGS paragraph</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Second half of the split paragraph. &quot;1,000 epoch&quot; became &quot;1,000 iterations&quot;; adds the Part 3 lead-in for the unweighted loss.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 259)</span></div><p><ins>When</ins> <ins>all</ins> <ins>four</ins> <ins>stages</ins> <ins>are</ins> <ins>completed,</ins> <ins>L-BFGS</ins> <ins>tries</ins> <ins>to</ins> <ins>minimize</ins> <ins>the</ins> <ins>loss</ins> <ins>using</ins> <ins>unweighted</ins> <ins>residual</ins> <ins>mean</ins> <ins>up</ins> <ins>to</ins> <ins>1,000</ins> <ins>iterations.</ins> <ins>For</ins> <ins>L-BFGS,</ins> <ins>we</ins> <ins>remove</ins> <ins>the</ins> <ins>causal</ins> <ins>weights</ins> <ins>and</ins> <ins>use</ins> <ins>the</ins> <ins>plain</ins> <ins>mean</ins> <ins>of</ins> <ins>the</ins> <ins>point</ins> <ins>losses.</ins></p></div>
+  
+</article>
+<article class="card" id="c57">
+  <div class="head"><span class="n">57</span><h3>Unweighted loss display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Same two forms on one row. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 434–440)</span></div><div class="eq">\[\begin{aligned}
+&amp;=\frac{1}{n_k}\sum_{i=1}^{n_k}L_{k,i}\\
+&amp;=\frac{1}{3n_k}
+\sum_{i=1}^{n_k}
+\left\|r_k(t_{k,i})\right\|_2^2.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 262–263)</span></div><div class="eq">\[=\frac{1}{n_k}\sum_i L_{k,i}
+=\frac{1}{3n_k}\sum_i\|r_k(t_{k,i})\|_2^2.\]</div></div>
+  
+</article>
+<article class="card" id="c58">
+  <div class="head"><span class="n">58</span><h3>Snapshot sentence</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">&quot;every 50 epoch to keep training history&quot; made grammatical, using &quot;updates&quot; consistently.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 443)</span></div><p>To keep track of <del>training</del> we <del>use</del> a snapshot <del>at</del> every 50 <del>epoch</del> <del>to</del> <del>keep</del> <del>training</del> <del>history.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 266)</span></div><p>To keep track of <ins>training,</ins> we <ins>save</ins> a snapshot every 50 <ins>updates.</ins></p></div>
+  
+</article>
+<article class="card" id="c59">
+  <div class="head"><span class="n">59</span><h3>Saved-state paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The config sentence was garbled (&quot;has the same configuration as all modules were…&quot;). &quot;set up evaluative points&quot; made &quot;fixed evaluation points&quot;. One implementation-detail sentence cut for space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 445)</span></div><p>The code saves the parameters of each window, transfers the endpoint state, and copies the parameters to the next trainable window. The config file <del>has</del> the <del>same</del> <del>configuration</del> <del>as</del> <del>all</del> <del>modules</del> <del>were,</del> initial states, training history, next <del>window,</del> <del>PyTorch,</del> NumPy <del>etc.</del> A different configuration <del>in</del> <del>a</del> <del>config</del> is rejected. <del>The</del> <del>run</del> <del>also</del> <del>outputs</del> <del>stage</del> <del>status</del> <del>and</del> <del>residual</del> <del>snapshots.</del> DOP853 values are captured at <del>set</del> <del>up</del> <del>evaluative</del> points. They do not enter the loss, gradient, or stopping test. After training, a dedicated custom function collects all the artifacts and evaluates the final piecewise model and its residual on the collocation and evaluation grids. Finally, a summary function computes error and invariant measures from these arrays. The reported <del>full</del> residual is one of <del>the</del> <del>evaluation.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 268)</span></div><p>The code saves the parameters of each window, transfers the endpoint state, and copies the parameters to the next trainable window. The config file <ins>stores</ins> the <ins>configuration,</ins> initial states, training history, next <ins>window</ins> <ins>and</ins> <ins>the</ins> <ins>PyTorch</ins> <ins>and</ins> NumPy <ins>states.</ins> A <ins>run</ins> <ins>with</ins> <ins>a</ins> different configuration is rejected. DOP853 values are captured at <ins>fixed</ins> <ins>evaluation</ins> points. They do not enter the loss, gradient, or stopping test. After training, a dedicated custom function collects all the artifacts and evaluates the final piecewise model and its residual on the collocation and evaluation grids. Finally, a summary function computes error and invariant measures from these arrays. The reported <ins>dense</ins> residual is one of <ins>these</ins> <ins>measures.</ins></p></div>
+  
+</article>
+<article class="card" id="c60">
+  <div class="head"><span class="n">60</span><h3>Algorithm caption</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Short caption, without &quot;causal&quot; to match the new title.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 448)</span></div><p>CAPTION: Sequential <del>causal</del> window training</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 271)</span></div><p>CAPTION: Sequential window training</p></div>
+  
+</article>
+<article class="card" id="c61">
+  <div class="head"><span class="n">61</span><h3>Algorithm steps</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The same steps in 3 lines instead of 6 (plan: shorten algorithm narration). Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 462–468)</span></div><p><del>•</del> <del>Evaluate</del> <del>$N_k(t_{k,i};\theta_k)\in\mathbb{R}^{3}$</del> • Form <del>$\hat{u}_k(t_{k,i})$</del> <del>using</del> <del>Eq.(trial)</del> <del>•</del> <del>Compute</del> $d\hat{u}_k/dt$ by <del>automatic</del> <del>differentiation</del> • <del>Evaluate</del> <del>$f(\hat{u}_k)$</del> and <del>form</del> <del>$r_k$</del> <del>using</del> <del>Eq.(residual)</del> <del>•</del> <del>Compute</del> $L_{k,i}$ <del>using</del> Eq.(pointloss) • Compute $w_{k,i}$ <del>using</del> Eq.(weights); detach weights • Backpropagate Eq.(causalloss); Adam then StepLR</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 285–288)</span></div><p>• Form <ins>$\hat{u}_k$</ins> <ins>by</ins> <ins>Eq.(trial);</ins> <ins>get</ins> $d\hat{u}_k/dt$ by <ins>autograd</ins> • <ins>Form</ins> $r_k$ <ins>by</ins> Eq.(residual) <ins>and</ins> $L_{k,i}$ <ins>by</ins> Eq.(pointloss) • Compute $w_{k,i}$ <ins>by</ins> Eq.(weights); detach weights • Backpropagate Eq.(causalloss); Adam then StepLR</p></div>
+  
+</article>
+<article class="card" id="c62">
+  <div class="head"><span class="n">62</span><h3>Ablation table + Experimental Setup heading</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">\input{ablation-table} adds the new PR 37 ablation table (see the last entry), placed here so it floats next to the protocol. &quot;Experimental Setup&quot; is the plan&#x27;s heading.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 481)</span></div><p>SECTION HEADING: Experimental <del>Protocol</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 301–303)</span></div><p><ins>[inserts</ins> <ins>file</ins> <ins>ablation-table.tex]</ins> SECTION HEADING: Experimental <ins>Setup</ins></p></div>
+  
+</article>
+<article class="card" id="c63">
+  <div class="head"><span class="n">63</span><h3>Removed section announcement</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">Announcement-only paragraph with a grammar error (&quot;This section explain&quot;). Removed per plan.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 482)</span></div><p><del>This</del> <del>section</del> <del>explain</del> <del>the</del> <del>experimental</del> <del>setup</del> <del>for</del> <del>the</del> <del>saved</del> <del>windowed</del> <del>run.</del> <del>It</del> <del>contains</del> <del>the</del> <del>configuration</del> <del>and</del> <del>reference</del> <del>information,</del> <del>the</del> <del>evaluation</del> <del>measures</del> <del>and</del> <del>the</del> <del>separate</del> <del>full</del> <del>interval</del> <del>comparison.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article></section><section id="s5"><h2>Experimental Setup</h2>
+<article class="card" id="c64">
+  <div class="head"><span class="n">64</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 487)</span></div><p>SUBSECTION HEADING: <del>Baseline</del> Reference</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 305)</span></div><p>SUBSECTION HEADING: Reference <ins>Solution</ins></p></div>
+  
+</article>
+<article class="card" id="c65">
+  <div class="head"><span class="n">65</span><h3>Reference Solution paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;a absolute&quot;). &quot;Distances away from training grid&quot; was inaccurate because the grids share endpoints; now &quot;a separate evaluation grid&quot; (plan). The repeated last sentence is cut.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 492)</span></div><p>Table ‹config› shows the parameters used for the reported windowed run. We use SciPy’s DOP853 [virtanen2020] as the numerical reference, a relative tolerance of $10^{-10}$ and <del>a</del> absolute tolerance of $10^{-12}$. It is sampled at 13,265 equally-spaced time <del>points,</del> <del>and</del> <del>Distances</del> <del>away</del> <del>from</del> <del>training</del> grid. <del>This</del> <del>is</del> <del>a</del> <del>numerical</del> <del>reference</del> <del>at</del> <del>specified</del> <del>tolerances.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 310)</span></div><p>Table ‹config› shows the parameters used for the reported windowed run. We use SciPy’s DOP853 [virtanen2020] as the numerical reference, a relative tolerance of $10^{-10}$ and <ins>an</ins> absolute tolerance of $10^{-12}$. It is sampled at 13,265 equally-spaced time <ins>points</ins> <ins>on</ins> a <ins>separate</ins> <ins>evaluation</ins> <ins>grid.</ins></p></div>
+  
+</article>
+<article class="card" id="c66">
+  <div class="head"><span class="n">66</span><h3>Config table caption</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Capitalised first word.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 496)</span></div><p>CAPTION: <del>windowed-run</del> configuration</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 313)</span></div><p>CAPTION: <ins>Windowed-run</ins> configuration</p></div>
+  
+</article>
+<article class="card" id="c67">
+  <div class="head"><span class="n">67</span><h3>Config table: parameters</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Adds the 304,641 total, so the table matches the text.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 505)</span></div><p>Parameters | <del>11,283</del> <del>per</del> <del>window</del> /</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 322)</span></div><p>Parameters | <ins>11,283/window;</ins> <ins>304,641</ins> <ins>total</ins> /</p></div>
+  
+</article>
+<article class="card" id="c68">
+  <div class="head"><span class="n">68</span><h3>Config table: initial condition</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Written as a vector in square brackets, matching the notation everywhere else.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 506)</span></div><p>Initial condition; precision | <del>0.5,</del> <del>0.75,</del> <del>1.0;</del> float64 /</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 323)</span></div><p>Initial condition; precision | <ins>$[0.5,0.75,1.0]^\mathsf{T}$;</ins> float64 /</p></div>
+  
+</article>
+<article class="card" id="c69">
+  <div class="head"><span class="n">69</span><h3>Config table: threshold row</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">&quot;epoch limit&quot; became &quot;steps/stage&quot; (they are Adam updates). The old &quot;min$\_w$&quot; math was broken; it now renders min over all points.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 509)</span></div><p>Stage threshold; <del>epoch</del> <del>limit</del> | <del>min</del> <del>$\_w_{k,i}&gt;0.99$;</del> 4,000 /</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 326)</span></div><p>Stage threshold; <ins>steps/stage</ins> | <ins>$\min_{1\leq i\leq n_k}w_{k,i}&gt;0.99$;</ins> 4,000 /</p></div>
+  
+</article>
+<article class="card" id="c70">
+  <div class="head"><span class="n">70</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 518)</span></div><p>SUBSECTION HEADING: <del>Measures</del> <del>and</del> <del>Comparison</del> <del>Run</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 335)</span></div><p>SUBSECTION HEADING: <ins>Evaluation</ins></p></div>
+  
+</article>
+<article class="card" id="c71">
+  <div class="head"><span class="n">71</span><h3>New: error vector</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3: defines the error vector and separates it from the ODE residual.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 336)</span></div><p><ins>At</ins> <ins>each</ins> <ins>evaluation</ins> <ins>time</ins> <ins>$t_j$,</ins> <ins>$j=1,\ldots,n_{\mathrm{eval}}$,</ins> <ins>we</ins> <ins>subtract</ins> <ins>the</ins> <ins>reference</ins> <ins>state</ins> <ins>from</ins> <ins>the</ins> <ins>predicted</ins> <ins>state</ins> <ins>and</ins> <ins>get</ins> <ins>the</ins> <ins>error</ins> <ins>vector</ins> <ins>$e(t_j)\in\mathbb{R}^3$.</ins> <ins>This</ins> <ins>error</ins> <ins>is</ins> <ins>not</ins> <ins>the</ins> <ins>same</ins> <ins>as</ins> <ins>the</ins> <ins>ODE</ins> <ins>residual.</ins></p></div>
+  
+</article>
+<article class="card" id="c72">
+  <div class="head"><span class="n">72</span><h3>Error vector display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Column vector became one row, with the j range in the sentence above. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 520–527)</span></div><div class="eq">\[e(t_j)
+=\hat{u}(t_j)-u_{\mathrm{ref}}(t_j)
+=
+\begin{bmatrix}
+e_x(t_j)\\ e_y(t_j)\\ e_z(t_j)
+\end{bmatrix}
+\in\mathbb{R}^{3},
+\qquad j=1,\ldots,n_{\mathrm{eval}}.\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 338–340)</span></div><div class="eq">\[\begin{aligned}
+e(t_j)&amp;=\hat{u}(t_j)-u_{\mathrm{ref}}(t_j)=[e_x,e_y,e_z]^\mathsf{T}(t_j).
+\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c73">
+  <div class="head"><span class="n">73</span><h3>New: combined RMSE explanation</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3: says in words how Eq. (9) is computed and that it equals the root-sum of the component RMSEs.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 342)</span></div><p><ins>For</ins> <ins>the</ins> <ins>combined</ins> <ins>RMSE,</ins> <ins>we</ins> <ins>take</ins> <ins>the</ins> <ins>mean</ins> <ins>of</ins> <ins>the</ins> <ins>squared</ins> <ins>error</ins> <ins>norms</ins> <ins>over</ins> <ins>all</ins> <ins>evaluation</ins> <ins>times</ins> <ins>and</ins> <ins>then</ins> <ins>the</ins> <ins>square</ins> <ins>root.</ins> <ins>It</ins> <ins>is</ins> <ins>also</ins> <ins>equal</ins> <ins>to</ins> <ins>the</ins> <ins>square</ins> <ins>root</ins> <ins>of</ins> <ins>the</ins> <ins>sum</ins> <ins>of</ins> <ins>the</ins> <ins>three</ins> <ins>squared</ins> <ins>component</ins> <ins>RMSEs.</ins></p></div>
+  
+</article>
+<article class="card" id="c74">
+  <div class="head"><span class="n">74</span><h3>Removed: second row of Eq. (9)</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">The component identity is now stated in the sentence (entry 73). Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 536–540)</span></div><div class="eq">\[\begin{aligned}\right)^{1/2}\\
+&amp;=\left(
+\operatorname{RMSE}_x^2
++\operatorname{RMSE}_y^2
++\operatorname{RMSE}_z^2\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c75">
+  <div class="head"><span class="n">75</span><h3>New: component measures</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Part 3 lead-in. E_mean and E_max are defined in words here, so their display could go.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 354)</span></div><p><ins>For</ins> <ins>each</ins> <ins>state</ins> <ins>$c\in\{x,y,z\}$</ins> <ins>we</ins> <ins>also</ins> <ins>report</ins> <ins>MAE,</ins> <ins>RMSE</ins> <ins>and</ins> <ins>the</ins> <ins>maximum</ins> <ins>absolute</ins> <ins>error.</ins> <ins>$E_{\mathrm{mean}}$</ins> <ins>and</ins> <ins>$E_{\mathrm{max}}$</ins> <ins>are</ins> <ins>the</ins> <ins>mean</ins> <ins>and</ins> <ins>the</ins> <ins>maximum</ins> <ins>of</ins> <ins>the</ins> <ins>error</ins> <ins>norm.</ins></p></div>
+  
+</article>
+<article class="card" id="c76">
+  <div class="head"><span class="n">76</span><h3>MAE / RMSE / Max display</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Same definitions in 2 compact rows instead of about 9 lines. Space.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 548–558)</span></div><div class="eq">\[\begin{aligned}\operatorname{MAE}_c
+&amp;=\frac{1}{n_{\mathrm{eval}}}
+\sum_{j=1}^{n_{\mathrm{eval}}}|e_c(t_j)|,\\
+\operatorname{RMSE}_c
+&amp;=\left(
+\frac{1}{n_{\mathrm{eval}}}
+\sum_{j=1}^{n_{\mathrm{eval}}}e_c(t_j)^2
+\right)^{1/2},\\
+\operatorname{Max}_c
+&amp;=\max_{1\leq j\leq n_{\mathrm{eval}}}|e_c(t_j)|,
+\qquad c\in\{x,y,z\}.\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 357–358)</span></div><div class="eq">\[\begin{aligned}\operatorname{MAE}_c&amp;=\tfrac{1}{n_{\mathrm{eval}}}\textstyle\sum_j|e_c(t_j)|,\quad \operatorname{Max}_c=\max_j|e_c(t_j)|,\\
+\operatorname{RMSE}_c&amp;=\bigl(\tfrac{1}{n_{\mathrm{eval}}}\textstyle\sum_j e_c(t_j)^2\bigr)^{1/2},\quad c\in\{x,y,z\}.\end{aligned}\]</div></div>
+  
+</article>
+<article class="card" id="c77">
+  <div class="head"><span class="n">77</span><h3>Dense residual sentence</h3>
+    <span class="pill added">added</span></div>
+  <p class="why">Your sentence kept and moved before its formula. Adds why it divides by three and RMSE does not (Part 3).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex</div><p class="empty">(not present)</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 364)</span></div><p><ins>The</ins> <ins>dense-grid</ins> <ins>residual</ins> <ins>mean</ins> <ins>square</ins> <ins>is</ins> <ins>the</ins> <ins>average</ins> <ins>of</ins> <ins>the</ins> <ins>three</ins> <ins>residual</ins> <ins>components</ins> <ins>squared,</ins> <ins>taken</ins> <ins>over</ins> <ins>the</ins> <ins>times</ins> <ins>of</ins> <ins>the</ins> <ins>evaluation.</ins> <ins>So</ins> <ins>it</ins> <ins>has</ins> <ins>a</ins> <ins>factor</ins> <ins>of</ins> <ins>$1/(3n_{\mathrm{eval}})$,</ins> <ins>but</ins> <ins>the</ins> <ins>combined</ins> <ins>state</ins> <ins>RMSE</ins> <ins>is</ins> <ins>not</ins> <ins>divided</ins> <ins>by</ins> <ins>three.</ins></p></div>
+  
+</article>
+<article class="card" id="c78">
+  <div class="head"><span class="n">78</span><h3>E display replaced by residual MSE formula</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">E_mean and E_max are now in words (entry 75). The residual MSE formula was missing from the paper (Part 1 equation list), so it&#x27;s added here.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 562–568)</span></div><div class="eq">\[\begin{aligned}
+E_{\mathrm{mean}}
+&amp;=\frac{1}{n_{\mathrm{eval}}}
+\sum_{j=1}^{n_{\mathrm{eval}}}\|e(t_j)\|_2,\\
+E_{\mathrm{max}}
+&amp;=\max_{1\leq j\leq n_{\mathrm{eval}}}\|e(t_j)\|_2.
+\end{aligned}\]</div></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 366–367)</span></div><div class="eq">\[\operatorname{MSE}_{r,\mathrm{eval}}
+=\frac{1}{3n_{\mathrm{eval}}}\sum_{j=1}^{n_{\mathrm{eval}}}\|r(t_j)\|_2^2.\]</div></div>
+  
+</article>
+<article class="card" id="c79">
+  <div class="head"><span class="n">79</span><h3>Comparison-run sentence + new Ablation Protocol and Failure Cases</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Isolated E_max sentence removed (duplicate), typo &quot;measuere&quot; fixed, and the config-difference list moved to Run Comparison. New subsections from the PR 37 task: configurations, seeds and budgets, and how failures are judged.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(lines 572–574)</span></div><p><del>while</del> <del>the</del> <del>combined</del> <del>maximum</del> <del>error</del> <del>is</del> <del>$\max_j\|e(t_j)\|_2$.</del> <del>The</del> <del>dense-grid</del> <del>residual</del> <del>mean</del> <del>square</del> <del>is</del> <del>the</del> <del>average</del> <del>of</del> <del>the</del> <del>three</del> <del>residual</del> <del>components</del> <del>squared,</del> <del>taken</del> <del>over</del> <del>the</del> <del>times</del> <del>of</del> <del>the</del> <del>evaluation.</del> The comparison run <del>is</del> <del>with</del> the same network depth and width <del>for</del> the entire interval <del>[0,</del> <del>T].</del> <del>The</del> <del>windowed</del> <del>run</del> <del>simultaneously</del> <del>changes</del> <del>the</del> <del>number</del> <del>of</del> <del>networks,</del> <del>the</del> <del>grid,</del> <del>loss,</del> <del>warm</del> <del>start</del> and <del>the</del> <del>optimizer</del> <del>schedule.</del> <del>We</del> <del>measuere</del> their final <del>output</del> and compare <del>them.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(lines 369–375)</span></div><p>The comparison run <ins>uses</ins> the same network depth and width <ins>on</ins> the entire interval <ins>$[0,T]$,</ins> and <ins>we</ins> <ins>compare</ins> their final <ins>outputs.</ins> <ins>SUBSECTION</ins> <ins>HEADING:</ins> <ins>Ablation</ins> <ins>Protocol</ins> <ins>Table</ins> <ins>‹ablations›</ins> <ins>shows</ins> <ins>the</ins> <ins>ablation</ins> and <ins>failure-case</ins> <ins>runs.</ins> <ins>All</ins> <ins>runs</ins> <ins>use</ins> <ins>the</ins> <ins>same</ins> <ins>initial</ins> <ins>state,</ins> <ins>coefficients,</ins> <ins>float64</ins> <ins>precision,</ins> <ins>interval</ins> <ins>and</ins> <ins>DOP853</ins> <ins>reference</ins> <ins>grid.</ins> <ins>The</ins> <ins>candidate</ins> <ins>is</ins> <ins>our</ins> <ins>windowed</ins> <ins>PINN</ins> <ins>from</ins> <ins>Section</ins> <ins>III,</ins> <ins>and</ins> <ins>we</ins> <ins>ran</ins> <ins>it</ins> <ins>with</ins> <ins>seeds</ins> <ins>0–4.</ins> <ins>Seed</ins> <ins>0</ins> <ins>is</ins> <ins>the</ins> <ins>run</ins> <ins>we</ins> <ins>reported</ins> <ins>in</ins> <ins>Tables</ins> <ins>‹errors›</ins> <ins>and</ins> <ins>‹comparison›.</ins> <ins>For</ins> <ins>the</ins> <ins>ablations</ins> <ins>we</ins> <ins>used</ins> <ins>seeds</ins> <ins>1–3.</ins> <ins>In</ins> <ins>the</ins> <ins>no-causal</ins> <ins>case</ins> <ins>we</ins> <ins>removed</ins> <ins>the</ins> <ins>causal</ins> <ins>weights</ins> <ins>and</ins> <ins>trained</ins> <ins>each</ins> <ins>window</ins> <ins>for</ins> <ins>1,300</ins> <ins>Adam</ins> <ins>steps</ins> <ins>(35,100</ins> <ins>in</ins> <ins>total).</ins> <ins>This</ins> <ins>is</ins> <ins>close</ins> <ins>to</ins> <ins>the</ins> <ins>candidate,</ins> <ins>which</ins> <ins>used</ins> <ins>34,768</ins> <ins>steps</ins> <ins>on</ins> <ins>average.</ins> <ins>In</ins> <ins>the</ins> <ins>no-warm-start</ins> <ins>case</ins> <ins>we</ins> <ins>kept</ins> <ins>the</ins> <ins>candidate</ins> <ins>schedule</ins> <ins>but</ins> <ins>did</ins> <ins>not</ins> <ins>copy</ins> <ins>the</ins> <ins>parameters</ins> <ins>of</ins> <ins>the</ins> <ins>previous</ins> <ins>window.</ins> <ins>The</ins> <ins>shared-network</ins> <ins>case</ins> <ins>uses</ins> <ins>the</ins> <ins>no-causal</ins> <ins>schedule,</ins> <ins>but</ins> <ins>one</ins> <ins>network</ins> <ins>is</ins> <ins>trained</ins> <ins>for</ins> <ins>all</ins> <ins>27</ins> <ins>windows</ins> <ins>one</ins> <ins>after</ins> <ins>another.</ins> <ins>In</ins> <ins>the</ins> <ins>causal</ins> <ins>single-network</ins> <ins>case</ins> <ins>we</ins> <ins>used</ins> <ins>causal</ins> <ins>weights</ins> <ins>on</ins> <ins>one</ins> <ins>network</ins> <ins>for</ins> <ins>the</ins> <ins>full</ins> <ins>interval,</ins> <ins>with</ins> <ins>the</ins> <ins>same</ins> <ins>grid</ins> <ins>and</ins> <ins>budget</ins> <ins>as</ins> <ins>the</ins> <ins>full-interval</ins> <ins>run:</ins> <ins>39,793</ins> <ins>LHS</ins> <ins>points,</ins> <ins>40,000</ins> <ins>Adam</ins> <ins>steps</ins> <ins>and</ins> <ins>at</ins> <ins>most</ins> <ins>5,000</ins> <ins>L-BFGS</ins> <ins>iterations.</ins> <ins>Some</ins> <ins>runs</ins> <ins>were</ins> <ins>on</ins> <ins>CPU</ins> <ins>and</ins> <ins>some</ins> <ins>on</ins> <ins>GPU,</ins> <ins>so</ins> <ins>we</ins> compare <ins>Adam</ins> <ins>steps</ins> <ins>and</ins> <ins>not</ins> <ins>wall</ins> <ins>time.</ins> <ins>SUBSECTION</ins> <ins>HEADING:</ins> <ins>Failure</ins> <ins>Cases</ins> <ins>We</ins> <ins>used</ins> <ins>two</ins> <ins>failure</ins> <ins>cases.</ins> <ins>The</ins> <ins>shared-network</ins> <ins>case</ins> <ins>checks</ins> <ins>if</ins> <ins>one</ins> <ins>network</ins> <ins>can</ins> <ins>keep</ins> <ins>what</ins> <ins>it</ins> <ins>learned</ins> <ins>in</ins> <ins>the</ins> <ins>earlier</ins> <ins>windows.</ins> <ins>The</ins> <ins>causal</ins> <ins>single-network</ins> <ins>case</ins> <ins>checks</ins> <ins>if</ins> <ins>causal</ins> <ins>weighting</ins> <ins>alone</ins> <ins>can</ins> <ins>fix</ins> <ins>the</ins> <ins>error</ins> <ins>of</ins> <ins>the</ins> <ins>full-interval</ins> <ins>network.</ins> <ins>We</ins> <ins>judge</ins> <ins>a</ins> <ins>run</ins> <ins>only</ins> <ins>by</ins> <ins>its</ins> <ins>final</ins> <ins>error</ins> <ins>against</ins> <ins>DOP853.</ins> <ins>All</ins> <ins>the</ins> <ins>runs</ins> <ins>completed</ins> <ins>training,</ins> <ins>so</ins> <ins>a</ins> <ins>large</ins> <ins>error</ins> <ins>here</ins> <ins>means</ins> <ins>a</ins> <ins>poor</ins> <ins>prediction</ins> <ins>and</ins> <ins>not</ins> <ins>a</ins> <ins>stopped</ins> <ins>job.</ins> <ins>When</ins> <ins>a</ins> <ins>stage</ins> <ins>reaches</ins> <ins>the</ins> <ins>4,000-step</ins> <ins>cap</ins> <ins>we</ins> <ins>record</ins> <ins>it,</ins> <ins>but</ins> <ins>this</ins> <ins>alone</ins> <ins>does</ins> <ins>not</ins> <ins>mean</ins> <ins>the</ins> <ins>trajectory</ins> <ins>failed.</ins> <ins>We</ins> <ins>did</ins> <ins>not</ins> <ins>use</ins> <ins>any</ins> <ins>success</ins> <ins>cutoff</ins> <ins>to</ins> <ins>pick</ins> <ins>runs,</ins> <ins>and</ins> <ins>Table</ins> <ins>‹ablations›</ins> <ins>shows</ins> <ins>every</ins> <ins>completed</ins> <ins>seed.</ins></p></div>
+  
+</article>
+<article class="card" id="c80">
+  <div class="head"><span class="n">80</span><h3>Removed section announcement</h3>
+    <span class="pill removed">removed</span></div>
+  <p class="why">Announcement-only paragraph. Removed per plan.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 582)</span></div><p><del>This</del> <del>section</del> <del>reports</del> <del>the</del> <del>measurements</del> <del>taken</del> <del>from</del> <del>the</del> <del>completed</del> <del>training</del> <del>artifacts.</del> <del>We</del> <del>first</del> <del>look</del> <del>at</del> <del>what</del> <del>the</del> <del>windowed</del> <del>model</del> <del>does</del> <del>correctly</del> <del>and</del> <del>how</del> <del>well</del> <del>it</del> <del>follows</del> <del>the</del> <del>true</del> <del>path</del> <del>and</del> <del>physics.</del> <del>We</del> <del>then</del> <del>compare</del> <del>these</del> <del>results</del> <del>with</del> <del>the</del> <del>baseline</del> <del>reference</del> <del>and</del> <del>a</del> <del>single-network</del> <del>run</del> <del>for</del> <del>comparison</del> <del>with</del> <del>the</del> <del>behaviour</del> <del>of</del> <del>the</del> <del>model.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex</div><p class="empty">(not present)</p></div>
+  
+</article>
+<article class="card" id="c94">
+  <div class="head"><span class="n">94</span><h3>New file: ablation-table.tex</h3><span class="pill added">added</span></div>
+  <p class="why">Part 2 of your request: the ablation and failure-case table built from the PR 37 runs (values in verified-ablation-values.csv). main.tex inserts it at entry 62; it is explained in Ablation Protocol, Failure Cases and Ablation and Failure Results.</p>
+  <div class="side ins"><div class="tag">After · ablation-table.tex <span>(lines 1–17)</span></div>
+  <pre class="src">\begin{table*}[t]
+\caption{Ablation results (medians over seeds)}
+\label{tab:ablations}
+\centering\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+Configuration &amp; Seeds &amp; Median RMSE &amp; RMSE range &amp; Residual MSE\\
+\midrule
+Candidate &amp; 5 &amp; $8.13\!\times\!10^{-5}$ &amp; $6.97\!\times\!10^{-5}$--$2.60\!\times\!10^{-4}$ &amp; $1.87\!\times\!10^{-7}$\\
+No causal &amp; 3 &amp; $1.89\!\times\!10^{-4}$ &amp; $1.75\!\times\!10^{-4}$--$5.16\!\times\!10^{-4}$ &amp; $8.81\!\times\!10^{-7}$\\
+No warm start &amp; 3 &amp; $2.85\!\times\!10^{-4}$ &amp; $1.76\!\times\!10^{-4}$--$2.88\!\times\!10^{-4}$ &amp; $8.35\!\times\!10^{-7}$\\
+Shared network &amp; 3 &amp; $0.486$ &amp; $0.350$--$0.648$ &amp; $0.965$\\
+Causal single &amp; 1 &amp; $0.275$ &amp; -- &amp; $5.23\!\times\!10^{-6}$\\
+Full interval &amp; 1 &amp; $2.237$ &amp; -- &amp; --\\
+\bottomrule
+\end{tabular}
+\end{table*}</pre></div>
+</article></section><section id="s6"><h2>Results</h2>
+<article class="card" id="c81">
+  <div class="head"><span class="n">81</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 584)</span></div><p>SUBSECTION HEADING: <del>State</del> Accuracy <del>and</del> <del>Physics</del> <del>Checks</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 380)</span></div><p>SUBSECTION HEADING: <ins>Prediction</ins> Accuracy</p></div>
+  
+</article>
+<article class="card" id="c82">
+  <div class="head"><span class="n">82</span><h3>Prediction Accuracy paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;the error show small peaks in the errors&quot;). Adds which formula each Table III state-norm cell uses (Part 3), so Eq. (9) is now referenced.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 585)</span></div><p>We compare the windowed PINN with an extremely accurate numerical reference which is SciPy&#x27;s DOP853. As shown in Table ‹errors›, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure ‹trajectory› plots these predictions against the reference over time. The trajectories <del>are</del> <del>shown</del> <del>to</del> overlap <del>completely</del> but the error <del>show</del> small <del>peaks</del> <del>in</del> <del>the</del> <del>errors</del> particularly at $t\simeq5$.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 381)</span></div><p>We compare the windowed PINN with an extremely accurate numerical reference which is SciPy&#x27;s DOP853. As shown in Table ‹errors›, our model achieved a combined RMSE of $6.97\times10^{-5}$ across the 13,265 uniform times in our evaluation grid. The highest state error norm was $3.09\times10^{-4}$. Figure ‹trajectory› plots these predictions against the reference over time. The trajectories overlap <ins>completely,</ins> but the error <ins>shows</ins> small <ins>peaks,</ins> particularly at $t\simeq5$. <ins>In</ins> <ins>the</ins> <ins>state-norm</ins> <ins>row,</ins> <ins>the</ins> <ins>MAE-column</ins> <ins>entry</ins> <ins>is</ins> <ins>$E_{\mathrm{mean}}$,</ins> <ins>the</ins> <ins>RMSE</ins> <ins>entry</ins> <ins>is</ins> <ins>$\operatorname{RMSE}_2$</ins> <ins>from</ins> <ins>Eq.(rmse),</ins> <ins>and</ins> <ins>the</ins> <ins>maximum</ins> <ins>entry</ins> <ins>is</ins> <ins>$E_{\mathrm{max}}$.</ins></p></div>
+  
+</article>
+<article class="card" id="c83">
+  <div class="head"><span class="n">83</span><h3>Error table caption</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Short caption; &quot;seed 0&quot; says which run it is now that the paper has five seeds.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 588)</span></div><p>CAPTION: Windowed-run error <del>against</del> <del>DOP853</del> <del>on</del> <del>13,265</del> <del>times</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 384)</span></div><p>CAPTION: Windowed-run error <ins>(seed</ins> <ins>0)</ins></p></div>
+  
+</article>
+<article class="card" id="c84">
+  <div class="head"><span class="n">84</span><h3>Figure 3 caption</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Short caption. The figure file was also redrawn from the seed-0 checkpoint (RMSE reproduced) without its long built-in title.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 606)</span></div><p>CAPTION: PINN <del>solution</del> <del>vs</del> <del>reference</del> <del>with</del> <del>signed</del> <del>errors.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 402)</span></div><p>CAPTION: <ins>Windowed</ins> PINN <ins>vs.\</ins> <ins>DOP853</ins> <ins>(seed</ins> <ins>0)</ins></p></div>
+  
+</article>
+<article class="card" id="c85">
+  <div class="head"><span class="n">85</span><h3>Physics-check paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar fixes. &quot;Drifted less than 4e-10 for perspective&quot; didn&#x27;t say what drifted; it now names the conserved invariants and gives the drift for DOP853 and the PINN, from the run record (it also references Eq. (2)).</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 610)</span></div><p>We also measured how closely the model obeyed the underlying equations. The MSE of the ODE residual was very small on the evaluation grid at $1.872\times10^{-7}$. <del>Also</del> <del>the</del> residual MSE of windowed run on collocation grid is nearly same ( $1.874\times10^{-7}$). The <del>DOP853</del> <del>reference</del> <del>drifted</del> <del>less</del> <del>than</del> $4\times10^{-10}$ for <del>perspective.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 406)</span></div><p>We also measured how closely the model obeyed the underlying equations. The MSE of the ODE residual was very small on the evaluation grid at $1.872\times10^{-7}$. <ins>The</ins> residual MSE of <ins>the</ins> windowed run on <ins>the</ins> collocation grid is nearly <ins>the</ins> same ( $1.874\times10^{-7}$). The <ins>system</ins> <ins>Eq.(ode)</ins> <ins>conserves</ins> <ins>every</ins> <ins>quadratic</ins> <ins>form</ins> <ins>$\alpha x^2+\beta y^2+\gamma z^2$</ins> <ins>with</ins> <ins>$[\alpha,\beta,\gamma]^\mathsf{T}$</ins> <ins>orthogonal</ins> <ins>to</ins> <ins>$a$.</ins> <ins>The</ins> <ins>maximum</ins> <ins>relative</ins> <ins>drift</ins> <ins>of</ins> <ins>its</ins> <ins>two</ins> <ins>independent</ins> <ins>invariants</ins> <ins>is</ins> <ins>below</ins> $4\times10^{-10}$ for <ins>DOP853</ins> <ins>and</ins> <ins>below</ins> <ins>$2.6\times10^{-4}$</ins> <ins>for</ins> <ins>our</ins> <ins>PINN.</ins></p></div>
+  
+</article>
+<article class="card" id="c86">
+  <div class="head"><span class="n">86</span><h3>Subsection heading</h3>
+    <span class="pill changed">changed</span><span class="pill base">was already in the Oct 8 baseline</span></div>
+  <p class="why">Shorter heading from the plan. Already in the Oct 8 baseline.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 615)</span></div><p>SUBSECTION HEADING: Comparison <del>and</del> <del>Training</del> <del>Record</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 411)</span></div><p>SUBSECTION HEADING: <ins>Run</ins> Comparison</p></div>
+  
+</article>
+<article class="card" id="c87">
+  <div class="head"><span class="n">87</span><h3>Run Comparison paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Both runs are float64, so &quot;differ in precision&quot; was false (review, major); the real differences are listed. &quot;Uncontrolled ablation&quot; became &quot;comparison of two saved configurations&quot; (plan). The untested smaller-network claim is removed and a cross-reference to Table I added.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 616)</span></div><p>The differences with respect to the two saved configurations are shown in Table ‹comparison›. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network&#x27;s RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. <del>All</del> of <del>the</del> <del>above</del> <del>are</del> <del>uncontrolled</del> <del>types</del> <del>of</del> <del>ablation</del> in <del>the</del> <del>concept</del> <del>of</del> causal weighting [wang2024causal], windowing [penwarden2023] and warm starts as well as <del>precision</del> and <del>even</del> <del>L-BFGS.</del> In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid. <del>Reducing</del> <del>the</del> <del>parameter</del> <del>count</del> <del>of</del> <del>each</del> <del>network</del> <del>might</del> <del>result</del> <del>in</del> <del>similar</del> <del>error.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 412)</span></div><p>The differences with respect to the two saved configurations are shown in Table ‹comparison›. The RMSE value of the entire interval network is 2.237, which is much larger than the windowed run network&#x27;s RMSE value of $6.97\times10^{-5}$. It is a notable result for the recorded settings of this initial value problem. <ins>This</ins> <ins>is</ins> <ins>a</ins> <ins>comparison</ins> of <ins>two</ins> <ins>saved</ins> <ins>configurations,</ins> <ins>which</ins> <ins>differ</ins> in causal weighting [wang2024causal], windowing [penwarden2023] and warm starts as well as <ins>the</ins> <ins>collocation</ins> <ins>grid,</ins> <ins>the</ins> <ins>Adam</ins> <ins>schedule</ins> and <ins>the</ins> <ins>L-BFGS</ins> <ins>budget.</ins> <ins>The</ins> <ins>full-interval</ins> <ins>row</ins> <ins>of</ins> <ins>Table</ins> <ins>‹ablations›</ins> <ins>is</ins> <ins>this</ins> <ins>same</ins> <ins>run.</ins> In particular the model with the window is much more complicated with 27 times as many parameters and a different collocation grid.</p></div>
+  
+</article>
+<article class="card" id="c88">
+  <div class="head"><span class="n">88</span><h3>Comparison table caption</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Short caption.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 619)</span></div><p>CAPTION: <del>Saved</del> <del>full-interval</del> and windowed runs <del>on</del> <del>the</del> <del>same</del> <del>IVP</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 415)</span></div><p>CAPTION: <ins>Full-interval</ins> and windowed runs</p></div>
+  
+</article>
+<article class="card" id="c89">
+  <div class="head"><span class="n">89</span><h3>Comparison table: wall time row</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The runs used different hardware (CPU vs GPU), so wall time isn&#x27;t comparable. Replaced with Adam steps from the run records.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 631)</span></div><p>Recorded <del>wall</del> <del>time</del> <del>(s)</del> | <del>4,529</del> | <del>881</del> /</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 427)</span></div><p>Recorded <ins>Adam</ins> <ins>steps</ins> | <ins>40,000</ins> | <ins>34,765</ins> /</p></div>
+  
+</article>
+<article class="card" id="c90">
+  <div class="head"><span class="n">90</span><h3>L-BFGS count</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">1,000 is the iteration budget, not a closure count. The run record shows 33,143 closure evaluations in total.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 636)</span></div><p>The 27 run windows had 34,765 Adam updates and <del>1000</del> L-BFGS closure evaluations <del>per</del> <del>window.</del> Closure evaluations are function calls made by L-BFGS, not iterations. Only two of the 108 causal stages ended at the 4,000-step cap without meeting the $0.99$ weight threshold.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 432)</span></div><p>The 27 run windows had 34,765 Adam updates and <ins>33,143</ins> L-BFGS closure evaluations <ins>in</ins> <ins>total.</ins> Closure evaluations are function calls made by L-BFGS, not iterations. Only two of the 108 causal stages ended at the 4,000-step cap without meeting the $0.99$ weight threshold.</p></div>
+  
+</article>
+<article class="card" id="c91">
+  <div class="head"><span class="n">91</span><h3>Discussion heading became Ablation results heading</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">The plan removes the standalone Discussion and Limitations section. Its place is taken by the new results subsection for the PR 37 ablations.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 637)</span></div><p><del>SECTION</del> HEADING: <del>Discussion</del> and <del>Limitations</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 434)</span></div><p><ins>SUBSECTION</ins> HEADING: <ins>Ablation</ins> and <ins>Failure</ins> <ins>Results</ins></p></div>
+  
+</article>
+<article class="card" id="c92">
+  <div class="head"><span class="n">92</span><h3>Discussion paragraph became Ablation results paragraph</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Discussion statements were moved: derivative caveat and propagated error to Window Handoff, configuration differences to Run Comparison, collocation note to Training Loss, scope to Conclusion. Outdated claims were dropped (&quot;no run without causal weights&quot;, &quot;one seed&quot;). The new text reports the PR 37 ablations, including p = 0.196.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 638)</span></div><p><del>There</del> are <del>a</del> <del>few</del> <del>limitations</del> <del>of</del> <del>our</del> <del>method.</del> <del>The</del> <del>trial</del> <del>solution</del> <del>[lagaris1998]</del> <del>defines</del> the <del>initial</del> <del>state</del> <del>for</del> <del>each</del> <del>window</del> <del>exactly.</del> <del>The</del> <del>values</del> <del>remain</del> <del>continuous</del> <del>at</del> <del>the</del> <del>boundaries,</del> but the <del>derivatives</del> <del>can</del> <del>still</del> <del>change</del> <del>suddenly</del> <del>at</del> the <del>boundaries.</del> <del>This</del> <del>comparison</del> with the <del>single</del> <del>network</del> <del>is</del> <del>only</del> <del>a</del> <del>description</del> <del>of</del> <del>two</del> <del>saved</del> <del>runs.</del> The <del>two</del> <del>runs</del> <del>differed</del> <del>in</del> <del>a</del> <del>number</del> <del>of</del> <del>things,</del> <del>including</del> <del>the</del> <del>number</del> <del>of</del> <del>networks,</del> <del>grid,</del> <del>loss</del> and <del>schedule.</del> <del>There</del> <del>was</del> <del>not</del> <del>a</del> <del>windowed</del> <del>run</del> <del>that</del> <del>was</del> <del>saved</del> <del>without</del> <del>using</del> <del>causal</del> <del>weights,</del> <del>because</del> <del>[wang2024causal]</del> <del>they</del> <del>are</del> <del>finding</del> <del>was</del> <del>respecting</del> <del>causality</del> <del>gives</del> <del>one</del> <del>or</del> <del>two</del> <del>order</del> <del>less</del> <del>error.</del> <del>This</del> <del>research</del> <del>applies</del> <del>to</del> <del>only</del> <del>one</del> <del>seed,</del> <del>one</del> <del>initial</del> <del>state</del> <del>and</del> <del>one</del> <del>coefficient</del> <del>set.</del> <del>Other</del> <del>initial</del> <del>states</del> <del>and</del> <del>other</del> <del>coefficient</del> <del>sets</del> <del>may</del> <del>result</del> <del>in</del> <del>different</del> <del>behavior.</del> <del>There</del> <del>is</del> <del>a</del> <del>weakness</del> <del>with</del> <del>the</del> <del>handoff.</del> <del>All</del> <del>windows</del> <del>that</del> <del>follow</del> <del>the</del> <del>first</del> <del>window</del> <del>begin</del> <del>from</del> <del>a</del> <del>predicted</del> <del>state</del> <del>and</del> <del>not</del> <del>the</del> <del>actual</del> <del>state.</del> <del>This</del> <del>means</del> <del>that</del> <del>errors</del> <del>from</del> <del>earlier</del> <del>windows</del> <del>get</del> <del>carried</del> <del>over</del> <del>to</del> <del>later</del> <del>windows.</del> <del>Only</del> <del>2</del> of the 108 <del>causal</del> stages <del>were</del> <del>at</del> <del>the</del> <del>4,000-step</del> <del>limit</del> <del>but</del> <del>failed</del> <del>to</del> reach the <del>$0.99$</del> <del>weight</del> <del>limit.</del> The causal weights <del>Wang</del> <del>et</del> <del>al.</del> <del>vary</del> <del>depending</del> <del>on</del> the <del>number</del> <del>and</del> <del>spacing</del> <del>of</del> <del>the</del> <del>collocation</del> <del>points</del> <del>so</del> <del>if</del> <del>we</del> <del>increase</del> <del>the</del> <del>number</del> <del>of</del> <del>collocation</del> <del>points</del> <del>that</del> <del>will</del> <del>decrease</del> <del>the</del> <del>training</del> <del>loss.</del> <del>To</del> <del>obtain</del> <del>a</del> <del>fairer</del> <del>future</del> <del>test,</del> <del>one</del> <del>and</del> <del>only</del> <del>one</del> <del>training</del> <del>option</del> <del>will</del> <del>be</del> <del>changed</del> <del>at</del> <del>a</del> <del>time,</del> <del>with</del> <del>several</del> <del>seeds.</del></p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 435)</span></div><p><ins>Table</ins> <ins>‹ablations›</ins> <ins>shows</ins> the <ins>ablation</ins> <ins>results.</ins> The <ins>median</ins> <ins>RMSE</ins> <ins>of</ins> the <ins>candidate</ins> <ins>is</ins> <ins>$8.13\times10^{-5}$,</ins> <ins>and</ins> <ins>three</ins> <ins>of</ins> <ins>the</ins> <ins>five</ins> <ins>seeds</ins> <ins>are</ins> <ins>below</ins> <ins>$10^{-4}$.</ins> <ins>Without</ins> <ins>causal</ins> <ins>weights</ins> <ins>the</ins> <ins>median</ins> <ins>is</ins> <ins>about</ins> <ins>2.3</ins> <ins>times</ins> <ins>larger,</ins> but the <ins>difference</ins> <ins>is</ins> <ins>not</ins> <ins>significant</ins> <ins>(Mann–Whitney</ins> <ins>$p=0.196$),</ins> <ins>and</ins> <ins>for</ins> <ins>seed</ins> <ins>2</ins> the <ins>no-causal</ins> <ins>run</ins> <ins>has</ins> <ins>lower</ins> <ins>RMSE</ins> <ins>than</ins> <ins>the</ins> <ins>candidate.</ins> <ins>Without</ins> <ins>warm</ins> <ins>start,</ins> <ins>all</ins> <ins>three</ins> <ins>seeds</ins> <ins>have</ins> <ins>larger</ins> <ins>RMSE</ins> <ins>than</ins> <ins>the</ins> <ins>candidate</ins> with the <ins>same</ins> <ins>seed.</ins> The <ins>mean</ins> <ins>Adam</ins> <ins>steps</ins> <ins>also</ins> <ins>rise</ins> to <ins>102,989,</ins> and <ins>17–19</ins> of the 108 stages reach the <ins>cap,</ins> <ins>while</ins> <ins>the</ins> <ins>candidate</ins> <ins>has</ins> <ins>only</ins> <ins>1–2.</ins> <ins>When</ins> <ins>one</ins> <ins>network</ins> <ins>is</ins> <ins>reused</ins> <ins>for</ins> <ins>all</ins> <ins>windows,</ins> <ins>the</ins> <ins>RMSE</ins> <ins>is</ins> <ins>between</ins> <ins>0.350</ins> <ins>and</ins> <ins>0.648.</ins> <ins>With</ins> <ins>separate</ins> <ins>networks</ins> <ins>and</ins> <ins>the</ins> <ins>same</ins> <ins>no-causal</ins> <ins>schedule</ins> <ins>it</ins> <ins>is</ins> <ins>between</ins> <ins>$1.75\times10^{-4}$</ins> <ins>and</ins> <ins>$5.16\times10^{-4}$.</ins> <ins>This</ins> <ins>matches</ins> <ins>what</ins> <ins>we</ins> <ins>noticed</ins> <ins>in</ins> <ins>Section</ins> <ins>III,</ins> <ins>that</ins> <ins>the</ins> <ins>previous</ins> <ins>learning</ins> <ins>is</ins> <ins>lost</ins> <ins>or</ins> <ins>degraded</ins> <ins>when</ins> <ins>one</ins> <ins>network</ins> <ins>moves</ins> <ins>to</ins> <ins>a</ins> <ins>new</ins> <ins>window.</ins> The causal <ins>single</ins> <ins>network</ins> <ins>gives</ins> <ins>0.275</ins> <ins>in</ins> <ins>its</ins> one <ins>run.</ins> <ins>This</ins> <ins>is</ins> <ins>lower</ins> <ins>than</ins> <ins>the</ins> <ins>full-interval</ins> <ins>run</ins> <ins>but</ins> <ins>still</ins> <ins>far</ins> <ins>from</ins> <ins>the</ins> <ins>windowed</ins> <ins>runs.</ins> <ins>These</ins> <ins>runs</ins> <ins>support</ins> <ins>the</ins> <ins>combination</ins> <ins>of</ins> <ins>windows,</ins> <ins>warm</ins> <ins>start</ins> and <ins>causal</ins> <ins>weights</ins> <ins>that</ins> <ins>we</ins> <ins>tested</ins> <ins>for</ins> <ins>this</ins> <ins>orbit.</ins> <ins>But</ins> with <ins>three</ins> <ins>to</ins> <ins>five</ins> <ins>seeds,</ins> <ins>they</ins> <ins>do</ins> <ins>not</ins> <ins>show</ins> <ins>that</ins> <ins>causal</ins> <ins>weighting</ins> <ins>always</ins> <ins>improves</ins> <ins>the</ins> <ins>accuracy.</ins></p></div>
+  
+</article></section><section id="s7"><h2>Conclusion</h2>
+<article class="card" id="c93">
+  <div class="head"><span class="n">93</span><h3>Conclusion</h3>
+    <span class="pill changed">changed</span></div>
+  <p class="why">Grammar (&quot;Each of our 27 window PINN passes each of the tests&quot;). The garbled &quot;next window was predicted to be at the end&quot; is removed. Adds the five-seed median and the scope limitation moved from Discussion; &quot;generalise&quot; made American.</p>
+  <div class="side del"><div class="tag">Before · main_prev.tex <span>(line 644)</span></div><p><del>Each</del> <del>of</del> <del>our</del> <del>27</del> <del>window</del> PINN passes <del>each</del> <del>of</del> <del>the</del> <del>tests</del> on the nearly closed Lorenz-system interval $[0,13.26446]$. The <del>next</del> <del>window</del> <del>was</del> <del>predicted</del> <del>to</del> <del>be</del> <del>at</del> <del>the</del> <del>end.</del> <del>The</del> <del>saved</del> run had a combined state RMSE of $6.97\times10^{-5}$ in comparison to <del>DOP853.</del> A network <del>designed</del> <del>separately</del> <del>to</del> full <del>intervals</del> recorded an RMSE of 2.237. Future research will focus on matched configurations and initial states and <del>generalise</del> to problems with specified boundary conditions at each end.</p></div>
+  <div class="side ins"><div class="tag">After · main.tex <span>(line 439)</span></div><p><ins>Our</ins> <ins>27-window</ins> PINN passes <ins>every</ins> <ins>check</ins> on the nearly closed Lorenz-system interval $[0,13.26446]$. The <ins>seed-0</ins> run had a combined state RMSE of $6.97\times10^{-5}$ in comparison to <ins>DOP853,</ins> <ins>and</ins> <ins>the</ins> <ins>median</ins> <ins>over</ins> <ins>five</ins> <ins>seeds</ins> <ins>is</ins> <ins>$8.13\times10^{-5}$.</ins> A <ins>separate</ins> network <ins>trained</ins> <ins>on</ins> <ins>the</ins> full <ins>interval</ins> recorded an RMSE of 2.237. <ins>This</ins> <ins>research</ins> <ins>applies</ins> <ins>to</ins> <ins>only</ins> <ins>one</ins> <ins>initial</ins> <ins>state</ins> <ins>and</ins> <ins>one</ins> <ins>coefficient</ins> <ins>set.</ins> <ins>Other</ins> <ins>initial</ins> <ins>states</ins> <ins>and</ins> <ins>other</ins> <ins>coefficient</ins> <ins>sets</ins> <ins>may</ins> <ins>result</ins> <ins>in</ins> <ins>different</ins> <ins>behavior.</ins> Future research will focus on matched configurations and initial states and <ins>generalize</ins> to problems with specified boundary conditions at each end.</p></div>
+  
+</article></section>
+</main></body></html>
