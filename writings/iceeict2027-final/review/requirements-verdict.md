@@ -1,6 +1,6 @@
 # Final point-by-point submission requirements
 
-Paper source commit: 9a9e5ab56338c0e5c4c7b8d1a754179612853268. PDF SHA-256: 9494f54f1ec97d4a3bee13c866bb03aeec4b747d7478bdbca2be2a3a50f80de9.
+Paper source commit: 80c6266a3c9524ca437e7c130181ea8c26ced4d3. PDF SHA-256: 2a3ac3710bb8d34b48aa61571007cacb3b9e2f4720d79918f6b98cbc533b29f9.
 
 All previously failed figure typography checks are corrected. Author attestations and later submission checks retain their original evidence categories.
 
@@ -8,11 +8,11 @@ All previously failed figure typography checks are corrected. Author attestation
 | --- | --- | --- | --- |
 | S01 | IEEE double-column template | Pass | IEEEtran conference A4, two columns; class/style unchanged. |
 | S02 | PDF format | Pass | Compiled main.pdf opens and every page was rendered. |
-| S03 | File size at most 3 MB | Pass | 2,697,666 bytes, below 3 MB. |
+| S03 | File size at most 3 MB | Pass | 2,845,787 bytes, below 3 MB. |
 | S04 | A4 paper | Pass | All six pages are 595.28 x 841.89 PDF points. |
 | S05 | Maximum six pages including everything | Pass | Six pages including figures, tables and 13 references; no font/margin compression. |
-| S06 | No Type 3 fonts | Pass | Zero Type 3 fonts among 26 final fonts. |
-| S07 | All fonts embedded | Pass | All 26 font programs are embedded. |
+| S06 | No Type 3 fonts | Pass | Zero Type 3 fonts among 27 final fonts. |
+| S07 | All fonts embedded | Pass | All 27 font programs are embedded. |
 | S08 | Every author meets authorship criteria | Author-confirmed | Submitting author confirms authorship/contributions alignment; private contributor evidence not independently checked. |
 | S09 | Strict IEEE typesetting and bibliography | Pass on checked file requirements | All three regenerated figures use embedded Times New Roman at minimum 8.5 pt in the final PDF; IEEEtran defaults and corrected bibliography remain unchanged. Labels, ticks and curves were visually inspected. |
 | S10 | Agreement on author sequence | Author-confirmed | Submitting author confirms author-order agreement and supervisor alignment. |

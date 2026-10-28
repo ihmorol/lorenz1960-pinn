@@ -53,8 +53,9 @@ g)) (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd)
 (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd)
 [1{C:/Users/User/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Use
 r/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}] [2 <./figures/pla
-teau-results.pdf>] [3 <./figures/method.pdf>] (ablation-table.tex) [4] [5 <./fi
-gures/solution_vs_reference.pdf>]
+teau-results.pdf>]
+Underfull \vbox (badness 2460) has occurred while \output is active [3 <./figur
+es/method.pdf>] (ablation-table.tex) [4] [5]
 Underfull \hbox (badness 2435) in paragraph at lines 423--424
 \OT1/ptm/m/n/10 as-sis-tance with for-mat-ting, type-set-ting, lan-guage edit-i
 ng
@@ -70,7 +71,7 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[6] (main.aux) )
+[6 <./figures/solution_vs_reference.pdf>] (main.aux) )
 (see the transcript file for additional information)<C:/Users/User/AppData/Loca
 l/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/User/AppD
 ata/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/U
@@ -96,5 +97,5 @@ pe1/urw/times/utmb8a.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/urw/times/utmbi8a.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/typ
 e1/urw/times/utmr8a.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type
 1/urw/times/utmri8a.pfb>
-Output written on main.pdf (6 pages, 2697666 bytes).
+Output written on main.pdf (6 pages, 2845787 bytes).
 Transcript written on main.log.
