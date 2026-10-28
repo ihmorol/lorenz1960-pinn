@@ -169,7 +169,12 @@ def test_restore_prefers_drive_validates_checkpoints_and_keeps_local_finished_ru
     _write(local / "c_seed1" / "run_summary.csv", "local finished")
     _write(local / "c_seed1" / "history" / "config.json", "local copy")
 
-    notes = restore(drive, local)
+    _write(drive / "b_seed1" / "history" / "window_00.pt", "bulk")
+    _write(drive / "sequential_single_net" / "net.pt", "obsolete run from old code")
+
+    notes = restore(drive, local, {"b_seed1", "c_seed1", "absent_seed1"})
+    assert not (local / "b_seed1" / "history" / "window_00.pt").exists()
+    assert not (local / "sequential_single_net").exists()
     assert torch.load(local / "b_seed1" / "history" / "progress.pt", weights_only=False) == {"ok": 1}
     assert len(notes) == 1 and "previous" in notes[0]
     assert (local / "b_seed1" / "history" / "loss_history.csv").read_text() == "drive"

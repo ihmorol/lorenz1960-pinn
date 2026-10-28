@@ -107,20 +107,26 @@ def _loadable(path: Path) -> bool:
         return False
 
 
-def restore(drive: Path, local: Path) -> list[str]:
-    """Drive -> local. Drive wins, except for runs that only the local tree has finished."""
+def restore(drive: Path, local: Path, runs: set[str]) -> list[str]:
+    """Drive -> local for the planned runs only. Drive wins, except for runs that only the
+    local tree has finished; bulk the sync never needs (see _skip) is left on Drive."""
     notes = []
-    if not drive.exists():
-        return notes
-    for s in sorted(p for p in drive.rglob("*") if p.is_file()):
-        rel = s.relative_to(drive)
-        run = rel.parts[0]
-        if s.name.endswith((".partial", ".prev.pt")) or (
-                (local / run / "run_summary.csv").exists() and not (drive / run / "run_summary.csv").exists()):
+    for run in sorted(r for r in runs if (drive / r).is_dir()):
+        if (local / run / "run_summary.csv").exists() and not (drive / run / "run_summary.csv").exists():
             continue
-        if not _same(s, local / rel):
+        finished = {run} if (drive / run / "run_summary.csv").exists() else set()
+        copied = 0
+        for s in sorted(p for p in (drive / run).rglob("*") if p.is_file()):
+            rel = s.relative_to(drive)
+            if s.name.endswith(".prev.pt") or _skip(rel, finished) or _same(s, local / rel):
+                continue
             _copy(s, local / rel)
-    for progress in local.glob("*/history/progress.pt"):
+            copied += 1
+        print(f"[drive] restored {run}: {copied} files", flush=True)
+    for progress in (local / r / "history" / "progress.pt" for r in sorted(runs)):
+        if not progress.exists():
+            continue
+        print(f"[drive] validating {progress.relative_to(local)}", flush=True)
         if _loadable(progress):
             continue
         prev = drive / progress.relative_to(local).with_name("progress.prev.pt")
@@ -196,8 +202,9 @@ def main() -> None:
     ap.add_argument("--no-drive", action="store_true", help="run without Drive persistence")
     ap.add_argument("--drive-root", default=None, help=f"Drive folder (default {DRIVE_BASE})")
     args = ap.parse_args()
+    print(f"[suite] commit {environment(args.jobs)['git_commit'][:7]}", flush=True)
 
-    out_dir = Path(args.out) if Path(args.out).is_absolute() else REPO / args.out
+    out_dir =Path(args.out) if Path(args.out).is_absolute() else REPO / args.out
     logs = out_dir / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     on_colab = "COLAB_RELEASE_TAG" in os.environ or "COLAB_GPU" in os.environ
@@ -209,13 +216,14 @@ def main() -> None:
             sys.exit("Drive is not mounted or not writable. Run in a notebook cell first:\n"
                      "    from google.colab import drive; drive.mount('/content/drive')\n"
                      "or pass --no-drive to run without persistence.")
-        for note in restore(drive, out_dir):
-            print(f"[drive] {note}", flush=True)
-        print(f"[drive] persisting to {drive}", flush=True)
-
     plan = [(a, s) for a, s in PLAN if not args.arms or a in args.arms.split(",")]
     if args.seeds:
         plan = [(a, int(s)) for a in (args.arms or "r3,r4,r1,r2,r6").split(",") for s in args.seeds.split(",")]
+    if drive:
+        print(f"[drive] restoring {len(plan)} planned runs from {drive} (can take a few minutes)", flush=True)
+        for note in restore(drive, out_dir, {run_name(a, s) for a, s in plan}):
+            print(f"[drive] {note}", flush=True)
+        print(f"[drive] persisting to {drive}", flush=True)
     finished = {run_name(a, s) for a, s in plan if (out_dir / run_name(a, s) / "run_summary.csv").exists()}
     todo = [(a, s) for a, s in plan if run_name(a, s) not in finished]
     ram = available_ram_gb()
