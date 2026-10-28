@@ -1,0 +1,193 @@
+\documentclass[a4paper,11pt]{report}
+%\usepackage[none]{hyphenat}
+
+%\usepackage[T1]{fontenc}
+%\usepackage[bitstream-charter]{mathdesign}
+
+%\usepackage[usenames,dvipsnames,pdf]{pstricks}
+%\usepackage[crop=off]{auto-pst-pdf}
+\usepackage{makeidx}
+\usepackage{url}
+\usepackage[square,sort,comma,numbers]{natbib}
+\usepackage{framed}
+
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{float}
+
+\usepackage{tabularx} % Add this to your preamble
+\usepackage{booktabs} % Recommended for professional tables
+\usepackage{xcolor}
+\usepackage{pgfgantt}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds, shapes.geometric}
+
+\usepackage{listings}
+\definecolor{lstkeyword}{RGB}{0,90,160}
+\definecolor{lstcomment}{RGB}{100,110,120}
+\definecolor{lststring}{RGB}{160,60,40}
+\definecolor{lstframe}{RGB}{200,205,210}
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{lstkeyword}\bfseries,
+  commentstyle=\color{lstcomment}\itshape,
+  stringstyle=\color{lststring},
+  numbers=left,
+  numberstyle=\ttfamily\scriptsize\color{lstcomment},
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{lstframe},
+  framexleftmargin=4pt,
+  xleftmargin=16pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  captionpos=b,
+  float=false,
+  aboveskip=1.2em,
+  belowskip=1.2em,
+  emph={torch,nn,np,qmc},
+  emphstyle=\color{lstkeyword}
+}
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{8}
+
+\renewcommand{\topfraction}{0.92}
+
+\renewcommand{\bottomfraction}{0.85}
+
+\renewcommand{\textfraction}{0.06}
+
+\renewcommand{\floatpagefraction}{0.75}
+\renewcommand{\lstlistingname}{Listing}
+\AtBeginDocument{\counterwithin{lstlisting}{chapter}}
+
+\usepackage[noend,ruled,noline,linesnumbered,algochapter]{algorithm2e}
+
+\usepackage[linktoc=page]{hyperref}
+\usepackage[margin=3cm]{geometry}
+\usepackage{setspace} 
+
+\usepackage{fancyhdr}
+
+\usepackage{parskip}
+\pagestyle{fancy}
+
+\rhead{\nouppercase\leftmark}
+\lhead{\nouppercase\rightmark}
+
+\makeindex
+
+\onehalfspacing 
+
+\renewcommand*\contentsname{Table of Contents}
+
+\begin{document}
+
+\pagenumbering{roman}
+
+%title page
+\input{0.0.title.tex}
+
+
+%\clearpage
+%\thispagestyle{empty}
+%\mbox{}
+\clearpage
+
+%\thispagestyle{empty}
+%Dedication
+%I would like to dedicate this thesis to my loving family ...
+    
+
+
+
+%\clearpage
+%\thispagestyle{empty}
+%\mbox{}
+%\clearpage
+%\thispagestyle{empty}
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+
+\input{0.1.abstract.tex}
+
+\input{0.2.ack.tex}
+
+\input{0.3.pub.tex}
+
+
+
+
+
+
+\clearpage
+\phantomsection
+\tableofcontents
+\renewcommand{\contentsname}{Table of Contents}
+\addcontentsline{toc}{chapter}{Table of Contents}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+
+
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\renewcommand\bibname{References}
+
+\clearpage
+\phantomsection
+
+
+\input{1.intro.tex}
+\input{2.back.tex}
+\input{3.design.tex}
+\input{4.implementation.tex}
+\input{5.sic.tex}
+\input{6.conclusion.tex}
+
+
+\bibliographystyle{unsrt}
+\bibliography{fydp}
+\addcontentsline{toc}{chapter}{References}
+
+\clearpage
+%\appendix 
+
+%\phantomsection
+
+%\addcontentsline{toc}{chapter}{Appendices}
+%\chapter{Amino Acids\label{appAmino}}
+%\begin{figure}[h]
+%\begin{center}
+%\includegraphics[width=1\textwidth]{./images/background/aminoacids}
+%\end{center}
+%\caption{Twenty different amino acids, their structures and chemical properties.\index{Amino Acid!chemical properties}\cite{Lehninger2012}.}
+%\end{figure}
+%\clearpage
+%\thispagestyle{empty}
+%\mbox{}
+
+%\clearpage
+%\phantomsection
+%\addcontentsline{toc}{chapter}{Index}
+%\printindex
+
+\end{document}

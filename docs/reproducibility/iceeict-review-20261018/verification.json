@@ -1,0 +1,207 @@
+{
+  "source_pdf_sha256": "4fb90c2a194e01e6019aad7492b808d7516d379de4a03a4ccf2543ed368cf083",
+  "preview_pdf_sha256": "b8a8f55c3eeafb9be3023de487cc6136c2a055324c3fb81997b0e1d0ff79e99a",
+  "pages": 6,
+  "bytes": 499381,
+  "a4": true,
+  "fonts_embedded": true,
+  "type3_fonts": false,
+  "clean_latex_log": true,
+  "deleted_sentences": 2,
+  "deleted_words": 33,
+  "deleted_text": "In this section we report the accuracy and physics checks of the windowed run against DOP853. Then we compare it with the full-interval run and we also show the ablation and failure results.",
+  "layout_change": "remove stale IEEEtriggeratref{13} manual reference break",
+  "scientific_environments_citations_figures_bibliography_unchanged": true,
+  "original_manuscript_unchanged": true,
+  "all_requirements_met": false,
+  "remaining_template_issue": "figure labels below 8pt and not Times New Roman",
+  "fonts": [
+    {
+      "xref": 4,
+      "type": "Type1",
+      "name": "BSAJIB+NimbusRomNo9L-Regu",
+      "embedded": true
+    },
+    {
+      "xref": 5,
+      "type": "Type1",
+      "name": "LREKMX+NimbusRomNo9L-MediItal",
+      "embedded": true
+    },
+    {
+      "xref": 6,
+      "type": "Type1",
+      "name": "WQVLHL+NimbusRomNo9L-Medi",
+      "embedded": true
+    },
+    {
+      "xref": 7,
+      "type": "Type1",
+      "name": "VDMIHQ+NimbusRomNo9L-ReguItal",
+      "embedded": true
+    },
+    {
+      "xref": 8,
+      "type": "Type1",
+      "name": "DGJRCA+CMR10",
+      "embedded": true
+    },
+    {
+      "xref": 9,
+      "type": "Type1",
+      "name": "POFCOR+CMMI10",
+      "embedded": true
+    },
+    {
+      "xref": 10,
+      "type": "Type1",
+      "name": "WTWXPF+CMSY10",
+      "embedded": true
+    },
+    {
+      "xref": 11,
+      "type": "Type1",
+      "name": "SQSORA+CMSY7",
+      "embedded": true
+    },
+    {
+      "xref": 12,
+      "type": "Type1",
+      "name": "RINTZB+CMR7",
+      "embedded": true
+    },
+    {
+      "xref": 13,
+      "type": "Type1",
+      "name": "ACFVVT+CMEX10",
+      "embedded": true
+    },
+    {
+      "xref": 14,
+      "type": "Type1",
+      "name": "AUVGAC+CMSS8",
+      "embedded": true
+    },
+    {
+      "xref": 20,
+      "type": "Type1",
+      "name": "YFTRSA+CMMI7",
+      "embedded": true
+    },
+    {
+      "xref": 21,
+      "type": "Type1",
+      "name": "QDTWCG+MSBM10",
+      "embedded": true
+    },
+    {
+      "xref": 23,
+      "type": "TrueType",
+      "name": "ECACOO+DejaVuSerif-Bold",
+      "embedded": true
+    },
+    {
+      "xref": 24,
+      "type": "TrueType",
+      "name": "HCDTYZ+DejaVuSerif-Italic",
+      "embedded": true
+    },
+    {
+      "xref": 25,
+      "type": "TrueType",
+      "name": "BXGEVL+DejaVuSerif",
+      "embedded": true
+    },
+    {
+      "xref": 40,
+      "type": "Type1",
+      "name": "UUPYUE+CMBX10",
+      "embedded": true
+    },
+    {
+      "xref": 41,
+      "type": "Type1",
+      "name": "YJUITE+CMMI5",
+      "embedded": true
+    },
+    {
+      "xref": 48,
+      "type": "Type0",
+      "name": "AAAAAA+SegoeUI-Bold",
+      "embedded": true
+    },
+    {
+      "xref": 49,
+      "type": "Type0",
+      "name": "BAAAAA+SegoeUI-BoldItalic",
+      "embedded": true
+    },
+    {
+      "xref": 50,
+      "type": "Type0",
+      "name": "CAAAAA+SegoeUI",
+      "embedded": true
+    },
+    {
+      "xref": 66,
+      "type": "Type1",
+      "name": "ZOQGBX+CMR5",
+      "embedded": true
+    },
+    {
+      "xref": 71,
+      "type": "Type1",
+      "name": "PRRUGR+CMR8",
+      "embedded": true
+    },
+    {
+      "xref": 72,
+      "type": "Type1",
+      "name": "SCAILV+CMMI8",
+      "embedded": true
+    },
+    {
+      "xref": 73,
+      "type": "Type1",
+      "name": "LUYPUJ+CMSY8",
+      "embedded": true
+    },
+    {
+      "xref": 74,
+      "type": "Type1",
+      "name": "ZJYZQV+CMSY6",
+      "embedded": true
+    },
+    {
+      "xref": 75,
+      "type": "Type1",
+      "name": "KWRQED+CMR6",
+      "embedded": true
+    },
+    {
+      "xref": 76,
+      "type": "Type1",
+      "name": "JSBDNW+CMMI6",
+      "embedded": true
+    },
+    {
+      "xref": 78,
+      "type": "TrueType",
+      "name": "ECACOO+DejaVuSerif-Bold",
+      "embedded": true
+    },
+    {
+      "xref": 79,
+      "type": "TrueType",
+      "name": "HCDTYZ+DejaVuSerif-Italic",
+      "embedded": true
+    },
+    {
+      "xref": 80,
+      "type": "TrueType",
+      "name": "BXGEVL+DejaVuSerif",
+      "embedded": true
+    }
+  ],
+  "built_from_deliverable_folder": true
+}

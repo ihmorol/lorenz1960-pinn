@@ -1,0 +1,205 @@
+{
+  "source_commit": "a85ccb66be4bbce5631f80653fbcfaeebeea9d09",
+  "tasks": [
+    {
+      "task": "P0.1",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P0.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P0.3",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P0.4",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.1",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.3",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.4",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.5",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.6",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P1.7",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P2.1",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P2.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P2.3",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P2.4",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P2.5",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P3.1",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P3.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P3.3",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P4.1",
+      "status": "Partial",
+      "evidence_or_reason": "Exact SVG/HTML pipeline source recovered and pixel-identical; exact compact generators not recovered. Originals retained by author fallback."
+    },
+    {
+      "task": "P4.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P4.3",
+      "status": "Retained; requirement unresolved",
+      "evidence_or_reason": "Times font candidate rendered/tested and rejected; final 8-point font requirement remains unmet."
+    },
+    {
+      "task": "P4.4",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.1",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.2",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.3",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.4",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.5",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P5.6",
+      "status": "Complete",
+      "evidence_or_reason": "See claim-to-evidence.md, changes.md and final-verification.json."
+    },
+    {
+      "task": "P6.1",
+      "status": "Complete",
+      "evidence_or_reason": "Independent final review at a85ccb66; see independent-review.md, exact final PDF hash and all requirement/criterion verdicts."
+    },
+    {
+      "task": "P6.2",
+      "status": "Complete",
+      "evidence_or_reason": "Independent final review at a85ccb66; see independent-review.md, exact final PDF hash and all requirement/criterion verdicts."
+    },
+    {
+      "task": "P6.3",
+      "status": "Complete",
+      "evidence_or_reason": "Independent final review at a85ccb66; see independent-review.md, exact final PDF hash and all requirement/criterion verdicts."
+    },
+    {
+      "task": "P6.4",
+      "status": "Complete",
+      "evidence_or_reason": "Independent final review at a85ccb66; see independent-review.md, exact final PDF hash and all requirement/criterion verdicts."
+    },
+    {
+      "task": "P6.5",
+      "status": "Complete",
+      "evidence_or_reason": "Independent final review at a85ccb66; see independent-review.md, exact final PDF hash and all requirement/criterion verdicts."
+    },
+    {
+      "task": "P7.1",
+      "status": "Author confirmations recorded; final review pending",
+      "evidence_or_reason": "Authorship/order, existing approvals and no-submission history confirmed. Newly generated PDF must still be reviewed before upload."
+    },
+    {
+      "task": "P7.2",
+      "status": "History confirmed; final review pending",
+      "evidence_or_reason": "Non-intellectual LLM use confirmed; accurate acknowledgment retained. Final revised output review is later."
+    },
+    {
+      "task": "P7.3",
+      "status": "Author-reported prior pass",
+      "evidence_or_reason": "Latest report 7% similarity and 0% AI-detector score. No report inspected or rescreen of this revised PDF."
+    },
+    {
+      "task": "P7.4",
+      "status": "Deferred by author",
+      "evidence_or_reason": "CMT account/metadata and qualified presenter verification are later steps."
+    },
+    {
+      "task": "P7.5",
+      "status": "Public date checked; exact cutoff deferred",
+      "evidence_or_reason": "Official date is 25 October 2026; public page does not state exact cutoff/timezone."
+    },
+    {
+      "task": "P7.6",
+      "status": "Deferred final approval",
+      "evidence_or_reason": "PDF/source can be frozen now, but author approval of this exact regenerated file is still required before upload."
+    }
+  ]
+}

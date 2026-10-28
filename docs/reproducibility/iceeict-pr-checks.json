@@ -1,0 +1,17 @@
+{
+  "reviewed_paper_commit": "80c6266a3c9524ca437e7c130181ea8c26ced4d3",
+  "pdf_sha256": "2a3ac3710bb8d34b48aa61571007cacb3b9e2f4720d79918f6b98cbc533b29f9",
+  "upload_zip": "writings/iceeict2027-manuscript.zip",
+  "upload_zip_sha256": "263f6734cfe94a20b3a106a25c4e7c3b6c08769c3c0df7e7880cef267b71ec45",
+  "upload_zip_entries": 11,
+  "fresh_extract_pdflatex_bibtex_pdflatex_pdflatex": "pass",
+  "fresh_build_pages": 6,
+  "fresh_build_text_identical": true,
+  "fresh_build_all_page_pixels_identical": true,
+  "artifact_verification": "pass; 55 manifest files and both archives checked",
+  "negative_verification": "prior check at 34ae92a: modified PDF rejected; verifier unchanged",
+  "ci_scope": "frozen file hashes, archive CRC/membership, checkout-content parity, audit/PDF binding and upload ZIP contents; does not rebuildTeX or rerun scientific tests",
+  "line_endings": "ZIP hashes are byte-exact; checked-out text content is compared after Git CRLF/LF normalization",
+  "training_rerun": false,
+  "screening_rerun": false
+}

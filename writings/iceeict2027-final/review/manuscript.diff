@@ -1,0 +1,24 @@
+--- iceeict2027-submission/main.tex
++++ iceeict2027-final/main.tex
+@@ -151,10 +151,10 @@
+ 
+ Fig.~\ref{fig:pipeline} shows the implementation pipeline.
+ 
+-\begin{figure}[t]
++\begin{figure}[!t]
+ \centering
+ \includegraphics[width=\columnwidth]{figures/method.pdf}
+-\caption{Sequential training with endpoint handoff (windows 1--27)}
++\caption{Sequential training with endpoint handoff ($k=0,\ldots,26$)}
+ \label{fig:pipeline}
+ \end{figure}
+ 
+@@ -230,7 +230,7 @@
+ 
+ \subsection{Training Procedure}
+ 
+-The causal loss defined above is minimized separately in each window. Fig.~\ref{fig:pipeline} summarizes the sequence across the windows. Fig.~\ref{fig:training} gives the training steps. In each window, an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. After every Adam update the code recalculates the causal weights at all collocation points of the window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records that the stage was capped.
++The causal loss defined above is minimized separately in each window. Fig.~\ref{fig:pipeline} summarizes the sequence across the windows. Fig.~\ref{fig:training} gives the training steps. In each window, an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. Before advancing a stage, the code verifies that the updated parameters give a minimum causal weight above 0.99 over all collocation points of the window. If this criterion is not met within 4,000 updates, it records the stage as capped and moves to the next $\epsilon$ stage.
+ 
+ When all four stages are completed, L-BFGS minimizes the unweighted residual mean for up to 1,000 iterations. For L-BFGS, we remove the causal weights and use the plain mean of the point losses.
+ \[

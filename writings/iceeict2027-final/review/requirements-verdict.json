@@ -1,0 +1,150 @@
+{
+  "source_commit": "80c6266a3c9524ca437e7c130181ea8c26ced4d3",
+  "rows": [
+    {
+      "id": "S01",
+      "requirement": "IEEE double-column template",
+      "status": "Pass",
+      "evidence": "IEEEtran conference A4, two columns; class/style unchanged."
+    },
+    {
+      "id": "S02",
+      "requirement": "PDF format",
+      "status": "Pass",
+      "evidence": "Compiled main.pdf opens and every page was rendered."
+    },
+    {
+      "id": "S03",
+      "requirement": "File size at most 3 MB",
+      "status": "Pass",
+      "evidence": "2,845,787 bytes, below 3 MB."
+    },
+    {
+      "id": "S04",
+      "requirement": "A4 paper",
+      "status": "Pass",
+      "evidence": "All six pages are 595.28 x 841.89 PDF points."
+    },
+    {
+      "id": "S05",
+      "requirement": "Maximum six pages including everything",
+      "status": "Pass",
+      "evidence": "Six pages including figures, tables and 13 references; no font/margin compression."
+    },
+    {
+      "id": "S06",
+      "requirement": "No Type 3 fonts",
+      "status": "Pass",
+      "evidence": "Zero Type 3 fonts among 27 final fonts."
+    },
+    {
+      "id": "S07",
+      "requirement": "All fonts embedded",
+      "status": "Pass",
+      "evidence": "All 27 font programs are embedded."
+    },
+    {
+      "id": "S08",
+      "requirement": "Every author meets authorship criteria",
+      "status": "Author-confirmed",
+      "evidence": "Submitting author confirms authorship/contributions alignment; private contributor evidence not independently checked."
+    },
+    {
+      "id": "S09",
+      "requirement": "Strict IEEE typesetting and bibliography",
+      "status": "Pass on checked file requirements",
+      "evidence": "All three regenerated figures use embedded Times New Roman at minimum 8.5 pt in the final PDF; IEEEtran defaults and corrected bibliography remain unchanged. Labels, ticks and curves were visually inspected."
+    },
+    {
+      "id": "S10",
+      "requirement": "Agreement on author sequence",
+      "status": "Author-confirmed",
+      "evidence": "Submitting author confirms author-order agreement and supervisor alignment."
+    },
+    {
+      "id": "S11",
+      "requirement": "All authors approve submission",
+      "status": "Pending final-file review",
+      "evidence": "Approval to revise and existing author/supervisor agreement confirmed; this newly generated PDF still needs author review before upload."
+    },
+    {
+      "id": "S12",
+      "requirement": "Original contribution; not previously published or submitted",
+      "status": "Author-confirmed",
+      "evidence": "Submitting author confirms no prior submission. Original contribution/history attestation recorded, not independently certified."
+    },
+    {
+      "id": "S13",
+      "requirement": "No simultaneous submission without TPC permission",
+      "status": "Author-confirmed",
+      "evidence": "Submitting author confirms no planned parallel submission; restriction remains applicable during conference review."
+    },
+    {
+      "id": "S14",
+      "requirement": "Similarity strictly below 30%",
+      "status": "Author-reported prior pass",
+      "evidence": "Latest report from author is 7% similarity, superseding earlier 0% wording. Report not inspected and revised PDF not rescanned."
+    },
+    {
+      "id": "S15",
+      "requirement": "LLM use acknowledged",
+      "status": "Pass",
+      "evidence": "Acknowledgment explicitly limits LLM assistance to formatting/typesetting/language/proofreading."
+    },
+    {
+      "id": "S16",
+      "requirement": "LLM use solely non-intellectual",
+      "status": "Author-confirmed",
+      "evidence": "Submitting author confirms non-intellectual LLM-use history. No research result generated in this pass."
+    },
+    {
+      "id": "S17",
+      "requirement": "LLM output carefully reviewed and approved",
+      "status": "Confirmed history; final review pending",
+      "evidence": "Author confirms LLM declaration/review history; approval of this revised output is a later final-file step."
+    },
+    {
+      "id": "S18",
+      "requirement": "Authors accept accuracy/content responsibility",
+      "status": "Pass: declaration",
+      "evidence": "Authors explicitly retain responsibility; source-grounded corrections verified separately."
+    },
+    {
+      "id": "S19",
+      "requirement": "Double blind: names, affiliations, addresses, emails, self-citation, other identifiers",
+      "status": "Pass on inspection",
+      "evidence": "Empty author block/author metadata; no author contact/affiliation or identifying repository link in PDF. External online matching not certified."
+    },
+    {
+      "id": "S20",
+      "requirement": "Qualified presenter if accepted",
+      "status": "Deferred by author",
+      "evidence": "Qualified presenter must be confirmed if accepted; no current PDF defect."
+    },
+    {
+      "id": "S21",
+      "requirement": "No-show papers excluded from Xplore",
+      "status": "Policy consequence",
+      "evidence": "No-show exclusion is recorded; it is a future obligation, not a current file-test pass."
+    },
+    {
+      "id": "S22",
+      "requirement": "No-show fees not refunded",
+      "status": "Policy consequence",
+      "evidence": "No-show non-refund consequence is recorded; no present fee transaction checked."
+    },
+    {
+      "id": "S23",
+      "requirement": "Every coauthor has correct-email CMT account",
+      "status": "Deferred verification",
+      "evidence": "Earlier account-creation report retained; every coauthor email/CMT field not authenticated in this pass."
+    },
+    {
+      "id": "S24",
+      "requirement": "Xplore inclusion subject to scope and quality",
+      "status": "Conditional outcome",
+      "evidence": "Xplore submission/inclusion depends on scope/quality and conference processes; not guaranteed."
+    }
+  ],
+  "pdf_sha256": "2a3ac3710bb8d34b48aa61571007cacb3b9e2f4720d79918f6b98cbc533b29f9"
+}

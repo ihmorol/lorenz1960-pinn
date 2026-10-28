@@ -1,0 +1,24 @@
+{
+  "revision_branch": "https://github.com/ihmorol/lorenz1960-pinn/tree/dev/iceeict2027-revision",
+  "public_repository": "https://github.com/ihmorol/lorenz1960-windowed-pinn",
+  "public_commit": "423696d89fb2021d7b1abceafd92b7fba1dab92a",
+  "public_visibility": "PUBLIC",
+  "public_branches": [
+    "main"
+  ],
+  "published_clone_verified": true,
+  "evaluated_models": 16,
+  "results_files_hashed": 150,
+  "archive_sha256": "9e9534611bffc2a233d688185de0d3b73e5102622a3838f1709e95edd6b3f159",
+  "pending": [
+    "six-page limit",
+    "small figure text retained by explicit user choice",
+    "writing/accuracy findings",
+    "author approval, similarity, authenticated CMT"
+  ],
+  "completed_training_source": "ed43703233264b5568ec4598dedc1cf84ac0f452",
+  "ablation_configurations_matching_recovered_source": 14,
+  "historical_dirty_diff_available": false,
+  "public_source_regression_tests_passed": 80,
+  "recovered_source_ast_matches": 7
+}

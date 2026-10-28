@@ -1,0 +1,42 @@
+{
+  "purpose": "Figures regenerated from archived final checkpoint inference and locked DOP853 evaluation; no training",
+  "points": 13265,
+  "runs": {
+    "full_interval": {
+      "run": "runs/4x60_f64_unit",
+      "checkpoint_sha256": "10793b067ea15eef9ccb0b6ebaf4ca00fb29dec757e14dc2d6ab6c6a0a524384",
+      "summary_sha256": "d6c08791ebf8a7ffc59c06bc7769853e6667915665957c3a8e6cd08b61ed8020",
+      "data_sha256": "e3e3ef3149a8ba36748b8ca82d996cee98603baaa72cfacbfb3ff4eefc36209b",
+      "rmse_combined_l2": 2.2370605122285716,
+      "archived_rmse_combined_l2": 2.23706051,
+      "per_state_rmse": [
+        0.3835914984368067,
+        2.0760995567916636,
+        0.7396674441861194
+      ],
+      "largest_error_time": 9.121316319360675,
+      "t_start": 0.0,
+      "t_end": 13.26446,
+      "all_points_plotted": 13265,
+      "loss_sha256": "0e46cbf85751c663d7123b2466273849566300e7c8974d38e4f8239f968f754b",
+      "loss_records": 46251
+    },
+    "windowed": {
+      "run": "runs/causal-window/candidate-1536pt/4x60_f64_unit_win27_causal_warm_f1cbeebd",
+      "checkpoint_sha256": "d58fbc51d2f48a8af9cd21090378f7fdb8a8ef29bce80a11911ba379532b1456",
+      "summary_sha256": "f39dd2610b3c98b4f706f727d7b556e122fe97865fc8e0450612ca10f4c7f833",
+      "data_sha256": "83018e8e8a639efeac859dc5e90d466d0dd59f9f48e9fde8180544235f95072b",
+      "rmse_combined_l2": 6.966965305660092e-05,
+      "archived_rmse_combined_l2": 6.96696531e-05,
+      "per_state_rmse": [
+        2.7430405058471594e-05,
+        4.959763887019796e-05,
+        4.0515523615729715e-05
+      ],
+      "largest_error_time": 5.021174129975875,
+      "t_start": 0.0,
+      "t_end": 13.26446,
+      "all_points_plotted": 13265
+    }
+  }
+}

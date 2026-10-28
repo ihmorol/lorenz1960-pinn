@@ -1,0 +1,194 @@
+
+=== r4_candidate_seed4 -> /content/lorenz1960-pinn/runs/paper_ablations/r4_candidate_seed4 ===
+[setup] device=cuda | seed=4 | 4x60 tanh, hard IC, 41446 uniform points, 27 windows, causal
+[setup] 304641 params | 41446 collocation pts on t in [0.0, 13.26446] | ref traj 13265 pts
+[setup] 27 windows, up to 4000 Adam steps per epsilon stage, then up to 1000 L-BFGS iterations per window; lr 1.0e-03, StepLR factor 0.9 every 1000 steps
+[setup] per-point snapshots every 2000 logged evaluations and at final window states -> /content/lorenz1960-pinn/runs/paper_ablations/r4_candidate_seed4/breakdown
+[adam]  window  0 eps 0.01 | epoch       0 | loss 5.5415e-02 | min_w 0.150 |    12.6s
+[adam]  window  0 eps 10.0 | epoch     250 | loss 6.9174e-07 | min_w 0.989 |    21.8s
+[window]  0 done | loss 6.4943e-07 |    78.9s
+[adam]  window  1 eps 10.0 | epoch    1750 | loss 9.7091e-07 | min_w 0.985 |    81.9s
+[window]  1 done | loss 6.1720e-09 |   159.9s
+[window]  2 done | loss 5.8483e-09 |   232.8s
+[window]  3 done | loss 2.6970e-09 |   311.5s
+[adam]  window  4 eps 0.1 | epoch    5750 | loss 2.4001e-04 | min_w 0.963 |   312.4s
+[window]  4 done | loss 1.8897e-09 |   407.9s
+[adam]  window  5 eps 1.0 | epoch    7000 | loss 2.0999e-05 | min_w 0.968 |   410.4s
+[window]  5 done | loss 1.2280e-08 |   517.2s
+[adam]  window  6 eps 10.0 | epoch    8500 | loss 1.3033e-06 | min_w 0.980 |   522.2s
+[window]  6 done | loss 5.0756e-09 |   627.0s
+[window]  7 done | loss 1.5453e-08 |   774.7s
+[window]  8 done | loss 2.0964e-08 |   880.2s
+[adam]  window  9 eps 10.0 | epoch   12250 | loss 1.7791e-06 | min_w 0.973 |   885.7s
+[window]  9 done | loss 1.3116e-07 |   985.4s
+[adam]  window 10 eps 10.0 | epoch   13750 | loss 1.2051e-06 | min_w 0.982 |   992.1s
+[adam]  window 10 eps 10.0 | epoch   14000 | loss 1.1885e-06 | min_w 0.982 |  1005.5s
+[adam]  window 10 eps 10.0 | epoch   14250 | loss 1.1652e-06 | min_w 0.982 |  1014.2s
+[adam]  window 10 eps 10.0 | epoch   14500 | loss 1.1359e-06 | min_w 0.983 |  1021.1s
+[adam]  window 10 eps 10.0 | epoch   14750 | loss 1.1037e-06 | min_w 0.983 |  1029.3s
+[adam]  window 10 eps 10.0 | epoch   15000 | loss 6.5915e-06 | min_w 0.899 |  1036.5s
+[adam]  window 10 eps 10.0 | epoch   15250 | loss 8.8111e-06 | min_w 0.865 |  1044.7s
+[adam]  window 10 eps 10.0 | epoch   15500 | loss 1.0375e-05 | min_w 0.841 |  1052.1s
+[adam]  window 10 eps 10.0 | epoch   15750 | loss 6.4022e-06 | min_w 0.902 |  1060.5s
+[adam]  window 10 eps 10.0 | epoch   16000 | loss 9.0156e-06 | min_w 0.862 |  1074.1s
+[adam]  window 10 eps 10.0 | epoch   16250 | loss 5.5924e-06 | min_w 0.914 |  1082.2s
+[adam]  window 10 eps 10.0 | epoch   16500 | loss 8.7954e-06 | min_w 0.865 |  1089.9s
+[adam]  window 10 eps 10.0 | epoch   16750 | loss 6.7422e-06 | min_w 0.897 |  1102.2s
+[adam]  window 10 eps 10.0 | epoch   17000 | loss 6.3329e-06 | min_w 0.903 |  1108.9s
+[adam]  window 10 eps 10.0 | epoch   17250 | loss 7.6770e-06 | min_w 0.882 |  1118.6s
+[adam]  window 10 eps 10.0 | epoch   17500 | loss 7.6848e-06 | min_w 0.882 |  1128.2s
+[window] 10 done | loss 7.8892e-08 |  1237.8s
+[adam]  window 11 eps 0.01 | epoch   18750 | loss 5.0629e-03 | min_w 0.922 |  1238.1s
+[adam]  window 11 eps 10.0 | epoch   19000 | loss 1.3626e-06 | min_w 0.979 |  1249.1s
+[adam]  window 11 eps 10.0 | epoch   19250 | loss 1.2883e-06 | min_w 0.980 |  1259.4s
+[adam]  window 11 eps 10.0 | epoch   19500 | loss 1.1918e-06 | min_w 0.982 |  1269.1s
+[adam]  window 11 eps 10.0 | epoch   19750 | loss 5.5568e-06 | min_w 0.915 |  1278.7s
+[adam]  window 11 eps 10.0 | epoch   20000 | loss 7.0155e-06 | min_w 0.892 |  1294.5s
+[adam]  window 11 eps 10.0 | epoch   20250 | loss 8.6101e-06 | min_w 0.868 |  1302.7s
+[adam]  window 11 eps 10.0 | epoch   20500 | loss 8.9005e-06 | min_w 0.863 |  1312.5s
+[adam]  window 11 eps 10.0 | epoch   20750 | loss 5.7260e-06 | min_w 0.912 |  1321.5s
+[adam]  window 11 eps 10.0 | epoch   21000 | loss 6.6650e-06 | min_w 0.898 |  1328.3s
+[adam]  window 11 eps 10.0 | epoch   21250 | loss 7.4069e-06 | min_w 0.886 |  1337.5s
+[adam]  window 11 eps 10.0 | epoch   21500 | loss 7.2998e-06 | min_w 0.888 |  1344.1s
+[adam]  window 11 eps 10.0 | epoch   21750 | loss 4.2049e-06 | min_w 0.935 |  1351.7s
+[window] 11 done | loss 4.0120e-08 |  1430.7s
+[adam]  window 12 eps 10.0 | epoch   23250 | loss 1.2371e-06 | min_w 0.981 |  1438.4s
+[adam]  window 12 eps 10.0 | epoch   23500 | loss 1.1376e-06 | min_w 0.983 |  1446.9s
+[adam]  window 12 eps 10.0 | epoch   23750 | loss 1.0176e-06 | min_w 0.984 |  1456.3s
+[adam]  window 12 eps 10.0 | epoch   24000 | loss 8.9457e-07 | min_w 0.986 |  1472.2s
+[adam]  window 12 eps 10.0 | epoch   24250 | loss 6.3209e-06 | min_w 0.903 |  1480.4s
+[adam]  window 12 eps 10.0 | epoch   24500 | loss 7.9778e-06 | min_w 0.878 |  1489.3s
+[adam]  window 12 eps 10.0 | epoch   24750 | loss 8.8267e-06 | min_w 0.865 |  1496.4s
+[adam]  window 12 eps 10.0 | epoch   25000 | loss 8.5913e-06 | min_w 0.868 |  1505.8s
+[window] 12 done | loss 1.2652e-08 |  1598.1s
+[window] 13 done | loss 3.2190e-09 |  1679.0s
+[adam]  window 14 eps 10.0 | epoch   27500 | loss 7.0106e-07 | min_w 0.989 |  1681.2s
+[window] 14 done | loss 8.7741e-08 |  1746.6s
+[window] 15 done | loss 6.8108e-08 |  1808.6s
+[adam]  window 16 eps 1.0 | epoch   30000 | loss 1.0644e-05 | min_w 0.984 |  1815.4s
+[window] 16 done | loss 5.1642e-08 |  1868.0s
+[window] 17 done | loss 2.1753e-08 |  1946.4s
+[adam]  window 18 eps 0.1 | epoch   32750 | loss 5.5925e-05 | min_w 0.991 |  1948.3s
+[window] 18 done | loss 7.4322e-08 |  2031.0s
+[adam]  window 19 eps 1.0 | epoch   34250 | loss 1.6192e-05 | min_w 0.975 |  2032.6s
+[window] 19 done | loss 1.8079e-07 |  2130.4s
+[adam]  window 20 eps 10.0 | epoch   35750 | loss 8.2943e-07 | min_w 0.987 |  2134.5s
+[adam]  window 20 eps 10.0 | epoch   36000 | loss 3.5606e-06 | min_w 0.945 |  2146.0s
+[adam]  window 20 eps 10.0 | epoch   36250 | loss 3.4516e-06 | min_w 0.947 |  2151.7s
+[adam]  window 20 eps 10.0 | epoch   36500 | loss 3.5028e-06 | min_w 0.946 |  2159.5s
+[adam]  window 20 eps 10.0 | epoch   36750 | loss 3.6584e-06 | min_w 0.944 |  2165.8s
+[adam]  window 20 eps 10.0 | epoch   37000 | loss 7.1029e-06 | min_w 0.891 |  2173.6s
+[adam]  window 20 eps 10.0 | epoch   37250 | loss 8.6214e-06 | min_w 0.868 |  2179.2s
+[adam]  window 20 eps 10.0 | epoch   37500 | loss 8.1529e-06 | min_w 0.875 |  2185.7s
+[window] 20 done | loss 5.5550e-07 |  2234.6s
+[adam]  window 21 eps 10.0 | epoch   39000 | loss 1.5986e-06 | min_w 0.976 |  2238.7s
+[adam]  window 21 eps 10.0 | epoch   39250 | loss 1.4978e-06 | min_w 0.977 |  2248.4s
+[adam]  window 21 eps 10.0 | epoch   39500 | loss 5.3830e-06 | min_w 0.918 |  2255.9s
+[adam]  window 21 eps 10.0 | epoch   39750 | loss 7.9339e-06 | min_w 0.878 |  2263.6s
+[adam]  window 21 eps 10.0 | epoch   40000 | loss 6.3748e-06 | min_w 0.902 |  2278.8s
+[adam]  window 21 eps 10.0 | epoch   40250 | loss 1.0437e-05 | min_w 0.840 |  2285.5s
+[adam]  window 21 eps 10.0 | epoch   40500 | loss 1.2065e-05 | min_w 0.815 |  2292.0s
+[adam]  window 21 eps 10.0 | epoch   40750 | loss 1.2029e-05 | min_w 0.815 |  2298.5s
+[adam]  window 21 eps 10.0 | epoch   41000 | loss 6.4107e-06 | min_w 0.902 |  2305.5s
+[adam]  window 21 eps 10.0 | epoch   41250 | loss 9.3430e-06 | min_w 0.857 |  2311.9s
+[adam]  window 21 eps 10.0 | epoch   41500 | loss 9.8470e-06 | min_w 0.849 |  2317.6s
+[adam]  window 21 eps 10.0 | epoch   41750 | loss 9.3806e-06 | min_w 0.856 |  2324.8s
+[adam]  window 21 eps 10.0 | epoch   42000 | loss 4.3179e-06 | min_w 0.934 |  2335.2s
+[adam]  window 21 eps 10.0 | epoch   42250 | loss 7.6471e-06 | min_w 0.883 |  2341.0s
+[adam]  window 21 eps 10.0 | epoch   42500 | loss 7.2348e-06 | min_w 0.889 |  2347.2s
+[adam]  window 21 eps 10.0 | epoch   42750 | loss 7.6273e-06 | min_w 0.883 |  2351.9s
+[window] 21 done | loss 5.2480e-07 |  2394.6s
+[adam]  window 22 eps 10.0 | epoch   44250 | loss 2.1411e-06 | min_w 0.967 |  2397.2s
+[adam]  window 22 eps 10.0 | epoch   44500 | loss 1.5892e-06 | min_w 0.976 |  2402.5s
+[adam]  window 22 eps 10.0 | epoch   44750 | loss 1.5551e-06 | min_w 0.976 |  2408.7s
+[adam]  window 22 eps 10.0 | epoch   45000 | loss 6.0947e-06 | min_w 0.907 |  2414.6s
+[adam]  window 22 eps 10.0 | epoch   45250 | loss 4.4869e-06 | min_w 0.931 |  2420.2s
+[adam]  window 22 eps 10.0 | epoch   45500 | loss 1.0809e-05 | min_w 0.834 |  2427.6s
+[adam]  window 22 eps 10.0 | epoch   45750 | loss 1.2742e-05 | min_w 0.805 |  2432.9s
+[adam]  window 22 eps 10.0 | epoch   46000 | loss 1.3418e-05 | min_w 0.794 |  2444.6s
+[adam]  window 22 eps 10.0 | epoch   46250 | loss 6.8558e-06 | min_w 0.895 |  2450.4s
+[adam]  window 22 eps 10.0 | epoch   46500 | loss 1.0221e-05 | min_w 0.843 |  2457.5s
+[adam]  window 22 eps 10.0 | epoch   46750 | loss 1.0852e-05 | min_w 0.834 |  2461.5s
+[adam]  window 22 eps 10.0 | epoch   47000 | loss 1.0889e-05 | min_w 0.833 |  2466.0s
+[adam]  window 22 eps 10.0 | epoch   47250 | loss 4.5183e-06 | min_w 0.931 |  2470.5s
+[adam]  window 22 eps 10.0 | epoch   47500 | loss 8.0706e-06 | min_w 0.876 |  2473.1s
+[adam]  window 22 eps 10.0 | epoch   47750 | loss 1.0954e-05 | min_w 0.832 |  2476.6s
+[adam]  window 22 eps 10.0 | epoch   48000 | loss 9.8220e-06 | min_w 0.849 |  2481.5s
+[window] 22 done | loss 3.6531e-08 |  2520.1s
+[adam]  window 23 eps 0.01 | epoch   49500 | loss 1.7733e-03 | min_w 0.973 |  2520.5s
+[adam]  window 23 eps 10.0 | epoch   49750 | loss 2.8052e-06 | min_w 0.957 |  2524.6s
+[adam]  window 23 eps 10.0 | epoch   50000 | loss 2.7403e-06 | min_w 0.958 |  2533.7s
+[adam]  window 23 eps 10.0 | epoch   50250 | loss 2.6506e-06 | min_w 0.959 |  2539.2s
+[adam]  window 23 eps 10.0 | epoch   50500 | loss 2.5367e-06 | min_w 0.961 |  2544.5s
+[adam]  window 23 eps 10.0 | epoch   50750 | loss 2.4083e-06 | min_w 0.963 |  2549.0s
+[adam]  window 23 eps 10.0 | epoch   51000 | loss 1.0255e-05 | min_w 0.843 |  2553.2s
+[adam]  window 23 eps 10.0 | epoch   51250 | loss 1.1717e-05 | min_w 0.820 |  2558.1s
+[adam]  window 23 eps 10.0 | epoch   51500 | loss 2.1688e-06 | min_w 0.967 |  2562.7s
+[adam]  window 23 eps 10.0 | epoch   51750 | loss 1.0055e-05 | min_w 0.846 |  2567.0s
+[adam]  window 23 eps 10.0 | epoch   52000 | loss 1.1830e-05 | min_w 0.818 |  2575.5s
+[adam]  window 23 eps 10.0 | epoch   52250 | loss 1.2001e-05 | min_w 0.816 |  2579.6s
+[adam]  window 23 eps 10.0 | epoch   52500 | loss 1.1972e-06 | min_w 0.982 |  2583.6s
+[adam]  window 23 eps 10.0 | epoch   52750 | loss 8.4316e-06 | min_w 0.871 |  2588.9s
+[adam]  window 23 eps 10.0 | epoch   53000 | loss 9.4216e-06 | min_w 0.855 |  2592.9s
+[adam]  window 23 eps 10.0 | epoch   53250 | loss 9.1204e-06 | min_w 0.860 |  2597.3s
+[adam]  window 23 eps 10.0 | epoch   53500 | loss 1.8084e-06 | min_w 0.972 |  2603.0s
+[window] 23 done | loss 3.5495e-07 |  2642.6s
+[adam]  window 24 eps 10.0 | epoch   55000 | loss 2.4528e-06 | min_w 0.962 |  2647.4s
+[adam]  window 24 eps 10.0 | epoch   55250 | loss 2.3574e-06 | min_w 0.964 |  2651.8s
+[adam]  window 24 eps 10.0 | epoch   55500 | loss 2.2264e-06 | min_w 0.966 |  2656.2s
+[adam]  window 24 eps 10.0 | epoch   55750 | loss 2.1065e-06 | min_w 0.968 |  2660.7s
+[adam]  window 24 eps 10.0 | epoch   56000 | loss 4.0605e-06 | min_w 0.938 |  2668.5s
+[adam]  window 24 eps 10.0 | epoch   56250 | loss 8.4269e-06 | min_w 0.871 |  2673.2s
+[adam]  window 24 eps 10.0 | epoch   56500 | loss 7.5886e-06 | min_w 0.884 |  2678.5s
+[adam]  window 24 eps 10.0 | epoch   56750 | loss 9.1689e-06 | min_w 0.859 |  2681.4s
+[adam]  window 24 eps 10.0 | epoch   57000 | loss 6.8049e-06 | min_w 0.896 |  2685.6s
+[adam]  window 24 eps 10.0 | epoch   57250 | loss 8.2824e-06 | min_w 0.873 |  2690.1s
+[adam]  window 24 eps 10.0 | epoch   57500 | loss 8.8502e-06 | min_w 0.864 |  2694.9s
+[adam]  window 24 eps 10.0 | epoch   57750 | loss 1.0085e-05 | min_w 0.845 |  2699.1s
+[window] 24 done | loss 5.9919e-07 |  2727.6s
+[adam]  window 25 eps 10.0 | epoch   59250 | loss 1.4882e-06 | min_w 0.977 |  2730.3s
+[adam]  window 25 eps 10.0 | epoch   59500 | loss 1.3643e-06 | min_w 0.979 |  2734.4s
+[adam]  window 25 eps 10.0 | epoch   59750 | loss 4.0593e-06 | min_w 0.938 |  2738.9s
+[adam]  window 25 eps 10.0 | epoch   60000 | loss 4.3046e-06 | min_w 0.934 |  2745.1s
+[adam]  window 25 eps 10.0 | epoch   60250 | loss 4.0607e-06 | min_w 0.938 |  2750.0s
+[adam]  window 25 eps 10.0 | epoch   60500 | loss 5.0922e-06 | min_w 0.922 |  2754.9s
+[adam]  window 25 eps 10.0 | epoch   60750 | loss 8.7041e-06 | min_w 0.866 |  2759.0s
+[adam]  window 25 eps 10.0 | epoch   61000 | loss 9.1048e-06 | min_w 0.860 |  2763.8s
+[adam]  window 25 eps 10.0 | epoch   61250 | loss 6.2755e-06 | min_w 0.904 |  2768.6s
+[adam]  window 25 eps 10.0 | epoch   61500 | loss 7.7847e-06 | min_w 0.881 |  2771.8s
+[adam]  window 25 eps 10.0 | epoch   61750 | loss 8.0582e-06 | min_w 0.876 |  2776.1s
+[adam]  window 25 eps 10.0 | epoch   62000 | loss 9.6467e-06 | min_w 0.852 |  2785.3s
+[window] 25 done | loss 2.5370e-07 |  2817.8s
+[adam]  window 26 eps 10.0 | epoch   63500 | loss 1.1291e-06 | min_w 0.983 |  2820.8s
+[adam]  window 26 eps 10.0 | epoch   63750 | loss 8.8727e-07 | min_w 0.986 |  2825.7s
+[adam]  window 26 eps 10.0 | epoch   64000 | loss 6.6886e-07 | min_w 0.990 |  2834.1s
+[window] 26 done | loss 9.7825e-08 |  2933.7s
+[save]  checkpoint + telemetry -> /content/lorenz1960-pinn/runs/paper_ablations/r4_candidate_seed4/history
+[save]  rendering figures -> /content/lorenz1960-pinn/runs/paper_ablations/r4_candidate_seed4 ...
+/content/lorenz1960-pinn/src/pinn/viz/evaluation.py:53: UserWarning:
+
+Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+
+[save]  44 snapshots + point_summary.csv + 4 breakdown figures
+[save]  wrote metrics.csv, run_summary.csv + 36 figure files
+[done]  total 3096.5s
+      state      mae     rmse  max_abs_error
+          x 0.000022 0.000030       0.000098
+          y 0.000041 0.000056       0.000175
+          z 0.000029 0.000040       0.000136
+combined_l2 0.000063 0.000075       0.000186
+                   arm device  adam_steps  lbfgs_evals  rmse_combined_l2  wall_clock_s
+    r1_no_causal_seed1    cpu       35100        33211          0.000175    1001.88770
+    r1_no_causal_seed2    cpu       35100        33486          0.000189    1117.94103
+    r1_no_causal_seed3    cpu       35100        33385          0.000516    1305.14008
+      r2_no_warm_seed1   cuda      105877        33174          0.000176   10501.44510
+      r2_no_warm_seed2   cuda      100185        33431          0.000288    9835.43886
+r3_causal_single_seed0   cuda       40000         5529          0.275134    8093.46380
+    r4_candidate_seed1    cpu       33564        33163          0.000081    1163.77413
+    r4_candidate_seed2    cpu       36759        33082          0.000260    1169.11740
+    r4_candidate_seed3   cuda       35996        33106          0.000199    3764.76705
+    r4_candidate_seed4   cuda       32757        32516          0.000075    2933.66347
+   r6_sequential_seed1   cuda       35100        33759          0.486230    4825.91686
+   r6_sequential_seed2   cuda       35100        33760          0.648400    4172.95236
+   r6_sequential_seed3   cuda       35100        33403          0.350488    2764.77157

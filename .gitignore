@@ -13,6 +13,7 @@ runs/epoch_probe/
 !src/pinn/history/pinn.pt
 !runs/*/history/pinn.pt
 !runs/causal-window/*/*/history/pinn.pt
+!runs/paper_ablations/*/history/pinn.pt
 *.npz
 *.npy
 
@@ -36,8 +37,15 @@ Thumbs.db
 
 # Local working notes, deliberately untracked.
 feedback.md
-writings
+writings/*
+!writings/journal/
 .claude
 .agents
 .kilo
 .omo
+
+# paper ablation runs: keep summaries, configs, model snapshots, and figures;
+# exclude optimizer-state and snapshot bulk
+runs/paper_ablations/*/breakdown/
+runs/paper_ablations/*/history/progress.pt
+runs/paper_ablations/*/history/param_trail.npz

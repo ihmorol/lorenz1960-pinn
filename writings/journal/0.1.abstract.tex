@@ -1,0 +1,10 @@
+%Abstract
+\setlength{\headheight}{14pt}
+\begin{center}
+	{\huge \bf Abstract}
+	\line(1,0){430}
+\end{center}
+In physical modeling, nonlinear coupled ordinary differential equations (ODEs) are frequently encountered. It is not possible to obtain their analytical solutions. In most cases, the traditional approach to solving such problems is numerical methods such as the Runge-Kutta family, which comes with a computational burden and mesh-dependency. The Lorenz ODE system is a simplified meteorological model that is used as a test case in this study. This study investigates whether a standard artificial neural network (ANN), without physics-informed loss functions or operator learning configurations, can approximate the solution to this coupled system. Accurate reference data are generated using the Runge-Kutta method and the SciPy solver. Several feedforward ANN structures are then trained on this reference data. Then, change the network structure by adjusting the number of hidden layers, the number of neurons per layer, and the activation functions. Lastly, test the models by checking the mean squared error (MSE), training convergence, and the time required to compute them.
+
+\clearpage
+\setlength{\headheight}{12pt}
