@@ -1,0 +1,16 @@
+{
+  "reference_vs_tighter_max_state_norm": 3.117325935429204e-10,
+  "reference_vs_radau_max_state_norm": 3.115642091171399e-10,
+  "rounded_horizon_return_distance": 1.6518658406610048e-06,
+  "estimated_full_period": 13.264461940383475,
+  "period_fit_return_distance": 2.683549374998111e-15,
+  "explicit_invariant_max_absolute_drift": [
+    1.4299672557172016e-13,
+    1.0391687510491465e-13
+  ],
+  "rk4_endpoint_errors": {
+    "1000": 2.937905812332733e-10,
+    "2000": 1.8323089877425037e-11,
+    "4000": 1.1454145064575131e-12
+  }
+}
