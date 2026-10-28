@@ -1,0 +1,10 @@
+docs(paper): plan evidence-bound submission fixes
+
+Preserve the full requirements audit and map every finding to a
+claimable revision task, owner boundary and verification gate.
+
+Constraint: no new experiments; preserve verified results and voice
+Confidence: high
+Scope-risk: narrow
+Tested: checked 24 requirement and 19 criterion mappings
+Not-tested: manuscript revisions and author policy confirmations

@@ -1,0 +1,9 @@
+fix(results): retain ablation model records
+
+Keep final paper-ablation checkpoints visible to Git and record hashes
+for all sixteen paper runs and their aggregate evidence.
+
+Constraint: retain saved numerical results unchanged
+Confidence: high
+Scope-risk: narrow
+Tested: sixteen-run manifest covers 108 files

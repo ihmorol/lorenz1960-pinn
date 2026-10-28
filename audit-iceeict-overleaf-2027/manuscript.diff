@@ -1,0 +1,194 @@
+--- imported/main.tex
++++ formatted/main.tex
+@@ -1,63 +1,22 @@
+-\documentclass[conference]{IEEEtran}
++\documentclass[conference,a4paper]{IEEEtran}
+ \usepackage{cite}
+ \usepackage{amsmath,amssymb}
+ \usepackage{graphicx}
+ \usepackage{booktabs}
+-\usepackage{algorithm}
+ \usepackage{algpseudocode}
+ 
+ \graphicspath{{figures/}}
+ 
+ \begin{document}
+ 
+-\title{Sequential Training of Windowed PINNs for the Lorenz-1960 ODE System}
+-
+-\author{
+-\IEEEauthorblockN{Ikramul Hasan Moral, Md. Abu Bakar, Samiur Rahman Omlan,\\
+-Md. Touhidul Islam, Fariha Islam, Dr. Muhammad Nomani Kabir}
+-\IEEEauthorblockA{Department of Computer Science and Engineering, United International University, Dhaka, Bangladesh\\
+-imoral223489@bscse.uiu.ac.bd, mbakar223200@bscse.uiu.ac.bd, somlan223195@bscse.uiu.ac.bd,\\
+-mislam223435@bscse.uiu.ac.bd, fislam223431@bscse.uiu.ac.bd, kabir@cse.uiu.ac.bd}
+-}
+-
+-
+-% \author{\IEEEauthorblockN{Ikramul Hasan Moral}
+-% \IEEEauthorblockA{\textit{Dept. of CSE} \\
+-% \textit{United International University}\\
+-% imoral223489@bscse.uiu.ac.bd}
+-
+-% \and
+-% \IEEEauthorblockN{Md. Abu Bakar}
+-% \IEEEauthorblockA{\textit{Dept. of CSE} \\
+-% \textit{United International University}\\
+-% mbakar223200@bscse.uiu.ac.bd}
+-% \and
+-% \IEEEauthorblockN{Samiur Rahman Omlan}
+-% \IEEEauthorblockA{\textit{Dept. of CSE} \\
+-% \textit{United International University}\\
+-% somlan223195@bscse.uiu.ac.bd}
+-% \and
+-% \IEEEauthorblockN{Md. Touhidul Islam}
+-% \IEEEauthorblockA{\textit{Dept. of CSE} \\
+-% \textit{United International University}\\
+-% mislam223435@bscse.uiu.ac.bd}
+-% \and
+-% \IEEEauthorblockN{Fariha Islam}
+-% \IEEEauthorblockA{\textit{Dept. of CSE} \\
+-% \textit{United International University}\\
+-% fislam223431@bscse.uiu.ac.bd}
+-% \and
+-% \IEEEauthorblockN{Dr. Muhammad Nomani Kabir}
+-% \IEEEauthorblockA{\textit{Professor, Dept of CSE} \\
+-% \textit{United International University}\\
+-% kabir@cse.uiu.ac.bd}
+-% }
+-
++\title{Sequential Training of Windowed Physics-Informed Neural Networks for the Lorenz-1960 Ordinary Differential Equation System}
++
++\author{}
+ 
+ \maketitle
+ 
+ \begin{abstract}
+-We study a physics-informed neural network (PINN) approximation of a single nearly closed orbit of the Lorenz three-state system on $t\in[0,13.26446]$. We trained a single network on the full interval that produces a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval into 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, L-BFGS minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. Across five seeds, the windowed model gives a median combined RMSE of $8.13\times10^{-5}$ on 13,265 evaluation times. Also a dense-grid residual mean square of $1.87\times10^{-7}$. The full-interval and windowed runs also vary in number of parameters, sampling and optimizer schedule, so we describe them as different configurations. Ablations show that separate window networks is needed and warm start improves accuracy and reduced training steps. 
++We study a physics-informed neural network (PINN) approximation of a single nearly closed orbit of the Lorenz three-state system on the time interval from 0 to 13.26446. We trained a single network on the full interval that produces a combined state root-mean-square error (RMSE) of 2.237. To address this long horizon problem, we divide the interval into 27 windows. Each window has a separate network and an initial state that is fixed to the predicted endpoint of the previous window. In each window, Adam reduces the residual in four stages. In each stage, we use causal weights and causal weighted loss to reduce the loss of all earlier points. Then, limited-memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) minimizes the loss using the unweighted residual mean. A numerical reference is used to monitor the training but is not used for optimization or stopping. Across five seeds, the windowed model gives a median combined RMSE of 0.0000813 on 13,265 evaluation times. Also a dense-grid residual mean square of 0.000000187. The full-interval and windowed runs also vary in number of parameters, sampling and optimizer schedule, so we describe them as different configurations. Ablations show that separate window networks is needed and warm start improves accuracy and reduced training steps.
+ 
+ \end{abstract}
+ 
+@@ -95,7 +54,11 @@
+ \label{eq:lorenz1960}
+ \end{equation}
+ 
+-Suppose the state vector is given by $u(t)=[x(t),y(t),z(t)]^\mathsf{T}$. We set $\kappa=2$ and $\ell=1$ in~\eqref{eq:lorenz1960} and get the three coefficients.
++Suppose the state vector is given by
++\[
++u(t)=[x(t),y(t),z(t)]^\mathsf{T}.
++\]
++ We set $\kappa=2$ and $\ell=1$ in~\eqref{eq:lorenz1960} and get the three coefficients.
+ 
+ 
+ % Physical wavenumbers: \kappa and \ell.
+@@ -121,7 +84,11 @@
+ 
+ The input of $f$ is a state vector $u$ with three components and the output is the rate of change of $x$, $y$ and $z$ in the same order. While training, we use this same function on the predicted state $\hat{u}_k(t)$.
+ 
+-For our experiment we used the coefficients $a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}$. The system starts from an initial state~\cite{matthews2024pinnde} of $u(0)=[0.5,0.75,1.0]^\mathsf{T}$ until a final time of $T=13.26446$. At this endpoint, the reference trajectory nearly returns to its starting state. It is very similar but not exactly closed so we call this interval a nearly closed orbit and not an exact period.
++For our experiment we used the coefficients
++\[
++a=[a_x,a_y,a_z]^\mathsf{T}=[-0.1,1.6,-0.75]^\mathsf{T}.
++\]
++ The system starts from an initial state~\cite{matthews2024pinnde} of $u(0)=[0.5,0.75,1.0]^\mathsf{T}$ until a final time of $T=13.26446$. At this endpoint, the reference trajectory nearly returns to its starting state. It is very similar but not exactly closed so we call this interval a nearly closed orbit and not an exact period.
+ 
+ 
+ \subsection{Related Work}
+@@ -136,6 +103,8 @@
+ 
+ \subsection{Network Structure}
+ We used several modeling strategies to approximate the solution for Lorenz system trajectory over  $[0,T]$, where $T=13.26446$ is one nearly closed loop for the chosen initial state. We first tried one network to learn the entire trajectory at once. As it got stuck in a plateau, we tried to split the time interval in equal segments.
++
++Fig.~\ref{fig:plateau} shows the saved full-interval result.
+ 
+ \begin{figure}[t]
+ \centering
+@@ -179,6 +148,8 @@
+ \end{equation}
+ 
+ The endpoint transfer in~\eqref{eq:handoff} and the trial solution make the predicted values continuous at the window boundaries. But the derivatives can still change suddenly at the boundaries. Window $k+1$ starts from a copy of the weights of window $k$, $\theta_{k+1}\leftarrow\theta_k$ for $k=0,\ldots,25$, and then trains its own parameters. As the starting point of the later windows is predicted, it can carry error from earlier windows.
++
++Fig.~\ref{fig:pipeline} shows the implementation pipeline.
+ 
+ \begin{figure}[t]
+ \centering
+@@ -259,9 +230,9 @@
+ 
+ \subsection{Training Procedure}
+ 
+-The causal loss defined above is minimized separately in each window. Figure~\ref{fig:pipeline} summarizes the sequence across the windows. Algorithm~\ref{alg:training} gives the training steps. In each window an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. After every Adam update the code recalculates the causal weights at all collocation points of the window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records failure.
+-
+-When all four stages are completed, L-BFGS tries to minimize the loss using unweighted residual mean up to 1,000 iterations. For L-BFGS, we remove the causal weights and use the plain mean of the point losses.
++The causal loss defined above is minimized separately in each window. Fig.~\ref{fig:pipeline} summarizes the sequence across the windows. Fig.~\ref{fig:training} gives the training steps. In each window an Adam optimizer and a StepLR scheduler are created. The learning rate starts at $10^{-3}$ and it is multiplied by 0.9 for every 1,000 updates across all four $\epsilon$ stages of the window. There is a 4,000 update limit for each stage. After every Adam update the code recalculates the causal weights at all collocation points of the window. If the minimum causal weight of all 1536 points of the window is above 0.99 after an update, then it moves to the next $\epsilon$ stage. If it is below 0.99 and it reaches the update limit then it moves to the next stage and records failure.
++
++When all four stages are completed, limited-memory Broyden–Fletcher–Goldfarb–Shanno (L-BFGS) tries to minimize the loss using unweighted residual mean up to 1,000 iterations. For L-BFGS, we remove the causal weights and use the plain mean of the point losses.
+ \[
+ \mathcal{L}^{\mathrm{raw}}_k
+ =\frac{1}{n_k}\sum_i L_{k,i}
+@@ -270,9 +241,9 @@
+ 
+ To keep track of training, we save a snapshot every 50 updates. After each window the trained parameters, predicted endpoint are stored. The same parameters initialize the next window. Reference grid values are only used for evaluation. After training, the model is evaluated on the collocation points and the evaluation grid to get the error, residual and other measurements. 
+ 
+-\begin{algorithm}[t]
+-\caption{Sequential window training}
+-\label{alg:training}
++\begin{figure}[t]
++\centering
++\begin{minipage}{\columnwidth}
+ \begin{algorithmic}[1]
+ \Require Ordered windows $W_0,\ldots,W_{26}$ and their uniform time points
+ \State Set $u_{0,0}\gets[0.5,0.75,1.0]^\mathsf{T}$
+@@ -299,7 +270,10 @@
+   \State Save window model, endpoint state, and config record
+ \EndFor
+ \end{algorithmic}
+-\end{algorithm}
++\end{minipage}
++\caption{Sequential window training}
++\label{fig:training}
++\end{figure}
+ 
+ \input{ablation-table}
+ 
+@@ -354,9 +328,9 @@
+ \end{aligned}
+ \label{eq:rmse}
+ \end{equation}
+-For each state $c\in\{x,y,z\}$ we also report MAE, RMSE and the maximum absolute error. $E_{\mathrm{mean}}$ and $E_{\mathrm{max}}$ are the mean and the maximum of the error norm.
+-
+-The dense-grid residual MSE is the average of the three residual components squared, taken over the times of the evaluation. So it has a factor of $1/(3n_{\mathrm{eval}})$, but the combined state RMSE is not divided by three.
++For each state $c\in\{x,y,z\}$ we also report mean absolute error (MAE), RMSE and the maximum absolute error. $E_{\mathrm{mean}}$ and $E_{\mathrm{max}}$ are the mean and the maximum of the error norm.
++
++The dense-grid residual mean square error (MSE) is the average of the three residual components squared, taken over the times of the evaluation. So it has a factor of $1/(3n_{\mathrm{eval}})$, but the combined state RMSE is not divided by three.
+ \[
+ \operatorname{MSE}_{r,\mathrm{eval}}
+ =\frac{1}{3n_{\mathrm{eval}}}\sum_{j=1}^{n_{\mathrm{eval}}}\|r(t_j)\|_2^2.
+@@ -376,7 +350,7 @@
+ 
+ 
+ \subsection{Prediction Accuracy}
+-We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853 and RK4. As shown in Table~\ref{tab:errors}, our model achieved a median combined RMSE of $8.13\times10^{-5}$ across the 13,265 uniform times in our evaluation grid and the best RMSE across the seeds is $6.97\times10^{-5}$. The highest state error norm was $3.09\times10^{-4}$. Figure~\ref{fig:trajectory} plots these predictions against the reference over time. The trajectories overlap completely, but the error shows small peaks, particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$ from~\eqref{eq:rmse}, and the maximum entry is $E_{\mathrm{max}}$.
++We compare the windowed PINN with an extremely accurate numerical reference which is SciPy's DOP853 and RK4. As shown in Table~\ref{tab:errors}, our model achieved a median combined RMSE of $8.13\times10^{-5}$ across the 13,265 uniform times in our evaluation grid and the best RMSE across the seeds is $6.97\times10^{-5}$. The highest state error norm was $3.09\times10^{-4}$. Fig.~\ref{fig:trajectory} plots these predictions against the reference over time. The trajectories overlap completely, but the error shows small peaks, particularly at $t\simeq5$. In the state-norm row, the MAE-column entry is $E_{\mathrm{mean}}$, the RMSE entry is $\operatorname{RMSE}_2$ from~\eqref{eq:rmse}, and the maximum entry is $E_{\mathrm{max}}$.
+ 
+ \begin{table}[t]
+ \caption{Windowed-run error (seed 0)}
+@@ -424,6 +398,7 @@
+ Collocation residual MSE & $2.80\times10^{-4}$ & $1.87\times10^{-7}$\\
+ Recorded Adam steps & 40,000 & 34,765\\
+ \bottomrule
++\multicolumn{3}{l}{LHS: Latin hypercube sampling.}\\
+ \end{tabular}
+ \end{table}
+ 
+@@ -444,6 +419,10 @@
+ 
+ 
+ 
++\section*{Acknowledgment}
++Large language models provided non-intellectual assistance limited to manuscript formatting and typesetting, language editing, or proofreading. The authors are responsible for the content and accuracy of the manuscript.
++
++\IEEEtriggeratref{13}
+ \bibliographystyle{IEEEtran}
+ \bibliography{references}
+ 

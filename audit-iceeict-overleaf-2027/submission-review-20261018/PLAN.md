@@ -1,0 +1,1 @@
+Completed: review both ZIPs and live conference requirements with pre-submission-reviewer; compile and inspect separate six-page preview; verify exact two-sentence deletion plus stale-reference-break removal; preserve canonical manuscript. Seven major findings and external author/CMT checks remain documented for author decisions.

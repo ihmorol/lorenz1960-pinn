@@ -1,0 +1,25 @@
+ok         r1_no_causal_seed1
+ok         r1_no_causal_seed2
+ok         r1_no_causal_seed3
+ok         r2_no_warm_seed1
+ok         r2_no_warm_seed2
+ok         r2_no_warm_seed3
+ok         r3_causal_single_seed0
+ok         r4_candidate_seed1
+ok         r4_candidate_seed2
+ok         r4_candidate_seed3
+ok         r4_candidate_seed4
+ok         r6_sequential_seed1
+ok         r6_sequential_seed2
+ok         r6_sequential_seed3
+ok         r4_candidate_seed0
+ok         F1_seed0
+
+r1_no_causal       n=3 adam=   35,100 rmse mean=0.000293 std=0.00019 median=0.000189 range=0.000175..0.000516 below1e-4=0/3 | MWU p vs r4: rmse_com=0.196, max_abs_=0.036, residual=0.018, invarian=0.018
+r2_no_warm         n=3 adam=  102,989 rmse mean=0.00025 std=6.4e-05 median=0.000285 range=0.000176..0.000288 below1e-4=0/3 | MWU p vs r4: rmse_com=0.071, max_abs_=0.018, residual=0.018, invarian=0.018
+r3_causal_single   n=1 adam=   40,000 rmse mean=0.275 std=nan median=0.275 range=0.275..0.275 below1e-4=0/1
+r4_candidate       n=5 adam=   34,768 rmse mean=0.000137 std=8.7e-05 median=8.13e-05 range=6.97e-05..0.00026 below1e-4=3/5
+r6_sequential      n=3 adam=   35,100 rmse mean=0.495 std=0.15 median=0.486 range=0.35..0.648 below1e-4=0/3 | MWU p vs r4: rmse_com=0.018, max_abs_=0.018, residual=0.018, invarian=0.018
+
+reference only, not pooled:
+  F1_seed0           rmse=2.24 max=3.35

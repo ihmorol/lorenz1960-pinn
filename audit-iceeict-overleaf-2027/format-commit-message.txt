@@ -1,0 +1,11 @@
+fix(paper): apply IEEE A4 presentation rules
+
+Anonymize the imported manuscript, use A4 conference typography, and
+repair figure font embedding while preserving the exact figure geometry.
+Retain scientific prose, equations and all reported measurements.
+
+Constraint: retain all prose and figure geometry by author request
+Confidence: high
+Scope-risk: narrow
+Tested: clean seven-page build, embedded fonts, unchanged figure streams
+Not-tested: six-page compliance remains unresolved by author choice

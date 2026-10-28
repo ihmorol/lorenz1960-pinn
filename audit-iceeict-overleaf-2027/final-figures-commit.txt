@@ -1,0 +1,11 @@
+fix(paper): make submission figures readable
+
+Regenerate all affected figures from archived results at readable
+column scale while preserving a six-page anonymous manuscript. Correct
+the stage-verification wording and align pipeline window indices.
+
+Constraint: no new experiments or changes to verified result values
+Tested: six A4 pages, 2.70 MB, embedded Times labels at least 8.5 pt
+Tested: archived RMSE agreement and unchanged equations and tables
+Scope-risk: narrow
+Refs: #39

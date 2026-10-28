@@ -1,0 +1,10 @@
+docs(results): record published archive checks
+
+Record direct evaluation of all sixteen saved models and verification
+from a fresh clone of the public main branch. Describe the unsupported
+historical R6 retraining script separately from verified evaluation.
+
+Confidence: high
+Scope-risk: narrow
+Tested: sixteen checkpoint RMSEs and 150 run-file integrity hashes
+Not-tested: full retraining and missing historical source diff

@@ -1,0 +1,11 @@
+feat(results): recover trained ablation models
+
+Combine the latest manuscript branch with its archived ablation evidence.
+Add the fourteen final checkpoints omitted by the existing ignore rules
+so the saved paper results can be evaluated without retraining.
+
+Constraint: preserve all recorded metrics and numerical settings
+Confidence: high
+Scope-risk: moderate
+Tested: checkpoint count and SHA-256 copies against local originals
+Not-tested: exact historical source diff for dirty training checkout

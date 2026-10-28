@@ -1,0 +1,24 @@
+{
+  "status": "formatting draft with known limits",
+  "pdf_sha256": "4fb90c2a194e01e6019aad7492b808d7516d379de4a03a4ccf2543ed368cf083",
+  "pages": 7,
+  "bytes": 500269,
+  "a4": true,
+  "fonts_embedded": true,
+  "type3_fonts": false,
+  "anonymous_pdf": true,
+  "clean_build_log": true,
+  "numbered_equations_and_pseudocode_unchanged": true,
+  "ablation_table_values_unchanged": true,
+  "pipeline_pdf_unchanged": true,
+  "conference_page_limit_met": false,
+  "pending_user_preserved_limits": [
+    "Seven pages, maximum six required",
+    "Small printed labels due exact figure geometry"
+  ],
+  "pending_author_checks": [
+    "final author review and approval",
+    "similarity screening",
+    "authenticated CMT fields"
+  ]
+}

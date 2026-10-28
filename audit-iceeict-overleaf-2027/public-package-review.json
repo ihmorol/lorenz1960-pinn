@@ -1,0 +1,30 @@
+{
+  "files": 208,
+  "bytes": 105873181,
+  "largest_files": [
+    [
+      5221364,
+      "runs/paper_ablations/r2_no_warm_seed1/history/loss_history.csv"
+    ],
+    [
+      5121739,
+      "runs/paper_ablations/r2_no_warm_seed3/history/loss_history.csv"
+    ],
+    [
+      5011818,
+      "runs/paper_ablations/r2_no_warm_seed2/history/loss_history.csv"
+    ],
+    [
+      2740477,
+      "runs/paper_ablations/r2_no_warm_seed1/history/causal.csv"
+    ],
+    [
+      2658609,
+      "runs/paper_ablations/r2_no_warm_seed3/history/causal.csv"
+    ]
+  ],
+  "secret_marker_scan": "pass",
+  "author_contact_scan": "pass",
+  "manuscripts_or_internal_agent_files": false,
+  "scope": "sixteen paper runs only"
+}

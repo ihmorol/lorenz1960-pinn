@@ -1,0 +1,9 @@
+docs(paper): preserve latest Overleaf source
+
+Preserve the author-designated manuscript before conference formatting.
+The imported files match the supplied archive byte for byte.
+
+Constraint: keep the imported version reviewable
+Confidence: high
+Scope-risk: narrow
+Tested: archive paths and SHA-256 import manifest

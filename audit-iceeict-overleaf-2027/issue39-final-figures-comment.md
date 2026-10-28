@@ -1,0 +1,3 @@
+Final figure revision published. The new final folder supersedes the earlier figure fallback. Independent technical check: **0 critical, 0 major, 0 minor; M7 resolved**. All three vector figures use readable embedded Times New Roman labels (minimum 8.5 pt at final scale). Six A4 pages, 2,697,666 bytes, zero Type 3 fonts. Archived RMSEs/data and all equations/tables/algorithm/bibliography preserved; no training performed.
+
+Paper commit `9a9e5ab56338c0e5c4c7b8d1a754179612853268`; audit/package commit `00faf052925cc24e6a621c18a33c1117f6313f59`. See the latest issue header for final PDF, ZIP, exact text diff, visual comparison and independent review. **34/40 tasks complete**; remaining author/CMT/screening/freeze gates stay explicit.

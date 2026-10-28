@@ -1,0 +1,71 @@
+\relax 
+\citation{lorenz1960}
+\citation{raissi2019}
+\citation{wang2024causal}
+\citation{wang2024causal}
+\citation{lagaris1998}
+\citation{matthews2024pinnde}
+\citation{matthews2024pinnde}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Problem and Related Work}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Lorenz System Initial-Value Problem}{1}{}\protected@file@percent }
+\newlabel{eq:lorenz1960}{{1}{1}{}{equation.1}{}}
+\newlabel{eq:ode}{{2}{1}{}{equation.2}{}}
+\citation{raissi2019}
+\citation{lagaris1998}
+\citation{wang2024causal}
+\citation{penwarden2023}
+\citation{wang2024causal}
+\citation{lagaris1998}
+\citation{wang2024causal}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Related Work}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Windowed PINN Method and Implementation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Model Construction and Time Routing}{2}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Training result of a single network , entire time at once}}{2}{}\protected@file@percent }
+\newlabel{fig:method}{{1}{2}{}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Hard Initial State and Window Handoff}{2}{}\protected@file@percent }
+\newlabel{eq:trial}{{3}{2}{}{equation.3}{}}
+\newlabel{eq:handoff}{{4}{2}{}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Collocation, Residual, and Causal Loss}{2}{}\protected@file@percent }
+\newlabel{eq:residual}{{5}{2}{}{equation.5}{}}
+\newlabel{eq:pointloss}{{6}{2}{}{equation.6}{}}
+\citation{virtanen2020}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Complete implementation pipeline}}{3}{}\protected@file@percent }
+\newlabel{fig:method}{{2}{3}{}{figure.2}{}}
+\newlabel{eq:weights}{{7}{3}{}{equation.7}{}}
+\newlabel{eq:causalloss}{{8}{3}{}{equation.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Optimizer Sequence and Saved State}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Experimental Protocol}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Baseline Reference}{3}{}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Sequential causal window training}}{4}{}\protected@file@percent }
+\newlabel{alg:training}{{1}{4}{}{algorithm.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces windowed-run configuration}}{4}{}\protected@file@percent }
+\newlabel{tab:config}{{I}{4}{}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Measures and Comparison Run}{4}{}\protected@file@percent }
+\newlabel{eq:rmse}{{9}{4}{}{equation.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Windowed-run error against DOP853 on 13,265 times}}{4}{}\protected@file@percent }
+\newlabel{tab:errors}{{II}{4}{}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces PINN solution vs reference with signed errors.}}{4}{}\protected@file@percent }
+\newlabel{fig:trajectory}{{3}{4}{}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}State Accuracy and Physics Checks}{4}{}\protected@file@percent }
+\citation{wang2024causal}
+\citation{penwarden2023}
+\citation{lagaris1998}
+\citation{wang2024causal}
+\bibstyle{IEEEtran}
+\bibdata{references}
+\bibcite{lorenz1960}{1}
+\bibcite{raissi2019}{2}
+\bibcite{wang2024causal}{3}
+\bibcite{lagaris1998}{4}
+\bibcite{matthews2024pinnde}{5}
+\bibcite{penwarden2023}{6}
+\bibcite{virtanen2020}{7}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Saved full-interval and windowed runs on the same IVP}}{5}{}\protected@file@percent }
+\newlabel{tab:comparison}{{III}{5}{}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Comparison and Training Record}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion and Limitations}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Conclusion}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{5}{}\protected@file@percent }
+\gdef \@abspage@last{5}

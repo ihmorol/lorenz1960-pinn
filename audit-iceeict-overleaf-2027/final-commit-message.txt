@@ -1,0 +1,11 @@
+docs(paper): record final submission audit
+
+Package the reviewed six-page manuscript with exact source changes,
+point-by-point verdicts and evidence for the retained figure fallback.
+Keep the reviewed paper and earlier manuscript versions unchanged.
+
+Constraint: preserve figure geometry and existing experimental results
+Tested: six A4 pages, reviewed hashes, page renders and archive CRC
+Not-tested: revised similarity screening and final CMT submission
+Scope-risk: narrow
+Refs: #39

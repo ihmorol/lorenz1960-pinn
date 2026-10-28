@@ -1,0 +1,114 @@
+{
+  "original_hashes_unchanged": {
+    "main.tex": "d25f44a2ef9663d60a22520b65410faa2745068af064b67a3b7962745913f6b0",
+    "main.pdf": "845af7ca2e399aa5a952279290fe97986a5d6d51e1e13052c23a19f0db8810a9",
+    "references.bib": "9a267b683ead6381c116334f7ec09f6b171bb9542f9cb4a7a489e242b8f9b124",
+    "main.bbl": "7baa5e590062600fe825da261d2881cdaea52b4c63d82c60cff5a96e8b5571ab"
+  },
+  "pdfs": {
+    "existing": {
+      "bytes": 338073,
+      "pages": 5,
+      "page_sizes_points": [
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ]
+      ],
+      "metadata": {
+        "format": "PDF 1.5",
+        "title": "",
+        "author": "",
+        "subject": "",
+        "keywords": "",
+        "creator": "TeX",
+        "producer": "pdfTeX-1.40.25",
+        "creationDate": "D:20260924113828Z",
+        "modDate": "D:20260924113828Z",
+        "trapped": "",
+        "encryption": null
+      },
+      "type3_fonts": []
+    },
+    "diagnostic": {
+      "bytes": 1409305,
+      "pages": 5,
+      "page_sizes_points": [
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ],
+        [
+          0.0,
+          0.0,
+          612.0,
+          792.0
+        ]
+      ],
+      "metadata": {
+        "format": "PDF 1.5",
+        "title": "",
+        "author": "",
+        "subject": "",
+        "keywords": "",
+        "creator": "TeX",
+        "producer": "MiKTeX pdfTeX-1.40.28",
+        "creationDate": "D:20261017133141+06'00'",
+        "modDate": "D:20261017133141+06'00'",
+        "trapped": "",
+        "encryption": null
+      },
+      "type3_fonts": [
+        "ECACOO+DejaVuSerif-Bold              Type 3            Custom           yes yes no      44  0",
+        "HCDTYZ+DejaVuSerif-Italic            Type 3            Custom           yes yes no      45  0",
+        "BXGEVL+DejaVuSerif                   Type 3            Custom           yes yes no      46  0"
+      ]
+    }
+  }
+}

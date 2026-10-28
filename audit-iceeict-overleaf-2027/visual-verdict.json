@@ -1,0 +1,21 @@
+{
+  "status": "PASS within user-approved scope; conference page limit remains unmet",
+  "pdf_sha256": "4fb90c2a194e01e6019aad7492b808d7516d379de4a03a4ccf2543ed368cf083",
+  "pages_inspected": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "font_embedding_repair": "same TrueType outlines; original raw and decoded page streams and page boxes unchanged",
+  "pipeline": "byte-identical",
+  "pending": [
+    "six-page limit",
+    "small printed figure labels retained by user choice",
+    "writing/accuracy findings",
+    "author approval/similarity/private CMT"
+  ]
+}

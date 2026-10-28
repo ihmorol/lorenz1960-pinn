@@ -1,0 +1,35 @@
+name                                 type              encoding         emb sub uni object ID
+------------------------------------ ----------------- ---------------- --- --- --- ---------
+LQSVOR+NimbusRomNo9L-Regu            Type 1            Custom           yes yes yes      4  0
+LREKMX+NimbusRomNo9L-MediItal        Type 1            Custom           yes yes yes      5  0
+VMINAN+NimbusRomNo9L-Medi            Type 1            Custom           yes yes yes      6  0
+VRIXMX+CMMI9                         Type 1            Builtin          yes yes yes      7  0
+ULAYFY+CMSY9                         Type 1            Builtin          yes yes yes      8  0
+TXNXEY+CMR9                          Type 1            Builtin          yes yes yes      9  0
+HBIEHQ+CMSY6                         Type 1            Builtin          yes yes yes     10  0
+PDAEVP+CMR6                          Type 1            Builtin          yes yes yes     11  0
+HXQCHQ+NimbusRomNo9L-ReguItal        Type 1            Custom           yes yes yes     12  0
+NTRXAT+CMR10                         Type 1            Builtin          yes yes yes     13  0
+RSRPRP+CMMI10                        Type 1            Builtin          yes yes yes     14  0
+AUVGAC+CMSS8                         Type 1            Builtin          yes yes yes     15  0
+QBDHSI+CMMI7                         Type 1            Builtin          yes yes yes     16  0
+EIBBLL+CMSY10                        Type 1            Builtin          yes yes yes     17  0
+VYKHNL+CMR7                          Type 1            Builtin          yes yes yes     18  0
+WWSQVD+NimbusMonL-Regu               Type 1            Custom           yes yes yes     19  0
+ZIPJOP+CMEX10                        Type 1            Builtin          yes yes yes     26  0
+YJUITE+CMMI5                         Type 1            Builtin          yes yes yes     27  0
+PXBGHL+CMSY7                         Type 1            Builtin          yes yes yes     28  0
+PRRUGR+CMR8                          Type 1            Builtin          yes yes yes     33  0
+VQKTPH+CMMI8                         Type 1            Builtin          yes yes yes     34  0
+PNUTJM+CMMI6                         Type 1            Builtin          yes yes yes     35  0
+KVFQUZ+CMSY8                         Type 1            Builtin          yes yes yes     36  0
+DKJRMR+DejaVuSans-Oblique            CID TrueType      Identity-H       yes yes yes     38  0
+FSEDLY+DejaVuSans-Oblique            CID TrueType      Identity-H       yes yes yes     39  0
+MCOPWY+DejaVuSans                    CID TrueType      Identity-H       yes yes yes     40  0
+DISKPK+DejaVuSans                    CID TrueType      Identity-H       yes yes yes     41  0
+DBETNR+DejaVuSerif                   CID TrueType      Identity-H       yes yes yes     42  0
+GGGFFG+DejaVuSerif                   CID TrueType      Identity-H       yes yes yes     43  0
+BWGRGR+DejaVuSans-Oblique            CID TrueType      Identity-H       yes yes yes     84  0
+FOKWBI+DejaVuSans                    CID TrueType      Identity-H       yes yes yes     85  0
+CUKENF+DejaVuSerif                   CID TrueType      Identity-H       yes yes yes     86  0
+EJTIYF+DejaVuSerif                   CID TrueType      Identity-H       yes yes yes     87  0

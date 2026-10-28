@@ -1,0 +1,12 @@
+fix(research): restore archived training support
+
+Recover completed shared-network and causal training code from the
+recorded experiment commit instead of rebuilding a scientific runner.
+Record matching settings for all fourteen ablation runs and publication
+of the verified sixteen-run public package.
+
+Constraint: preserve saved results and manuscript prose
+Tested: public package passes 80 tests and 16 checkpoint evaluations
+Not-tested: full research retraining and live Colab Drive
+Confidence: high
+Scope-risk: moderate

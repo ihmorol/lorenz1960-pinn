@@ -1,0 +1,11 @@
+feat(research): publish Lorenz PINN artifacts
+
+Provide the sixteen paper runs, final models, numerical settings and
+source code in a focused repository with reproducible evaluation.
+Exclude manuscripts, author contacts and unrelated experiments.
+
+Constraint: preserve saved results and disclose historical source gaps
+Confidence: high
+Scope-risk: moderate
+Tested: sixteen checkpoints, 31 stress tests and core regressions
+Not-tested: full retraining and incomplete historical R6 runner

@@ -1,0 +1,10 @@
+docs(paper): package audited final submission
+
+Include the independent figure and layout verdict, before-and-after
+comparison, all requirement statuses and a clean self-contained archive.
+Preserve the reviewed paper source and PDF unchanged.
+
+Tested: independent six-page review, archive CRC and all file hashes
+Not-tested: final author approval, fresh screening and CMT upload
+Scope-risk: narrow
+Refs: #39

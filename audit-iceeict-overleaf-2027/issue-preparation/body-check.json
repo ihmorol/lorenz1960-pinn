@@ -1,0 +1,10 @@
+{
+  "source_commit": "ec11b586d2d12b6a7921788791ed129144241371",
+  "characters": 48537,
+  "bytes": 48537,
+  "sha256": "79518c25c902935b52cc7a21f54ef59568a3bc516b8d9ee910f50416388f750f",
+  "requirements": 24,
+  "criteria": 19,
+  "findings": 15,
+  "checkboxes": 47
+}

@@ -1,0 +1,1 @@
+Completed: recover existing training source and tests; match all 14 archived configurations; pass all 80 public regression tests and 16 checkpoint evaluations; publish public main at 423696d. Exact historical dirty diff remains unavailable. Full training and live Drive were not rerun.

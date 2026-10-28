@@ -1,0 +1,301 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+(IEEEtran.cls
+Document Class: IEEEtran 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd)
+-- Using 210mm x 297mm (a4) paper.
+-- Using PDF output.
+-- This is a 10 point document.
+) (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/cite\cite.sty)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+For additional information on amsmath, use the `?' option.
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty))
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty))
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty))
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.cf
+g)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def)
+)) (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty
+)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/algorithmicx\algpseudoco
+de.sty (C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/base\ifthen.sty)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/algorithmicx\algorithmic
+x.sty
+Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
+)
+Document Style - pseudocode environments for use with the `algorithmicx' style
+)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdft
+ex.def)
+No file main.aux.
+-- Lines per column: 56 (exact).
+
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mki
+i
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-ba
+se.sty
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cf
+g))
+
+LaTeX Warning: Citation `lorenz1960' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `raissi2019' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `krishnapriyan2021' on page 1 undefined on input line 2
+8.
+
+
+LaTeX Warning: Citation `raissi2019' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 1 undefined on input line 28.
+
+
+LaTeX Warning: Citation `lagaris1998' on page 1 undefined on input line 28.
+
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd)
+(C:\Users\User\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd)
+
+LaTeX Warning: Reference `sec:windowed-pinn' on page 1 undefined on input line 
+30.
+
+
+LaTeX Warning: Reference `sec:results' on page 1 undefined on input line 30.
+
+
+LaTeX Warning: Reference `subsec:ablation-results' on page 1 undefined on input
+ line 30.
+
+
+LaTeX Warning: Citation `lorenz1960' on page 1 undefined on input line 38.
+
+
+LaTeX Warning: Reference `eq:lorenz1960' on page 1 undefined on input line 61.
+
+[1{C:/Users/User/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/Use
+r/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}]
+
+LaTeX Warning: Citation `matthews2024pinnde' on page 2 undefined on input line 
+91.
+
+
+LaTeX Warning: Citation `raissi2019' on page 2 undefined on input line 95.
+
+
+LaTeX Warning: Citation `lagaris1998' on page 2 undefined on input line 95.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 2 undefined on input line 95.
+
+
+LaTeX Warning: Citation `penwarden2023' on page 2 undefined on input line 95.
+
+
+LaTeX Warning: Citation `krishnapriyan2021' on page 2 undefined on input line 9
+7.
+
+
+LaTeX Warning: Citation `wang2021gradient' on page 2 undefined on input line 97
+.
+
+
+LaTeX Warning: Citation `wang2022ntk' on page 2 undefined on input line 97.
+
+
+LaTeX Warning: Citation `rohrhofer2023' on page 2 undefined on input line 97.
+
+
+LaTeX Warning: Citation `rathore2024' on page 2 undefined on input line 97.
+
+
+LaTeX Warning: Citation `mattey2022bcpinn' on page 2 undefined on input line 97
+.
+
+
+LaTeX Warning: Reference `fig:plateau' on page 2 undefined on input line 107.
+
+
+LaTeX Warning: Reference `tab:ablations' on page 2 undefined on input line 116.
+
+
+
+LaTeX Warning: Reference `eq:trial' on page 2 undefined on input line 125.
+
+
+LaTeX Warning: Citation `lagaris1998' on page 2 undefined on input line 144.
+
+[2 <./figures/plateau-results.pdf>]
+
+LaTeX Warning: Reference `eq:handoff' on page 3 undefined on input line 150.
+
+
+LaTeX Warning: Reference `fig:pipeline' on page 3 undefined on input line 152.
+
+
+LaTeX Warning: Reference `eq:trial' on page 3 undefined on input line 172.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 3 undefined on input line 207.
+
+
+
+LaTeX Warning: Citation `wang2024causal' on page 3 undefined on input line 227.
+
+
+[3 <./figures/method.pdf>]
+
+LaTeX Warning: Reference `eq:pointloss' on page 4 undefined on input line 229.
+
+
+LaTeX Warning: Reference `eq:causalloss' on page 4 undefined on input line 229.
+
+
+
+LaTeX Warning: Reference `fig:pipeline' on page 4 undefined on input line 233.
+
+
+LaTeX Warning: Reference `fig:training' on page 4 undefined on input line 233.
+
+
+LaTeX Warning: Reference `eq:trial' on page 4 undefined on input line 259.
+
+
+LaTeX Warning: Reference `eq:residual' on page 4 undefined on input line 260.
+
+
+LaTeX Warning: Reference `eq:pointloss' on page 4 undefined on input line 260.
+
+
+LaTeX Warning: Reference `eq:weights' on page 4 undefined on input line 261.
+
+
+LaTeX Warning: Reference `eq:causalloss' on page 4 undefined on input line 262.
+
+
+(ablation-table.tex)
+
+LaTeX Warning: Reference `tab:config' on page 4 undefined on input line 287.
+
+
+LaTeX Warning: Citation `virtanen2020' on page 4 undefined on input line 287.
+
+
+LaTeX Warning: Reference `tab:ablations' on page 4 undefined on input line 341.
+
+
+
+LaTeX Warning: Reference `tab:errors' on page 4 undefined on input line 341.
+
+
+LaTeX Warning: Reference `tab:comparison' on page 4 undefined on input line 341
+.
+
+[4]
+
+LaTeX Warning: Reference `tab:ablations' on page 5 undefined on input line 344.
+
+
+
+LaTeX Warning: Reference `tab:errors' on page 5 undefined on input line 353.
+
+
+LaTeX Warning: Reference `fig:trajectory' on page 5 undefined on input line 353
+.
+
+
+LaTeX Warning: Reference `eq:rmse' on page 5 undefined on input line 353.
+
+
+LaTeX Warning: Reference `eq:ode' on page 5 undefined on input line 378.
+
+[5 <./figures/solution_vs_reference.pdf>]
+
+LaTeX Warning: Reference `tab:comparison' on page 6 undefined on input line 384
+.
+
+
+LaTeX Warning: Citation `rohrhofer2023' on page 6 undefined on input line 384.
+
+
+LaTeX Warning: Citation `wang2024causal' on page 6 undefined on input line 384.
+
+
+
+LaTeX Warning: Citation `penwarden2023' on page 6 undefined on input line 384.
+
+
+LaTeX Warning: Reference `tab:ablations' on page 6 undefined on input line 384.
+
+
+
+LaTeX Warning: Reference `tab:ablations' on page 6 undefined on input line 409.
+
+
+(main.bbl [6])
+
+** Conference Paper **
+Before submitting the final camera ready copy, remember to:
+
+ 1. Manually equalize the lengths of two columns on the last page
+ of your paper;
+
+ 2. Ensure that any PostScript and/or PDF output post-processing
+ uses only Type 1 fonts and that every step in the generation
+ process uses the appropriate paper size.
+
+[7] (main.aux)
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ )<C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/c
+mbx10.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
+nts/cm/cmex10.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/amsfonts/cm/cmmi10.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/public/amsfonts/cm/cmmi5.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/f
+onts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/User/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/User/AppData/Local/Pro
+grams/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/User/AppData/Lo
+cal/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/User/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/Us
+er/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Us
+ers/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb>
+<C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr
+8.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/
+cm/cmss8.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/public/am
+sfonts/cm/cmsy10.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/amsfonts/cm/cmsy6.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX/fonts/
+type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/User/AppData/Local/Programs/MiKTeX
+/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/User/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb><C:/Users/User/AppData/L
+ocal/Programs/MiKTeX/fonts/type1/urw/times/utmb8a.pfb><C:/Users/User/AppData/Lo
+cal/Programs/MiKTeX/fonts/type1/urw/times/utmbi8a.pfb><C:/Users/User/AppData/Lo
+cal/Programs/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Users/User/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/urw/times/utmri8a.pfb>
+Output written on main.pdf (7 pages, 500710 bytes).
+Transcript written on main.log.

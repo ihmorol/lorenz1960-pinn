@@ -1,0 +1,8 @@
+test(pinn): check final snapshot epochs
+
+Verify both the pre-step snapshots and the final saved state. The old
+count omitted the final-state snapshot already written by training.
+
+Confidence: high
+Scope-risk: narrow
+Tested: core suite passes the exact snapshot-set assertion

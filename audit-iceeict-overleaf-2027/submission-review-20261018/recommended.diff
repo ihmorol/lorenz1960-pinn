@@ -1,0 +1,19 @@
+--- iceeict2027-overleaf/main.tex
++++ iceeict2027-six-page-preview/main.tex
+@@ -346,7 +346,7 @@
+ 
+ \section{Results}
+ \label{sec:results}
+-In this section we report the accuracy and physics checks of the windowed run against DOP853. Then we compare it with the full-interval run and we also show the ablation and failure results.
++
+ 
+ 
+ \subsection{Prediction Accuracy}
+@@ -422,7 +422,6 @@
+ \section*{Acknowledgment}
+ Large language models provided non-intellectual assistance limited to manuscript formatting and typesetting, language editing, or proofreading. The authors are responsible for the content and accuracy of the manuscript.
+ 
+-\IEEEtriggeratref{13}
+ \bibliographystyle{IEEEtran}
+ \bibliography{references}
+ 

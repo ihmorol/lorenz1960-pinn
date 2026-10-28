@@ -1,0 +1,27 @@
+[
+  {
+    "id": "C1",
+    "section": "III Windowed PINN",
+    "text": "This section explains the implementation of windowed PINN. It also contains the model construction, physics enforcement, causal weights, window segmentation, its handoff and the sequence in how the optimizer works for this particular case."
+  },
+  {
+    "id": "C2",
+    "section": "V Results",
+    "text": "In this section we report the accuracy and physics checks of the windowed run against DOP853. Then we compare it with the full-interval run and we also show the ablation and failure results."
+  },
+  {
+    "id": "C3",
+    "section": "IV Experimental Setup",
+    "text": "This section explains the experimental setup for the saved windowed run. It contains the configuration and reference information, the evaluation measures and the separate full interval comparison."
+  },
+  {
+    "id": "C4",
+    "section": "II Problem and Background",
+    "text": "In this section we describe the Lorenz equations and the initial value problem that we want the model to learn. Then we explain the existing methods or components that we used."
+  },
+  {
+    "id": "C5",
+    "section": "III.C Training Loss",
+    "text": "The next subsection explains the stopping rules of the stages and the unweighted L-BFGS refinement steps."
+  }
+]

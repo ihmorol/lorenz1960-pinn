@@ -1,0 +1,8 @@
+fix(paper): align claims with archived evidence
+
+Correct protocol, metrics, statistics and references while preserving
+numerical results and the six-page IEEE layout.
+
+Constraint: no new experiments; preserve the team voice
+Tested: six-page build and archived-input calculations
+Not-tested: similarity screening on the revised PDF

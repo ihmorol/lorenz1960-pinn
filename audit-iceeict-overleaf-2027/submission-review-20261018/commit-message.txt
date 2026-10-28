@@ -1,0 +1,11 @@
+docs(paper): add six-page submission review
+
+Keep the authoritative manuscript intact and provide a separate preview
+that reaches six pages with two redundant sentences removed. Record the
+conference/template audit and remaining writing and figure-font issues.
+
+Constraint: preserve equations, results, citations and figure geometry
+Tested: clean six-page A4 build and exact source comparison
+Not-tested: similarity screening, CMT fields and final author approval
+Confidence: high
+Scope-risk: narrow
