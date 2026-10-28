@@ -1,0 +1,35 @@
+{
+  "review_date": "2026-10-18",
+  "paper_source_commit": "70618fe6ca7766abe0bff5ee6086b69708a5bb9d",
+  "pdf_sha256": "2716949a56776b846f80cdca9e41e599c68d627c1e1afd52cd9fc975ffd321c4",
+  "verdict": "PASS: bounded restored-diagram and final-layout audit",
+  "findings": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0
+  },
+  "pages": 6,
+  "a4": true,
+  "bytes": 2725485,
+  "all_fonts_embedded": true,
+  "fonts": 27,
+  "type3_count": 0,
+  "minimum_placed_figure_font_pt": 8.5,
+  "original_nine_stages_restored": true,
+  "network_structure_restored": true,
+  "three_decision_diamonds_restored": true,
+  "feedback_structure_restored": true,
+  "page3_visually_inspected": true,
+  "six_page_contact_sheet_inspected": true,
+  "all_rendered_pages_match_pdf": true,
+  "numeric_figures_unchanged_vs": "34ae92a",
+  "only_main_tex_change_vs_34ae92a": "method float [t] to [!t]",
+  "new_blocking_findings": [],
+  "limits": [
+    "no repeat literature or statistics audit",
+    "no training",
+    "no screening",
+    "no CMT authentication or upload",
+    "final author approval remains separate"
+  ]
+}

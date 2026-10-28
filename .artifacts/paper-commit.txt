@@ -1,0 +1,10 @@
+docs(paper): prepare final submission review
+
+Deliver the reviewed six-page manuscript and readable vector figures
+without bringing historical training changes into the submission PR.
+Include the full evidence archive and a clean manuscript upload ZIP.
+
+Constraint: preserve reviewed PDF and verified numerical results
+Tested: clean ZIP rebuild matches all reviewed PDF pages
+Scope-risk: narrow
+Refs: #39

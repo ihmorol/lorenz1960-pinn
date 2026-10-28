@@ -1,0 +1,11 @@
+docs(paper): verify restored method diagram
+
+Refresh the frozen manuscript package and independent audit after
+restoring the authors' original method flow at a readable size.
+
+Constraint: six A4 pages; preserve prose and numerical results
+Confidence: high
+Scope-risk: narrow
+Tested: fresh ZIP rebuild matches all six pages; artifact verifier passes
+Not-tested: similarity screening and CMT submission
+Refs: #39

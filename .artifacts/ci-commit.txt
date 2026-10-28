@@ -1,0 +1,10 @@
+ci(paper): verify frozen manuscript artifacts
+
+Check archive contents and frozen manuscript evidence on GitHub so
+reviewers can confirm the delivered paper matches its recorded audit.
+Keep validation dependency-free and tolerate Git text line endings.
+
+Tested: positive verification and rejection of an altered PDF
+Not-tested: remote TeX build and scientific experiment reruns
+Scope-risk: narrow
+Refs: #39
